@@ -125,6 +125,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "jwt",
     maxAge: 365 * 24 * 60 * 60, // 1 year (effectively infinite)
   },
+  trustHost: true,
   cookies: {
     sessionToken: {
       name: "getmaterials-main-session",

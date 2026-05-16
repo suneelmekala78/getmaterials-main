@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@source "../app";
+@source "../components";
+@source "../../packages/ui/src";
+
+:root {
+  --primary: #b100ff;
+  --background: #ffffff;
+  --foreground: #1a1a1a;
+  --radius: 12px;
+}
+
+@theme {
+  --color-primary: #b100ff;
+  --font-sans: var(--font-poppins), ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background: #f9fafb;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+}
+
+button, a {
+  transition: 0.2s ease;
+}
+
+/* hide native scrollbar for cleaner look */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

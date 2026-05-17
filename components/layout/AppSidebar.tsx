@@ -15,6 +15,7 @@ import {
   FileText,
   BarChart3,
   Upload,
+  Globe,
 } from "lucide-react";
 
 const studentLinks = [
@@ -32,7 +33,9 @@ const studentLinks = [
 
 const teacherLinks = [
   { href: "/teacher/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/teacher/upload", icon: BookOpen, label: "Upload" },
+  { href: "/subjects", icon: Search, label: "Subjects" },
+  { href: "/materials", icon: FileText, label: "All Materials" },
+  { href: "/teacher/upload", icon: Upload, label: "Upload" },
   { href: "/teacher/materials", icon: BookOpen, label: "My Materials" },
   { href: "/teacher/quizzes", icon: ClipboardCheck, label: "Quizzes" },
   { href: "/teacher/polls", icon: BarChart3, label: "Polls" },

@@ -264,7 +264,7 @@ export default async function MaterialViewPage({ params }: Props) {
                   Description
                 </h3>
                 <div
-                  className="prose prose-sm max-w-none text-slate-600 [&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:text-base [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-4 [&_blockquote]:border-violet-200 [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-violet-600 [&_a]:underline"
+                  className="prose prose-sm max-w-none text-slate-600 break-words overflow-hidden [&_*]:max-w-full [&_pre]:overflow-x-auto [&_table]:overflow-x-auto [&_table]:block [&_img]:max-w-full [&_h1]:text-xl [&_h1]:font-bold [&_h2]:text-lg [&_h2]:font-semibold [&_h3]:text-base [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_blockquote]:border-l-4 [&_blockquote]:border-violet-200 [&_blockquote]:pl-4 [&_blockquote]:italic [&_a]:text-violet-600 [&_a]:underline [&_code]:break-all [&_pre_code]:break-normal"
                   dangerouslySetInnerHTML={{ __html: material.description }}
                 />
               </div>

@@ -20,10 +20,10 @@ const studentTabs = [
 
 const teacherTabs = [
   { href: "/teacher/dashboard", icon: LayoutDashboard, label: "Home" },
+  { href: "/materials", icon: BookOpen, label: "Browse" },
   { href: "/teacher/upload", icon: Upload, label: "Upload" },
-  { href: "/teacher/materials", icon: FileText, label: "Materials" },
+  { href: "/teacher/materials", icon: FileText, label: "My Files" },
   { href: "/teacher/quizzes", icon: ClipboardCheck, label: "Quizzes" },
-  { href: "/teacher/requests", icon: BookOpen, label: "Requests" },
 ];
 
 interface BottomBarProps {

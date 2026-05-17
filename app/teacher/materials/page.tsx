@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { connectDB, Material } from "@getmaterials/database";
-import { FileText, Video, Link2, Eye, Plus, Clock } from "lucide-react";
+import { FileText, Video, Link2, Eye, Plus, Clock, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { TeacherMaterialActions } from "@/components/TeacherMaterialActions";
 
@@ -71,15 +71,15 @@ export default async function TeacherMaterialsPage() {
                   return (
                     <tr key={material._id.toString()} className="table-row-hover">
                       <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
+                        <Link href={`/materials/${material.slug}`} className="flex items-center gap-3 group">
                           <div className={`w-9 h-9 rounded-lg ${typeInfo.color} flex items-center justify-center shrink-0`}>
                             <TypeIcon className="w-4 h-4" />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate max-w-[200px]">{material.title}</p>
+                            <p className="text-sm font-medium text-slate-900 truncate max-w-[200px] group-hover:text-violet-600 transition-colors">{material.title}</p>
                             <p className="text-xs text-slate-500">{(material.chapter as any)?.title || "—"}</p>
                           </div>
-                        </div>
+                        </Link>
                       </td>
                       <td className="px-5 py-4 text-sm text-slate-600">
                         {(material.subject as any)?.name || "—"}

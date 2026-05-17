@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { AppTopbar } from "@/components/layout/AppTopbar";
+import { MobileShell } from "@/components/layout/MobileShell";
+import { connectDB, User } from "@getmaterials/database";
 
 export default async function TeacherLayout({
   children,
@@ -16,7 +16,17 @@ export default async function TeacherLayout({
     redirect("/dashboard");
   }
 
-  if (user.status === "pending") {
+  // Always check latest status from DB to avoid stale JWT cache
+  let currentStatus = user.status;
+  if (currentStatus === "pending") {
+    await connectDB();
+    const dbUser = await User.findById(user.id).select("status").lean();
+    if (dbUser) {
+      currentStatus = (dbUser as any).status;
+    }
+  }
+
+  if (currentStatus === "pending") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
         <div className="max-w-md text-center bg-white p-10 rounded-2xl shadow-sm">
@@ -35,12 +45,8 @@ export default async function TeacherLayout({
   }
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
-      <AppSidebar user={user} />
-      <div className="flex-1 flex flex-col">
-        <AppTopbar user={user} />
-        <main className="p-6">{children}</main>
-      </div>
-    </div>
+    <MobileShell user={user}>
+      {children}
+    </MobileShell>
   );
 }

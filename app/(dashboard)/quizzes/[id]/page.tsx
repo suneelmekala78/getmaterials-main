@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Clock, CheckCircle2, XCircle, ArrowLeft, Trophy } from "lucide-react";
 import Link from "next/link";
+import toast from "react-hot-toast";
 
 interface Question {
   question: string;
@@ -90,9 +91,11 @@ export default function QuizTakePage() {
       const data = await res.json();
       if (data.score !== undefined) {
         setResults(data);
+      } else {
+        toast.error(data.error || "Failed to submit quiz");
       }
     } catch {
-      // handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
     }

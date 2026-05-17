@@ -3,9 +3,18 @@ import crypto from "crypto";
 import { connectDB, User } from "@getmaterials/database";
 import { forgotPasswordSchema } from "@getmaterials/shared";
 import { sendEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!rateLimit(`forgot-password:${ip}`, 3, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const parsed = forgotPasswordSchema.safeParse(body);
 
@@ -37,15 +46,17 @@ export async function POST(req: NextRequest) {
     user.resetPasswordExpires = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
     await user.save();
 
-    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3001"}/reset-password?token=${resetToken}`;
+    const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://app.getmaterials.in"}/reset-password?token=${resetToken}`;
 
     await sendEmail({
       to: email,
       subject: "Reset your password - GetMaterials",
       html: `
-        <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
           <div style="text-align: center; margin-bottom: 32px;">
-            <h1 style="color: #7c3aed; font-size: 24px; margin: 0;">GetMaterials</h1>
+            <h1 style="font-size: 26px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">
+              <span style="color: #7c3aed;">Get</span><span style="color: #1e293b;">Materials</span>
+            </h1>
           </div>
           <h2 style="color: #1e293b; font-size: 20px;">Reset your password</h2>
           <p style="color: #475569; line-height: 1.6;">

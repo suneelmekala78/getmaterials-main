@@ -35,7 +35,7 @@ export default async function SubjectDetailPage({ params }: Props) {
     Chapter.find({ subject: (subject as any)._id }).sort({ order: 1 }).lean(),
     Material.find({ subject: (subject as any)._id, status: "published", isPublic: true })
       .populate("chapter", "title slug")
-      .populate("uploadedBy", "name avatar")
+      .populate("uploadedBy", "name avatar role")
       .sort({ createdAt: -1 })
       .lean(),
   ]);
@@ -113,7 +113,7 @@ export default async function SubjectDetailPage({ params }: Props) {
                           </h3>
                           {material.description && (
                             <p className="text-xs text-slate-500 mt-0.5 truncate">
-                              {material.description}
+                              {material.description.replace(/<[^>]*>/g, "")}
                             </p>
                           )}
                           <div className="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
@@ -131,6 +131,11 @@ export default async function SubjectDetailPage({ params }: Props) {
                             )}
                             <span>
                               by {(material.uploadedBy as any)?.name || "Unknown"}
+                              {(material.uploadedBy as any)?.role === "teacher" ? (
+                                <span className="ml-1 inline-flex items-center px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-bold uppercase rounded-full border border-blue-200">Teacher</span>
+                              ) : (material.uploadedBy as any)?.role === "student" ? (
+                                <span className="ml-1 inline-flex items-center px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold uppercase rounded-full border border-emerald-200">Student</span>
+                              ) : null}
                             </span>
                           </div>
                         </div>

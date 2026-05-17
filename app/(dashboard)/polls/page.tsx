@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { BarChart3, CheckCircle2, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface Poll {
   _id: string;
@@ -39,9 +40,12 @@ export default function PollsPage() {
       });
       if (res.ok) {
         setSubmitted((prev) => ({ ...prev, [pollId]: true }));
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to submit poll response");
       }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setSubmitting(null);
     }

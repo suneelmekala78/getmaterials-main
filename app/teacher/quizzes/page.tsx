@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Trash2, Edit3, Eye, Users } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface Quiz {
   _id: string;
@@ -59,7 +60,7 @@ export default function TeacherQuizzesPage() {
         setAttemptStats(data.stats || null);
       }
     } catch {
-      // Handle error
+      toast.error("Failed to load quiz responses");
     } finally {
       setAttemptsLoading(false);
     }

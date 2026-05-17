@@ -13,7 +13,7 @@ const s3Client = new S3Client({
   },
 });
 
-const BUCKET = process.env.S3_BUCKET || "getmaterials-uploads";
+const BUCKET = process.env.S3_BUCKET || "getmaterials-media";
 
 export async function getPresignedUploadUrl(
   key: string,
@@ -53,7 +53,8 @@ export async function deleteS3Object(key: string): Promise<void> {
 }
 
 export function getS3Url(key: string): string {
-  return `https://${BUCKET}.s3.${process.env.S3_REGION || "ap-south-1"}.amazonaws.com/${key}`;
+  const cdnDomain = process.env.CLOUDFRONT_DOMAIN || "media.getmaterials.in";
+  return `https://${cdnDomain}/${key}`;
 }
 
 export function generateS3Key(

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { MessageSquare, Send, Plus, Clock, CheckCircle2, AlertCircle, Loader2, ChevronDown, UserCheck, Play, RotateCcw } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface Comment {
   user: { name: string; role: string };
@@ -114,9 +115,11 @@ export default function RequestsPage() {
           prev.map((r) => (r._id === id ? data.request : r))
         );
         setCommentText((prev) => ({ ...prev, [id]: "" }));
+      } else {
+        toast.error("Failed to reopen request");
       }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setUpdating(null);
     }
@@ -138,9 +141,11 @@ export default function RequestsPage() {
           prev.map((r) => (r._id === id ? data.request : r))
         );
         setCommentText((prev) => ({ ...prev, [id]: "" }));
+      } else {
+        toast.error("Failed to add comment");
       }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setUpdating(null);
     }

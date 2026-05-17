@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
+import toast from "react-hot-toast";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -26,23 +27,32 @@ export function LoginForm() {
 
       if (result?.error) {
         if (result.error.includes("EMAIL_NOT_VERIFIED")) {
-          setError("Please verify your email before logging in. Check your inbox for the verification code.");
+          const msg = "Please verify your email before logging in. Check your inbox for the verification code.";
+          setError(msg);
+          toast.error(msg);
         } else {
           setError("Invalid email or password");
+          toast.error("Invalid email or password");
         }
         setLoading(false);
       } else {
         setSuccess("Login successful! Redirecting...");
-        window.location.href = "/dashboard";
+        toast.success("Login successful!");
+        // Fetch session to determine role-based redirect
+        const sessionRes = await fetch("/api/auth/session");
+        const sessionData = await sessionRes.json();
+        const userRole = sessionData?.user?.role;
+        window.location.href = userRole === "teacher" ? "/teacher/dashboard" : "/dashboard";
       }
     } catch {
       setError("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    signIn("google", { callbackUrl: "/dashboard" });
+    signIn("google", { callbackUrl: "/" });
   };
 
   return (

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Edit, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import toast from "react-hot-toast";
 
 interface Material {
   _id: string;
@@ -22,8 +23,12 @@ export function TeacherMaterialActions({ material }: { material: Material }) {
       const res = await fetch(`/api/materials/${material._id}`, { method: "DELETE" });
       if (res.ok) {
         setDeleted(true);
+        toast.success("Material deleted");
+      } else {
+        toast.error("Failed to delete material");
       }
     } catch {
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setDeleting(false);
       setShowDelete(false);

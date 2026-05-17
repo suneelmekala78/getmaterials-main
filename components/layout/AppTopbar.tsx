@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { Search, Bell, Menu, LogOut, User, ChevronDown } from "lucide-react";
+import { Search, Menu, LogOut, User, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
@@ -13,9 +13,10 @@ interface AppTopbarProps {
     image?: string | null;
     role?: string;
   };
+  onMenuClick?: () => void;
 }
 
-export function AppTopbar({ user }: AppTopbarProps) {
+export function AppTopbar({ user, onMenuClick }: AppTopbarProps) {
   const [showProfile, setShowProfile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showLogout, setShowLogout] = useState(false);
@@ -29,7 +30,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
 
   return (
     <header className="h-14 px-6 flex items-center justify-between bg-white border-b border-black/10 shrink-0">
-      <button className="lg:hidden p-2 text-gray-600 hover:text-black rounded-lg">
+      <button onClick={onMenuClick} className="lg:hidden p-2 text-gray-600 hover:text-black rounded-lg">
         <Menu className="w-5 h-5" />
       </button>
 
@@ -47,9 +48,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
       </form>
 
       <div className="flex items-center gap-4">
-        <button className="text-xl text-gray-600 hover:text-black">
-          <Bell className="w-5 h-5" />
-        </button>
 
         <div className="relative">
           <button

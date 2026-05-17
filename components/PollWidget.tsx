@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import toast from "react-hot-toast";
 
 interface Poll {
   _id: string;
@@ -38,9 +39,12 @@ export function PollWidget() {
       });
       if (res.ok) {
         setSubmitted(true);
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to submit response");
       }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

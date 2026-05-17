@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Clock, CheckCircle2, XCircle, MessageSquare, Loader2, BookOpen, UserCheck, Play } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface Comment {
   user: { name: string; role: string };
@@ -59,9 +60,11 @@ export default function TeacherRequestsPage() {
         if (comment) {
           setCommentText((prev) => ({ ...prev, [id]: "" }));
         }
+      } else {
+        toast.error("Failed to update request status");
       }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setUpdating(null);
     }
@@ -83,9 +86,11 @@ export default function TeacherRequestsPage() {
           prev.map((r) => (r._id === id ? data.request : r))
         );
         setCommentText((prev) => ({ ...prev, [id]: "" }));
+      } else {
+        toast.error("Failed to add comment");
       }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setUpdating(null);
     }

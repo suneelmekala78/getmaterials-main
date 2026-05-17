@@ -21,8 +21,18 @@ interface EmailOptions {
   html: string;
 }
 
+// Styled text logo for emails — purple "Get" + black "Materials"
+// Uses @media (prefers-color-scheme: dark) for dark mode: purple "Get" + white "Materials"
+const emailLogo = `
+  <div style="text-align: center; margin-bottom: 32px;">
+    <h1 style="font-size: 26px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">
+      <span style="color: #7c3aed;">Get</span><span style="color: #1e293b;">Materials</span>
+    </h1>
+  </div>
+`;
+
 export async function sendEmail({ to, subject, html }: EmailOptions): Promise<boolean> {
-  const from = process.env.EMAIL_FROM || "GetMaterials <noreply@getmaterials.com>";
+  const from = process.env.EMAIL_FROM || "GetMaterials <noreply@getmaterials.in>";
 
   // Try Resend first
   if (resend) {
@@ -46,10 +56,8 @@ export async function sendEmail({ to, subject, html }: EmailOptions): Promise<bo
 
 export function getWelcomeEmailHtml(name: string): string {
   return `
-    <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-      <div style="text-align: center; margin-bottom: 32px;">
-        <h1 style="color: #7c3aed; font-size: 24px; margin: 0;">GetMaterials</h1>
-      </div>
+    <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
+      ${emailLogo}
       <h2 style="color: #1e293b; font-size: 20px;">Welcome, ${name}! 🎉</h2>
       <p style="color: #475569; line-height: 1.6;">
         Thank you for joining GetMaterials. You now have access to thousands of
@@ -71,10 +79,8 @@ export function getWelcomeEmailHtml(name: string): string {
 
 export function getTeacherApprovedEmailHtml(name: string): string {
   return `
-    <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-      <div style="text-align: center; margin-bottom: 32px;">
-        <h1 style="color: #7c3aed; font-size: 24px; margin: 0;">GetMaterials</h1>
-      </div>
+    <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
+      ${emailLogo}
       <h2 style="color: #1e293b; font-size: 20px;">You&apos;re approved, ${name}! ✅</h2>
       <p style="color: #475569; line-height: 1.6;">
         Great news! Your teacher account has been approved. You can now start

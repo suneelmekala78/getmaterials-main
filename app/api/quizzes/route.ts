@@ -23,7 +23,15 @@ export async function GET(request: Request) {
       if (!quiz) {
         return NextResponse.json({ error: "Quiz not found" }, { status: 404 });
       }
-      return NextResponse.json({ quiz });
+      // Strip correct answers so users can't cheat
+      const sanitizedQuiz = {
+        ...quiz,
+        questions: (quiz as any).questions?.map((q: any) => ({
+          question: q.question,
+          options: q.options,
+        })),
+      };
+      return NextResponse.json({ quiz: sanitizedQuiz });
     }
 
     // List quizzes

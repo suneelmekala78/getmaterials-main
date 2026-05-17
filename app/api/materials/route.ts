@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
           Material.find(query)
             .populate("subject", "name slug")
             .populate("chapter", "title slug")
-            .populate("uploadedBy", "name avatar")
+            .populate("uploadedBy", "name avatar role")
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit)
@@ -63,8 +63,8 @@ export async function POST(req: NextRequest) {
     }
 
     const user = session.user as any;
-    if (user.role !== "teacher" && user.role !== "admin") {
-      return NextResponse.json({ error: "Only teachers can upload materials" }, { status: 403 });
+    if (!["student", "teacher", "admin"].includes(user.role)) {
+      return NextResponse.json({ error: "You don't have permission to upload materials" }, { status: 403 });
     }
     if (user.status !== "active") {
       return NextResponse.json({ error: "Your account is not active" }, { status: 403 });
@@ -84,9 +84,13 @@ export async function POST(req: NextRequest) {
 
     const slug = slugify(parsed.data.title, { lower: true, strict: true }) + "-" + nanoid(6);
 
+    // Students' uploads go to review; teachers/admins publish directly
+    const status = user.role === "student" ? "under_review" : "published";
+
     const material = await Material.create({
       ...parsed.data,
       slug,
+      status,
       uploadedBy: user.id,
       attachments: body.attachments || [],
     });

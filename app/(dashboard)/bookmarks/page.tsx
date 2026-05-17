@@ -58,7 +58,7 @@ export default async function BookmarksPage() {
               <p className="text-xs text-slate-500 mb-3">{material.subject?.name}</p>
               <div className="flex items-center gap-2 text-xs text-slate-400">
                 <Clock className="w-3 h-3" />
-                <span>Saved {new Date(material.bookmarkedAt).toLocaleDateString()}</span>
+                <span>Saved {new Date(material.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
           ))}

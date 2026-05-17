@@ -68,8 +68,9 @@ export async function PATCH(
 
     const body = await req.json();
     const allowedFields = [
-      "title", "description", "type", "externalUrl", "fileUrl",
-      "thumbnailUrl", "subject", "chapter", "college", "tags", "attachments",
+      "title", "description", "type", "materialCategory", "program",
+      "externalUrl", "fileUrl", "thumbnailUrl", "subject", "chapter",
+      "college", "tags", "attachments",
     ];
     const updates: Record<string, any> = {};
     for (const key of allowedFields) {

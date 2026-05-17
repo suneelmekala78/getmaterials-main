@@ -26,9 +26,16 @@ const categoryColors: Record<string, string> = {
   general: "from-violet-500 to-blue-500",
 };
 
-export default async function SubjectsPage() {
+export default async function SubjectsPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q } = await searchParams;
   await connectDB();
-  const subjects = await Subject.find({ isActive: true }).sort({ name: 1 }).lean();
+
+  const filter: Record<string, unknown> = { isActive: true };
+  if (q?.trim()) {
+    filter.name = { $regex: q.trim(), $options: "i" };
+  }
+
+  const subjects = await Subject.find(filter).sort({ name: 1 }).lean();
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -41,14 +48,16 @@ export default async function SubjectsPage() {
       </div>
 
       {/* Search */}
-      <div className="relative max-w-md">
+      <form action="/subjects" method="GET" className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input
           type="text"
+          name="q"
+          defaultValue={q || ""}
           placeholder="Search subjects..."
           className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
         />
-      </div>
+      </form>
 
       {/* Subjects grid */}
       {subjects.length > 0 ? (

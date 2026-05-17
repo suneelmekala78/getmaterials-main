@@ -136,5 +136,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         secure: process.env.NODE_ENV === "production",
       },
     },
+    csrfToken: {
+      name: "getmaterials-main-csrf",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: process.env.NODE_ENV === "production",
+      },
+    },
   },
 });

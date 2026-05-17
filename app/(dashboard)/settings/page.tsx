@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
 import { User, Lock, Bell, LogOut, Save } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import toast from "react-hot-toast";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -21,18 +22,27 @@ export default function SettingsPage() {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState("");
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
-      await fetch("/api/user/profile", {
+      const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       });
-    } catch (err) {
-      // Handle error
+      if (res.ok) {
+        toast.success("Profile updated successfully!");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to update profile");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -148,34 +158,49 @@ export default function SettingsPage() {
           )}
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Current Password</label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-            />
+            <div className="relative">
+              <input
+                type={showCurrentPw ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 pr-12 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+              />
+              <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+                {showCurrentPw ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">New Password</label>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-            />
+            <div className="relative">
+              <input
+                type={showNewPw ? "text" : "password"}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 pr-12 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+              />
+              <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+                {showNewPw ? "Hide" : "Show"}
+              </button>
+            </div>
             <p className="text-xs text-slate-400 mt-1">Min 8 chars, 1 uppercase, 1 number</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">Confirm New Password</label>
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-            />
+            <div className="relative">
+              <input
+                type={showConfirmPw ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full px-4 py-2.5 pr-12 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+              />
+              <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+                {showConfirmPw ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
           <button
             type="submit"

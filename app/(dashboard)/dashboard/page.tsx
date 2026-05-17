@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { connectDB, Material, Subject } from "@getmaterials/database";
+import { connectDB, Material, Subject, User } from "@getmaterials/database";
 import { BookOpen, FileText, Video, Bookmark, Clock } from "lucide-react";
 import Link from "next/link";
 import { PollWidget } from "@/components/PollWidget";
@@ -14,16 +14,19 @@ export default async function DashboardPage() {
 
   await connectDB();
 
-  const [subjectsCount, materialsCount, recentMaterials] = await Promise.all([
+  const [subjectsCount, materialsCount, recentMaterials, currentUser] = await Promise.all([
     Subject.countDocuments({ isActive: true }),
     Material.countDocuments({ status: "published", isPublic: true }),
     Material.find({ status: "published", isPublic: true })
       .populate("subject", "name slug")
-      .populate("uploadedBy", "name")
+      .populate("uploadedBy", "name role")
       .sort({ createdAt: -1 })
       .limit(6)
       .lean(),
+    User.findById(user?.id).select("bookmarks").lean(),
   ]);
+
+  const bookmarksCount = (currentUser as any)?.bookmarks?.length || 0;
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
@@ -50,7 +53,7 @@ export default async function DashboardPage() {
         {[
           { icon: BookOpen, label: "Subjects", value: subjectsCount },
           { icon: FileText, label: "Materials", value: materialsCount },
-          { icon: Bookmark, label: "Bookmarks", value: 0 },
+          { icon: Bookmark, label: "Bookmarks", value: bookmarksCount },
         ].map((stat) => (
           <div key={stat.label} className="bg-white rounded-2xl p-5 shadow-sm">
             <div className="w-10 h-10 rounded-full bg-[rgba(177,0,255,0.08)] flex items-center justify-center mb-3">
@@ -76,7 +79,7 @@ export default async function DashboardPage() {
           {recentMaterials.map((material: any) => (
             <Link
               key={material._id.toString()}
-              href={`/subjects/${(material.subject as any)?.slug}`}
+              href={`/materials/${material.slug}`}
               className="group bg-white rounded-2xl p-5 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all"
             >
               <div className="flex items-start gap-3">
@@ -91,8 +94,13 @@ export default async function DashboardPage() {
                   <h3 className="text-sm font-semibold group-hover:text-[var(--primary)] truncate transition-colors">
                     {material.title}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
                     {(material.subject as any)?.name}
+                    {material.uploadedBy?.role === "teacher" ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-bold uppercase rounded-full border border-blue-200">Teacher</span>
+                    ) : material.uploadedBy?.role === "student" ? (
+                      <span className="inline-flex items-center px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold uppercase rounded-full border border-emerald-200">Student</span>
+                    ) : null}
                   </p>
                   <div className="flex items-center gap-2 mt-2 text-xs text-gray-400">
                     <Clock className="w-3 h-3" />

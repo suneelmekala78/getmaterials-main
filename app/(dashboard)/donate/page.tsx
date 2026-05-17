@@ -1,15 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Script from "next/script";
-import { Heart, Shield, Users, Sparkles, CheckCircle, Trophy } from "lucide-react";
-
-const amounts = [50, 100, 250, 500, 1000, 2500];
+import { useEffect, useState } from "react";
+import { Heart, Shield, Users, Sparkles, Trophy, QrCode } from "lucide-react";
+import Image from "next/image";
 
 export default function DonatePage() {
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(100);
-  const [customAmount, setCustomAmount] = useState("");
-  const [loading, setLoading] = useState(false);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
   useEffect(() => {
@@ -19,53 +14,8 @@ export default function DonatePage() {
       .catch(() => {});
   }, []);
 
-  const handleDonate = async () => {
-    const amount = selectedAmount || parseInt(customAmount);
-    if (!amount || amount < 10) return;
-
-    setLoading(true);
-    try {
-      const res = await fetch("/api/donations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
-      });
-      const data = await res.json();
-      if (data.orderId) {
-        // Initialize Razorpay payment
-        const options = {
-          key: data.keyId,
-          amount: amount * 100,
-          currency: "INR",
-          name: "GetMaterials",
-          description: "Support Free Education",
-          order_id: data.orderId,
-          handler: async function (response: any) {
-            await fetch("/api/donations", {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
-          },
-        };
-        const rzp = new (window as any).Razorpay(options);
-        rzp.open();
-      }
-    } catch (err) {
-      // Handle error
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <>
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6">
       <div className="text-center">
         <div className="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Heart className="w-6 h-6 text-pink-500" />
@@ -76,44 +26,16 @@ export default function DonatePage() {
         </p>
       </div>
 
-      {/* Amount selection */}
-      <div className="bg-white rounded-2xl p-6 border border-slate-100">
-        <h2 className="text-base font-semibold text-slate-900 mb-4">Choose amount</h2>
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          {amounts.map((amount) => (
-            <button
-              key={amount}
-              onClick={() => { setSelectedAmount(amount); setCustomAmount(""); }}
-              className={`p-4 rounded-xl border-2 text-center transition-all ${
-                selectedAmount === amount
-                  ? "border-violet-500 bg-violet-50 shadow-sm"
-                  : "border-slate-200 hover:border-violet-200 hover:bg-violet-50/50"
-              }`}
-            >
-              <span className="text-xl font-bold text-slate-900">₹{amount}</span>
-            </button>
-          ))}
+      {/* QR Code */}
+      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-100 text-center space-y-4">
+        <div className="flex items-center justify-center gap-2">
+          <QrCode className="w-5 h-5 text-violet-500" />
+          <h3 className="text-base font-semibold text-slate-900">Scan to Donate</h3>
         </div>
-
-        <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium">₹</span>
-          <input
-            type="number"
-            value={customAmount}
-            onChange={(e) => { setCustomAmount(e.target.value); setSelectedAmount(null); }}
-            placeholder="Custom amount"
-            min="10"
-            className="w-full pl-8 pr-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-          />
+        <div className="bg-slate-50 rounded-2xl p-6 inline-block">
+          <Image src="/qrcode.jpeg" alt="Donation QR Code" width={220} height={220} className="rounded-xl" />
         </div>
-
-        <button
-          onClick={handleDonate}
-          disabled={loading || (!selectedAmount && !customAmount)}
-          className="w-full mt-5 py-3.5 bg-gradient-to-r from-pink-500 to-violet-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-violet-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-        >
-          {loading ? "Processing..." : `Donate ₹${selectedAmount || customAmount || "0"}`}
-        </button>
+        <p className="text-sm text-slate-500">Scan with any UPI app (Google Pay, PhonePe, Paytm, etc.)</p>
       </div>
 
       {/* Why donate */}
@@ -162,6 +84,5 @@ export default function DonatePage() {
         </div>
       )}
     </div>
-    </>
   );
 }

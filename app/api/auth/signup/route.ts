@@ -4,9 +4,18 @@ import crypto from "crypto";
 import { connectDB, User, Otp } from "@getmaterials/database";
 import { signupSchema } from "@getmaterials/shared";
 import { sendEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!rateLimit(`signup:${ip}`, 5, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const parsed = signupSchema.safeParse(body);
 
@@ -76,9 +85,11 @@ export async function POST(req: NextRequest) {
 
 function getVerificationEmailHtml(name: string, code: string): string {
   return `
-    <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    <div style="font-family: 'Inter', -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background: #ffffff;">
       <div style="text-align: center; margin-bottom: 32px;">
-        <h1 style="color: #7c3aed; font-size: 24px; margin: 0;">GetMaterials</h1>
+        <h1 style="font-size: 26px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">
+          <span style="color: #7c3aed;">Get</span><span style="color: #1e293b;">Materials</span>
+        </h1>
       </div>
       <h2 style="color: #1e293b; font-size: 20px;">Verify your email, ${name}!</h2>
       <p style="color: #475569; line-height: 1.6;">

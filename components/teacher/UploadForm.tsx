@@ -54,11 +54,13 @@ const materialTypes = [
   { value: "assignment", label: "Assignment", icon: ClipboardCheck, color: "border-amber-200 bg-amber-50 text-amber-700" },
 ];
 
-export function UploadForm({ subjects, chapters, colleges }: UploadFormProps) {
+export function UploadForm({ subjects: initialSubjects, chapters: initialChapters, colleges }: UploadFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [subjects, setSubjects] = useState(initialSubjects);
+  const [chapters, setChapters] = useState(initialChapters);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -66,15 +68,73 @@ export function UploadForm({ subjects, chapters, colleges }: UploadFormProps) {
     chapter: "",
     college: "",
     tags: "",
+    materialCategory: "notes",
+    program: "btech",
   });
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [attachments, setAttachments] = useState<AttachmentItem[]>([
     { id: crypto.randomUUID(), type: "pdf" },
   ]);
 
+  // Inline add subject/chapter
+  const [showAddSubject, setShowAddSubject] = useState(false);
+  const [newSubjectName, setNewSubjectName] = useState("");
+  const [newSubjectCategory, setNewSubjectCategory] = useState("engineering");
+  const [addingSubject, setAddingSubject] = useState(false);
+
+  const [showAddChapter, setShowAddChapter] = useState(false);
+  const [newChapterTitle, setNewChapterTitle] = useState("");
+  const [addingChapter, setAddingChapter] = useState(false);
+
   const filteredChapters = chapters.filter(
     (c) => c.subject === formData.subject
   );
+
+  const handleAddSubject = async () => {
+    if (!newSubjectName.trim()) return;
+    setAddingSubject(true);
+    try {
+      const res = await fetch("/api/subjects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newSubjectName.trim(), category: newSubjectCategory }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add subject");
+      const newSubject = { id: data.subject._id.toString(), name: data.subject.name, slug: data.subject.slug };
+      setSubjects([...subjects, newSubject].sort((a, b) => a.name.localeCompare(b.name)));
+      setFormData({ ...formData, subject: newSubject.id, chapter: "" });
+      setNewSubjectName("");
+      setShowAddSubject(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setAddingSubject(false);
+    }
+  };
+
+  const handleAddChapter = async () => {
+    if (!newChapterTitle.trim() || !formData.subject) return;
+    setAddingChapter(true);
+    try {
+      const res = await fetch("/api/chapters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newChapterTitle.trim(), subject: formData.subject }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to add chapter");
+      const newChapter = { id: data.chapter._id.toString(), title: data.chapter.title, subject: formData.subject };
+      setChapters([...chapters, newChapter]);
+      setFormData({ ...formData, chapter: newChapter.id });
+      setNewChapterTitle("");
+      setShowAddChapter(false);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setAddingChapter(false);
+    }
+  };
 
   const addAttachment = () => {
     setAttachments([
@@ -184,6 +244,8 @@ export function UploadForm({ subjects, chapters, colleges }: UploadFormProps) {
           title: formData.title,
           description: formData.description,
           type: primary?.type || "pdf",
+          materialCategory: formData.materialCategory,
+          program: formData.program,
           subject: formData.subject,
           chapter: formData.chapter,
           college: formData.college || undefined,
@@ -256,6 +318,51 @@ export function UploadForm({ subjects, chapters, colleges }: UploadFormProps) {
           />
         </div>
 
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Material Category *
+            </label>
+            <select
+              value={formData.materialCategory}
+              onChange={(e) => setFormData({ ...formData, materialCategory: e.target.value })}
+              required
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+            >
+              <option value="notes">Notes / Study Material</option>
+              <option value="question_paper">Question Paper</option>
+              <option value="syllabus">Syllabus</option>
+              <option value="assignment">Assignment</option>
+              <option value="lab_manual">Lab Manual</option>
+              <option value="reference">Reference Material</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Program *
+            </label>
+            <select
+              value={formData.program}
+              onChange={(e) => setFormData({ ...formData, program: e.target.value })}
+              required
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+            >
+              <option value="btech">B.Tech</option>
+              <option value="mtech">M.Tech</option>
+              <option value="mca">MCA</option>
+              <option value="bca">BCA</option>
+              <option value="bsc">B.Sc</option>
+              <option value="msc">M.Sc</option>
+              <option value="mba">MBA</option>
+              <option value="bba">BBA</option>
+              <option value="diploma">Diploma</option>
+              <option value="phd">Ph.D</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Description
@@ -269,9 +376,59 @@ export function UploadForm({ subjects, chapters, colleges }: UploadFormProps) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Subject *
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-slate-700">
+                Subject *
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowAddSubject(!showAddSubject)}
+                className="text-xs font-medium text-violet-600 hover:text-violet-700 flex items-center gap-0.5"
+              >
+                <Plus className="w-3 h-3" /> Add New
+              </button>
+            </div>
+            {showAddSubject && (
+              <div className="mb-2 p-3 bg-violet-50 border border-violet-200 rounded-xl space-y-2">
+                <input
+                  type="text"
+                  value={newSubjectName}
+                  onChange={(e) => setNewSubjectName(e.target.value)}
+                  placeholder="Subject name"
+                  className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                />
+                <select
+                  value={newSubjectCategory}
+                  onChange={(e) => setNewSubjectCategory(e.target.value)}
+                  className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                >
+                  <option value="engineering">Engineering</option>
+                  <option value="science">Science</option>
+                  <option value="arts">Arts</option>
+                  <option value="commerce">Commerce</option>
+                  <option value="medical">Medical</option>
+                  <option value="law">Law</option>
+                  <option value="general">General</option>
+                </select>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAddSubject}
+                    disabled={addingSubject || !newSubjectName.trim()}
+                    className="px-3 py-1.5 bg-violet-600 text-white text-xs font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50"
+                  >
+                    {addingSubject ? "Adding..." : "Add Subject"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddSubject(false)}
+                    className="px-3 py-1.5 text-slate-500 text-xs font-semibold hover:text-slate-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
             <select
               value={formData.subject}
               onChange={(e) => setFormData({ ...formData, subject: e.target.value, chapter: "" })}
@@ -285,9 +442,48 @@ export function UploadForm({ subjects, chapters, colleges }: UploadFormProps) {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Chapter *
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-slate-700">
+                Chapter *
+              </label>
+              {formData.subject && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddChapter(!showAddChapter)}
+                  className="text-xs font-medium text-violet-600 hover:text-violet-700 flex items-center gap-0.5"
+                >
+                  <Plus className="w-3 h-3" /> Add New
+                </button>
+              )}
+            </div>
+            {showAddChapter && formData.subject && (
+              <div className="mb-2 p-3 bg-violet-50 border border-violet-200 rounded-xl space-y-2">
+                <input
+                  type="text"
+                  value={newChapterTitle}
+                  onChange={(e) => setNewChapterTitle(e.target.value)}
+                  placeholder="Chapter title"
+                  className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAddChapter}
+                    disabled={addingChapter || !newChapterTitle.trim()}
+                    className="px-3 py-1.5 bg-violet-600 text-white text-xs font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50"
+                  >
+                    {addingChapter ? "Adding..." : "Add Chapter"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddChapter(false)}
+                    className="px-3 py-1.5 text-slate-500 text-xs font-semibold hover:text-slate-700"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
             <select
               value={formData.chapter}
               onChange={(e) => setFormData({ ...formData, chapter: e.target.value })}

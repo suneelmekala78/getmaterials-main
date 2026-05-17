@@ -2,9 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { connectDB, User, Otp } from "@getmaterials/database";
 import { sendEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    if (!rateLimit(`resend-verification:${ip}`, 3, 60_000)) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
+
     const { email } = await req.json();
 
     if (!email) {

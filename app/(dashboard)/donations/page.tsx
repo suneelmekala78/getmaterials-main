@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Heart, Calendar, CheckCircle, Clock, IndianRupee } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface Donation {
   _id: string;
@@ -24,7 +25,9 @@ export default function DonationHistoryPage() {
         setDonations(data.donations || []);
         setTotal(data.total || 0);
       })
-      .catch(() => {})
+      .catch(() => {
+        toast.error("Failed to load donation history");
+      })
       .finally(() => setLoading(false));
   }, []);
 

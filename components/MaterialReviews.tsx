@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Star, Loader2, Trash2, MessageCircle } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface ReviewItem {
   _id: string;
@@ -52,7 +53,7 @@ export function MaterialReviews({ materialId, currentUserId }: { materialId: str
         }
       }
     } catch {
-      // Handle error
+      toast.error("Failed to load reviews");
     } finally {
       setLoading(false);
     }
@@ -103,9 +104,12 @@ export function MaterialReviews({ materialId, currentUserId }: { materialId: str
         setRating(0);
         setComment("");
         fetchReviews();
+        toast.success("Review deleted");
+      } else {
+        toast.error("Failed to delete review");
       }
     } catch {
-      // Handle error
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setDeleting(null);
     }

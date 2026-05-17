@@ -14,12 +14,14 @@ import {
   Search,
   FileText,
   BarChart3,
+  Upload,
 } from "lucide-react";
 
 const studentLinks = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/subjects", icon: BookOpen, label: "Subjects" },
   { href: "/materials", icon: FileText, label: "Materials" },
+  { href: "/upload", icon: Upload, label: "Upload" },
   { href: "/bookmarks", icon: Bookmark, label: "Bookmarks" },
   { href: "/quizzes", icon: ClipboardCheck, label: "Quizzes" },
   { href: "/requests", icon: MessageSquare, label: "Requests" },

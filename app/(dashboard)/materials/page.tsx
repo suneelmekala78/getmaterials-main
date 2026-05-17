@@ -29,7 +29,7 @@ export default async function MaterialsPage() {
   const [materials, subjects] = await Promise.all([
     Material.find({ status: "published", isPublic: true })
       .populate("subject", "name slug")
-      .populate("uploadedBy", "name")
+      .populate("uploadedBy", "name role")
       .sort({ createdAt: -1 })
       .limit(50)
       .lean(),
@@ -100,7 +100,14 @@ export default async function MaterialsPage() {
                     {material.title}
                   </h3>
                   <div className="flex items-center justify-between mt-3 text-xs text-slate-400">
-                    <span>{material.uploadedBy?.name || "Unknown"}</span>
+                    <span className="flex items-center gap-1.5">
+                      {material.uploadedBy?.name || "Unknown"}
+                      {material.uploadedBy?.role === "teacher" ? (
+                        <span className="inline-flex items-center px-1.5 py-0.5 bg-blue-50 text-blue-700 text-[9px] font-bold uppercase rounded-full border border-blue-200">Teacher</span>
+                      ) : material.uploadedBy?.role === "student" ? (
+                        <span className="inline-flex items-center px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold uppercase rounded-full border border-emerald-200">Student</span>
+                      ) : null}
+                    </span>
                     <span className="flex items-center gap-1">
                       <Eye className="w-3 h-3" /> {material.views || 0}
                     </span>

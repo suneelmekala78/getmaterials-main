@@ -61,6 +61,8 @@ export default async function EditMaterialPage({
     title: (material as any).title,
     description: (material as any).description || "",
     type: (material as any).type,
+    materialCategory: (material as any).materialCategory || "notes",
+    program: (material as any).program || "btech",
     subject: (material as any).subject.toString(),
     chapter: (material as any).chapter.toString(),
     college: (material as any).college?.toString() || "",

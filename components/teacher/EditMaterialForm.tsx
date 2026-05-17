@@ -47,6 +47,8 @@ interface MaterialData {
   title: string;
   description: string;
   type: string;
+  materialCategory: string;
+  program: string;
   subject: string;
   chapter: string;
   college: string;
@@ -93,19 +95,28 @@ export function EditMaterialForm({ material, subjects, chapters, colleges }: Edi
     chapter: material.chapter,
     college: material.college,
     tags: material.tags.join(", "),
+    materialCategory: material.materialCategory || "notes",
+    program: material.program || "btech",
   });
   const [thumbnail, setThumbnail] = useState<File | null>(null);
-  const [attachments, setAttachments] = useState<AttachmentItem[]>(
-    material.attachments.length > 0
-      ? material.attachments.map((a) => ({
-          id: crypto.randomUUID(),
-          type: a.type as AttachmentItem["type"],
-          fileUrl: a.fileUrl || undefined,
-          externalUrl: a.externalUrl || undefined,
-          fileName: a.fileName || undefined,
-        }))
-      : [{ id: crypto.randomUUID(), type: (material.type as AttachmentItem["type"]) || "pdf", fileUrl: material.fileUrl || undefined, externalUrl: material.externalUrl || undefined }]
-  );
+  const [attachments, setAttachments] = useState<AttachmentItem[]>(() => {
+    // Always include the primary file as the first attachment
+    const primary: AttachmentItem = {
+      id: crypto.randomUUID(),
+      type: (material.type as AttachmentItem["type"]) || "pdf",
+      fileUrl: material.fileUrl || undefined,
+      externalUrl: material.externalUrl || undefined,
+      fileName: material.fileUrl ? material.title : undefined,
+    };
+    const extras: AttachmentItem[] = material.attachments.map((a) => ({
+      id: crypto.randomUUID(),
+      type: a.type as AttachmentItem["type"],
+      fileUrl: a.fileUrl || undefined,
+      externalUrl: a.externalUrl || undefined,
+      fileName: a.fileName || undefined,
+    }));
+    return [primary, ...extras];
+  });
 
   const filteredChapters = chapters.filter((c) => c.subject === formData.subject);
 
@@ -194,13 +205,15 @@ export function EditMaterialForm({ material, subjects, chapters, colleges }: Edi
           title: formData.title,
           description: formData.description,
           type: primary?.type || material.type,
+          materialCategory: formData.materialCategory,
+          program: formData.program,
           subject: formData.subject,
           chapter: formData.chapter,
           college: formData.college || undefined,
           externalUrl: primary?.externalUrl || undefined,
           fileUrl: primary?.fileUrl || undefined,
           thumbnailUrl: thumbnailUrl || undefined,
-          attachments: uploadedAttachments,
+          attachments: uploadedAttachments.slice(1),
           tags: formData.tags.split(",").map((t) => t.trim()).filter(Boolean),
         }),
       });
@@ -257,6 +270,47 @@ export function EditMaterialForm({ material, subjects, chapters, colleges }: Edi
             required
             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
           />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Material Category *</label>
+            <select
+              value={formData.materialCategory}
+              onChange={(e) => setFormData({ ...formData, materialCategory: e.target.value })}
+              required
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+            >
+              <option value="notes">Notes / Study Material</option>
+              <option value="question_paper">Question Paper</option>
+              <option value="syllabus">Syllabus</option>
+              <option value="assignment">Assignment</option>
+              <option value="lab_manual">Lab Manual</option>
+              <option value="reference">Reference Material</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Program *</label>
+            <select
+              value={formData.program}
+              onChange={(e) => setFormData({ ...formData, program: e.target.value })}
+              required
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+            >
+              <option value="btech">B.Tech</option>
+              <option value="mtech">M.Tech</option>
+              <option value="mca">MCA</option>
+              <option value="bca">BCA</option>
+              <option value="bsc">B.Sc</option>
+              <option value="msc">M.Sc</option>
+              <option value="mba">MBA</option>
+              <option value="bba">BBA</option>
+              <option value="diploma">Diploma</option>
+              <option value="phd">Ph.D</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
         </div>
 
         <div>

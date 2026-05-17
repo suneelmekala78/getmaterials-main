@@ -53,7 +53,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   const links = user.role === "teacher" ? teacherLinks : studentLinks;
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 h-screen bg-white border-r border-black/10 sticky top-0 overflow-y-auto">
+    <aside className="flex flex-col w-64 h-screen bg-white border-r border-black/10 sticky top-0 overflow-y-auto">
       <div className="p-6 font-extrabold text-[1.2rem] text-[var(--primary)]">
         Get<span className="text-black">Materials</span>
       </div>

@@ -38,6 +38,8 @@ export default async function UploadPage() {
     id: c._id.toString(),
     name: c.name,
     code: c.code,
+    programs: c.programs || [],
+    branches: c.branches || [],
   }));
 
   const assignedCollegeIds = ((currentUser as any)?.assignedColleges || []).map(

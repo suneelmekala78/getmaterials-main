@@ -39,6 +39,8 @@ export default async function StudentUploadPage() {
     id: c._id.toString(),
     name: c.name,
     code: c.code,
+    programs: c.programs || [],
+    branches: c.branches || [],
   }));
 
   // Get the list of college IDs this user can upload to

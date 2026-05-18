@@ -33,6 +33,8 @@ interface College {
   id: string;
   name: string;
   code: string;
+  programs: { key: string; label: string; durationYears: number; totalSemesters: number }[];
+  branches: { program: string; name: string; sections: string[] }[];
 }
 
 interface UploadFormProps {
@@ -72,6 +74,7 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
     chapter: "",
     college: "",
     branch: "",
+    section: "",
     semester: "",
     tags: "",
     materialCategory: "notes",
@@ -301,6 +304,7 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
           materialCategory: formData.materialCategory,
           program: formData.program,
           branch: formData.branch || undefined,
+          section: formData.section || undefined,
           semester: formData.semester ? parseInt(formData.semester) : undefined,
           subject: formData.subject,
           chapter: formData.chapter,
@@ -630,7 +634,7 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
               </label>
               <select
                 value={formData.college}
-                onChange={(e) => setFormData({ ...formData, college: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, college: e.target.value, program: "", branch: "", section: "", semester: "" })}
                 required={uploadTarget === "college"}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
               >
@@ -643,46 +647,88 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
               </select>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Branch
-                </label>
-                <select
-                  value={formData.branch}
-                  onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
-                >
-                  <option value="">All Branches</option>
-                  <option value="CSE">CSE</option>
-                  <option value="ECE">ECE</option>
-                  <option value="EEE">EEE</option>
-                  <option value="MECH">Mechanical</option>
-                  <option value="CIVIL">Civil</option>
-                  <option value="IT">IT</option>
-                  <option value="AIDS">AI & DS</option>
-                  <option value="AIML">AI & ML</option>
-                  <option value="CSD">CS & Design</option>
-                  <option value="CSM">CSM</option>
-                  <option value="OTHER">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Semester
-                </label>
-                <select
-                  value={formData.semester}
-                  onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
-                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
-                >
-                  <option value="">All Semesters</option>
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                    <option key={sem} value={sem}>Semester {sem}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
+            {(() => {
+              const selectedCollege = colleges.find(c => c.id === formData.college);
+              const collegePrograms = selectedCollege?.programs || [];
+              const collegeBranches = (selectedCollege?.branches || []).filter(b => b.program === formData.program);
+              const selectedBranch = collegeBranches.find(b => b.name === formData.branch);
+              const branchSections = selectedBranch?.sections || [];
+              const selectedProgram = collegePrograms.find(p => p.key === formData.program);
+              const maxSemesters = selectedProgram?.totalSemesters || 8;
+
+              return (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Program
+                      </label>
+                      <select
+                        value={formData.program}
+                        onChange={(e) => setFormData({ ...formData, program: e.target.value, branch: "", section: "" })}
+                        disabled={collegePrograms.length === 0}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                      >
+                        <option value="">Select program</option>
+                        {collegePrograms.map((p) => (
+                          <option key={p.key} value={p.key}>{p.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Branch
+                      </label>
+                      <select
+                        value={formData.branch}
+                        onChange={(e) => setFormData({ ...formData, branch: e.target.value, section: "" })}
+                        disabled={collegeBranches.length === 0}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                      >
+                        <option value="">All Branches</option>
+                        {collegeBranches.map((b, i) => (
+                          <option key={i} value={b.name}>{b.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Section
+                      </label>
+                      <select
+                        value={formData.section}
+                        onChange={(e) => setFormData({ ...formData, section: e.target.value })}
+                        disabled={branchSections.length === 0}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+                      >
+                        <option value="">All Sections</option>
+                        {branchSections.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                        Semester
+                      </label>
+                      <select
+                        value={formData.semester}
+                        onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                      >
+                        <option value="">All Semesters</option>
+                        {Array.from({ length: maxSemesters }, (_, i) => i + 1).map((sem) => (
+                          <option key={sem} value={sem}>Semester {sem}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
           </div>
         )}
 

@@ -129,6 +129,16 @@ export default async function MaterialsPage() {
           })}
         </div>
       )}
+
+      {/* Disclaimer */}
+      <div className="mt-10 bg-slate-50 border border-slate-200 rounded-2xl p-5">
+        <h3 className="font-semibold text-xs text-slate-600 mb-1.5">Disclaimer</h3>
+        <p className="text-[11px] text-slate-500 leading-relaxed">
+          The study materials available on GetMaterials are sourced from publicly available online resources, contributed by teachers, or shared by students from various colleges and educational institutions. We do not claim ownership of any material unless explicitly stated. If any college, university, or educational institution believes that certain materials should not be displayed on our platform, please{" "}
+          <a href="https://getmaterials.in/contact" className="text-violet-600 hover:underline font-medium">contact us</a>{" "}
+          and we will promptly remove or modify the content as requested.
+        </p>
+      </div>
     </div>
   );
 }

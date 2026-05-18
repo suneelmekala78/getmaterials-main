@@ -8,8 +8,8 @@ export async function GET(req: NextRequest) {
     const query = searchParams.get("q");
     const type = searchParams.get("type");
     const subject = searchParams.get("subject");
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "20")));
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json(

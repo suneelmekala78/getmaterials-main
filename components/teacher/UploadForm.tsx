@@ -12,8 +12,10 @@ import {
   X,
   CheckCircle,
   Plus,
+  AlertCircle,
 } from "lucide-react";
 import { RichTextEditor } from "@/components/RichTextEditor";
+import toast from "react-hot-toast";
 
 interface Subject {
   id: string;
@@ -37,6 +39,7 @@ interface UploadFormProps {
   subjects: Subject[];
   chapters: Chapter[];
   colleges: College[];
+  assignedColleges?: string[]; // college IDs the teacher has access to
 }
 
 interface AttachmentItem {
@@ -54,22 +57,26 @@ const materialTypes = [
   { value: "assignment", label: "Assignment", icon: ClipboardCheck, color: "border-amber-200 bg-amber-50 text-amber-700" },
 ];
 
-export function UploadForm({ subjects: initialSubjects, chapters: initialChapters, colleges }: UploadFormProps) {
+export function UploadForm({ subjects: initialSubjects, chapters: initialChapters, colleges, assignedColleges = [] }: UploadFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState("");
   const [subjects, setSubjects] = useState(initialSubjects);
   const [chapters, setChapters] = useState(initialChapters);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [uploadTarget, setUploadTarget] = useState<"all" | "college">("all");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     subject: "",
     chapter: "",
     college: "",
+    branch: "",
+    semester: "",
     tags: "",
     materialCategory: "notes",
     program: "btech",
+    batch: "",
   });
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [attachments, setAttachments] = useState<AttachmentItem[]>([
@@ -90,8 +97,19 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
     (c) => c.subject === formData.subject
   );
 
+  const clearFieldError = (field: string) => {
+    setFieldErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  };
+
   const handleAddSubject = async () => {
-    if (!newSubjectName.trim()) return;
+    if (!newSubjectName.trim()) {
+      toast.error("Please enter a subject name");
+      return;
+    }
     setAddingSubject(true);
     try {
       const res = await fetch("/api/subjects", {
@@ -106,15 +124,26 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
       setFormData({ ...formData, subject: newSubject.id, chapter: "" });
       setNewSubjectName("");
       setShowAddSubject(false);
+      clearFieldError("subject");
+      toast.success(`Subject "${newSubject.name}" added!`);
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setAddingSubject(false);
     }
   };
 
   const handleAddChapter = async () => {
-    if (!newChapterTitle.trim() || !formData.subject) return;
+    if (!formData.subject) {
+      toast.error("Please select or add a subject first before adding a chapter");
+      setFieldErrors((prev) => ({ ...prev, subject: "You must select a subject before adding a chapter" }));
+      setShowAddChapter(false);
+      return;
+    }
+    if (!newChapterTitle.trim()) {
+      toast.error("Please enter a chapter title");
+      return;
+    }
     setAddingChapter(true);
     try {
       const res = await fetch("/api/chapters", {
@@ -129,8 +158,10 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
       setFormData({ ...formData, chapter: newChapter.id });
       setNewChapterTitle("");
       setShowAddChapter(false);
+      clearFieldError("chapter");
+      toast.success(`Chapter "${newChapter.title}" added!`);
     } catch (err: any) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setAddingChapter(false);
     }
@@ -158,20 +189,43 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
     const selected = e.target.files?.[0];
     if (selected) {
       if (selected.size > 100 * 1024 * 1024) {
-        setError("File size must be under 100MB");
+        toast.error("File size must be under 100MB");
         return;
       }
       updateAttachment(id, { file: selected });
-      setError("");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setFieldErrors({});
     setLoading(true);
 
+    // Validate fields
+    const errors: Record<string, string> = {};
+    if (!formData.title.trim()) errors.title = "Title is required";
+    if (!formData.subject) errors.subject = "Please select a subject";
+    if (!formData.chapter) errors.chapter = "Please select a chapter";
+
+    const hasFileOrUrl = attachments.some((a) =>
+      (a.type === "video" || a.type === "link") ? !!a.externalUrl : !!a.file
+    );
+    if (!hasFileOrUrl) errors.attachments = "Please add at least one file or URL";
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setLoading(false);
+      const firstErrorKey = Object.keys(errors)[0];
+      toast.error(errors[firstErrorKey]);
+      // Scroll to first error field
+      const el = document.getElementById(`field-${firstErrorKey}`);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
     try {
+      toast.loading("Uploading material...", { id: "upload" });
+
       // Upload thumbnail if provided
       let thumbnailUrl = "";
       if (thumbnail) {
@@ -234,7 +288,7 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
         }
       }
 
-      // Use first attachment as the primary file/url for backward compat
+      // Use first attachment to derive type
       const primary = uploadedAttachments[0];
 
       const res = await fetch("/api/materials", {
@@ -246,13 +300,14 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
           type: primary?.type || "pdf",
           materialCategory: formData.materialCategory,
           program: formData.program,
+          branch: formData.branch || undefined,
+          semester: formData.semester ? parseInt(formData.semester) : undefined,
           subject: formData.subject,
           chapter: formData.chapter,
-          college: formData.college || undefined,
-          externalUrl: primary?.externalUrl || undefined,
-          fileUrl: primary?.fileUrl || undefined,
+          college: uploadTarget === "college" ? formData.college || undefined : undefined,
+          batch: formData.batch || undefined,
           thumbnailUrl: thumbnailUrl || undefined,
-          attachments: uploadedAttachments.slice(1),
+          attachments: uploadedAttachments,
           tags: formData.tags
             .split(",")
             .map((t) => t.trim())
@@ -265,12 +320,13 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
         throw new Error(data.error || "Failed to upload material");
       }
 
+      toast.success("Material uploaded successfully!", { id: "upload" });
       setSuccess(true);
       setTimeout(() => {
         router.push("/teacher/materials");
       }, 2000);
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      toast.error(err.message || "Something went wrong", { id: "upload" });
     } finally {
       setLoading(false);
     }
@@ -294,28 +350,31 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="p-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2">
-          <X className="w-4 h-4 shrink-0" /> {error}
-        </div>
-      )}
-
       {/* Material type - removed, type is derived from first attachment */}
 
       {/* Details */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
-        <div>
+        <div id="field-title">
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
             Title *
           </label>
           <input
             type="text"
             value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            onChange={(e) => { setFormData({ ...formData, title: e.target.value }); clearFieldError("title"); }}
             placeholder="e.g., Algebra Basics - Complete Notes"
             required
-            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+            className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+              fieldErrors.title
+                ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                : "border-slate-200 focus:border-violet-500 focus:ring-violet-500/20"
+            }`}
           />
+          {fieldErrors.title && (
+            <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+              <AlertCircle className="w-3 h-3" /> {fieldErrors.title}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -375,7 +434,7 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
+          <div id="field-subject">
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-sm font-medium text-slate-700">
                 Subject *
@@ -431,22 +490,31 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
             )}
             <select
               value={formData.subject}
-              onChange={(e) => setFormData({ ...formData, subject: e.target.value, chapter: "" })}
+              onChange={(e) => { setFormData({ ...formData, subject: e.target.value, chapter: "" }); clearFieldError("subject"); }}
               required
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+              className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all ${
+                fieldErrors.subject
+                  ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                  : "border-slate-200 focus:border-violet-500 focus:ring-violet-500/20"
+              }`}
             >
               <option value="">Select subject</option>
               {subjects.map((s) => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
+            {fieldErrors.subject && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {fieldErrors.subject}
+              </p>
+            )}
           </div>
-          <div>
+          <div id="field-chapter">
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-sm font-medium text-slate-700">
                 Chapter *
               </label>
-              {formData.subject && (
+              {formData.subject ? (
                 <button
                   type="button"
                   onClick={() => setShowAddChapter(!showAddChapter)}
@@ -454,22 +522,30 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
                 >
                   <Plus className="w-3 h-3" /> Add New
                 </button>
+              ) : (
+                <span className="text-xs text-slate-400">Select subject first</span>
               )}
             </div>
-            {showAddChapter && formData.subject && (
+            {showAddChapter && (
               <div className="mb-2 p-3 bg-violet-50 border border-violet-200 rounded-xl space-y-2">
+                {!formData.subject && (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Select or add a subject first before adding a chapter
+                  </p>
+                )}
                 <input
                   type="text"
                   value={newChapterTitle}
                   onChange={(e) => setNewChapterTitle(e.target.value)}
                   placeholder="Chapter title"
-                  className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm focus:outline-none focus:border-violet-500"
+                  disabled={!formData.subject}
+                  className="w-full px-3 py-2 border border-violet-200 rounded-lg text-sm focus:outline-none focus:border-violet-500 disabled:opacity-50"
                 />
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={handleAddChapter}
-                    disabled={addingChapter || !newChapterTitle.trim()}
+                    disabled={addingChapter || !newChapterTitle.trim() || !formData.subject}
                     className="px-3 py-1.5 bg-violet-600 text-white text-xs font-semibold rounded-lg hover:bg-violet-700 disabled:opacity-50"
                   >
                     {addingChapter ? "Adding..." : "Add Chapter"}
@@ -486,34 +562,144 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
             )}
             <select
               value={formData.chapter}
-              onChange={(e) => setFormData({ ...formData, chapter: e.target.value })}
+              onChange={(e) => { setFormData({ ...formData, chapter: e.target.value }); clearFieldError("chapter"); }}
               required
               disabled={!formData.subject}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:opacity-50"
+              className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
+                fieldErrors.chapter
+                  ? "border-red-300 focus:border-red-500 focus:ring-red-500/20"
+                  : "border-slate-200 focus:border-violet-500 focus:ring-violet-500/20"
+              }`}
             >
               <option value="">Select chapter</option>
               {filteredChapters.map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
               ))}
             </select>
+            {fieldErrors.chapter && (
+              <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> {fieldErrors.chapter}
+              </p>
+            )}
           </div>
         </div>
 
+        {/* Upload Target: For All or For Specific College */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">
-            College (optional)
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Upload For
           </label>
-          <select
-            value={formData.college}
-            onChange={(e) => setFormData({ ...formData, college: e.target.value })}
-            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
-          >
-            <option value="">Not assigned to any college</option>
-            {colleges.map((c) => (
-              <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
-            ))}
-          </select>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => { setUploadTarget("all"); setFormData({ ...formData, college: "" }); }}
+              className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium border-2 transition-all ${
+                uploadTarget === "all"
+                  ? "border-violet-500 bg-violet-50 text-violet-700"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+              }`}
+            >
+              For Everyone
+            </button>
+            <button
+              type="button"
+              onClick={() => setUploadTarget("college")}
+              disabled={assignedColleges.length === 0}
+              className={`flex-1 px-4 py-2.5 rounded-xl text-sm font-medium border-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                uploadTarget === "college"
+                  ? "border-violet-500 bg-violet-50 text-violet-700"
+                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+              }`}
+            >
+              For Specific College
+            </button>
+          </div>
+          {assignedColleges.length === 0 && (
+            <p className="mt-1.5 text-xs text-slate-400">
+              Admin needs to assign you to a college before you can upload college-specific materials.
+            </p>
+          )}
         </div>
+
+        {/* College-specific fields */}
+        {uploadTarget === "college" && (
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                College *
+              </label>
+              <select
+                value={formData.college}
+                onChange={(e) => setFormData({ ...formData, college: e.target.value })}
+                required={uploadTarget === "college"}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+              >
+                <option value="">Select college</option>
+                {colleges
+                  .filter((c) => assignedColleges.includes(c.id))
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.code})</option>
+                  ))}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Branch
+                </label>
+                <select
+                  value={formData.branch}
+                  onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                >
+                  <option value="">All Branches</option>
+                  <option value="CSE">CSE</option>
+                  <option value="ECE">ECE</option>
+                  <option value="EEE">EEE</option>
+                  <option value="MECH">Mechanical</option>
+                  <option value="CIVIL">Civil</option>
+                  <option value="IT">IT</option>
+                  <option value="AIDS">AI & DS</option>
+                  <option value="AIML">AI & ML</option>
+                  <option value="CSD">CS & Design</option>
+                  <option value="CSM">CSM</option>
+                  <option value="OTHER">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                  Semester
+                </label>
+                <select
+                  value={formData.semester}
+                  onChange={(e) => setFormData({ ...formData, semester: e.target.value })}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+                >
+                  <option value="">All Semesters</option>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                    <option key={sem} value={sem}>Semester {sem}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {formData.materialCategory === "question_paper" && (
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Batch (e.g., 2020-2024)
+            </label>
+            <input
+              type="text"
+              value={formData.batch}
+              onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
+              placeholder="e.g., 2020-2024"
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
+            />
+          </div>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-1.5">
@@ -567,11 +753,10 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
                   const f = e.target.files?.[0];
                   if (f) {
                     if (f.size > 5 * 1024 * 1024) {
-                      setError("Thumbnail must be under 5MB");
+                      toast.error("Thumbnail must be under 5MB");
                       return;
                     }
                     setThumbnail(f);
-                    setError("");
                   }
                 }}
                 accept=".jpg,.jpeg,.png,.webp"
@@ -583,7 +768,7 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
       </div>
 
       {/* File/URL attachments */}
-      <div className="bg-white rounded-2xl border border-slate-100 p-6">
+      <div id="field-attachments" className="bg-white rounded-2xl border border-slate-100 p-6">
         <div className="flex items-center justify-between mb-4">
           <label className="block text-sm font-semibold text-slate-900">
             Attachments ({attachments.length})
@@ -596,6 +781,11 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
             <Plus className="w-3.5 h-3.5" /> Add more
           </button>
         </div>
+        {fieldErrors.attachments && (
+          <p className="mb-3 text-xs text-red-600 flex items-center gap-1">
+            <AlertCircle className="w-3 h-3" /> {fieldErrors.attachments}
+          </p>
+        )}
 
         <div className="space-y-4">
           {attachments.map((attachment, index) => (
@@ -672,7 +862,7 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
                       <input
                         type="file"
                         onChange={(e) => handleFileChange(attachment.id, e)}
-                        accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.mp4,.webm"
+                        accept={attachment.type === "pdf" || attachment.type === "assignment" ? ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt" : attachment.type === "image" ? ".jpg,.jpeg,.png,.webp,.gif" : ".pdf,.jpg,.jpeg,.png,.webp,.gif,.mp4,.webm"}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
                     </>

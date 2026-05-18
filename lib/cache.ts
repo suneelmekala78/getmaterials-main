@@ -34,7 +34,7 @@ export async function getCached<T>(
   const data = await fetcher();
 
   try {
-    await redis.set(key, JSON.stringify(data), { ex: ttlSeconds });
+    await redis.set(key, data, { ex: ttlSeconds });
   } catch {
     // Caching failed silently
   }
@@ -46,10 +46,18 @@ export async function invalidateCache(pattern: string): Promise<void> {
   if (!redis) return;
 
   try {
-    const keys = await redis.keys(pattern);
-    if (keys.length > 0) {
-      await redis.del(...keys);
-    }
+    let cursor = 0;
+    do {
+      const result = await redis.scan(cursor, {
+        match: pattern,
+        count: 100,
+      });
+      cursor = Number(result[0]);
+      const keys = result[1] as string[];
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } while (cursor !== 0);
   } catch {
     // Invalidation failed silently
   }

@@ -9,10 +9,16 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Browse Materials - GetMaterials",
-  description: "Browse all study materials",
+export const metadata: Metadata = {
+  title: "Browse Study Materials - GetMaterials",
+  description: "Browse free study materials, notes, question papers, videos, and resources uploaded by verified teachers. Download PDFs, watch video lectures, and more.",
+  openGraph: {
+    title: "Browse Study Materials - GetMaterials",
+    description: "Browse free study materials, notes, question papers, videos, and resources uploaded by verified teachers.",
+    type: "website",
+  },
 };
 
 const typeConfig: Record<string, { icon: any; label: string; color: string }> = {
@@ -41,7 +47,7 @@ export default async function MaterialsPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-slate-900">Browse Materials</h1>
         <p className="text-slate-500 mt-1">
-          Explore study materials uploaded by teachers
+          Explore study materials uploaded by teachers and students
         </p>
       </div>
 
@@ -84,7 +90,7 @@ export default async function MaterialsPage() {
                     className="w-full aspect-video object-cover"
                   />
                 ) : (
-                  <div className={`aspect-video bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center`}>
+                  <div className="aspect-video bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
                     <Icon className={`w-10 h-10 ${type.color.split(" ")[0]} opacity-50`} />
                   </div>
                 )}

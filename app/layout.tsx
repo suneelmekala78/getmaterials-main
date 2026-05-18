@@ -11,10 +11,23 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "GetMaterials - Study Materials Platform",
-  description: "Access free study materials, notes, videos, and resources uploaded by verified teachers.",
+  title: {
+    default: "GetMaterials - Free Study Materials Platform",
+    template: "%s | GetMaterials",
+  },
+  description: "Access free study materials, notes, question papers, videos, and resources uploaded by verified teachers. Download PDFs, watch video lectures, and excel in your exams.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://getmaterials.com"),
   icons: {
     icon: "/getmaterials.jpeg",
+  },
+  openGraph: {
+    siteName: "GetMaterials",
+    type: "website",
+    images: ["/getmaterials.jpeg"],
+  },
+  twitter: {
+    card: "summary",
+    images: ["/getmaterials.jpeg"],
   },
 };
 

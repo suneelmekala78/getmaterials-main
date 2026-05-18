@@ -1,5 +1,5 @@
 import { UploadForm } from "@/components/teacher/UploadForm";
-import { connectDB, Subject, Chapter, College } from "@getmaterials/database";
+import { connectDB, Subject, Chapter, College, User } from "@getmaterials/database";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
@@ -16,10 +16,11 @@ export default async function StudentUploadPage() {
 
   await connectDB();
 
-  const [subjects, chapters, colleges] = await Promise.all([
+  const [subjects, chapters, colleges, currentUser] = await Promise.all([
     Subject.find({}).sort({ name: 1 }).lean(),
     Chapter.find({}).sort({ order: 1 }).lean(),
     College.find({ status: "active" }).sort({ name: 1 }).lean(),
+    User.findById(user.id).select("assignedColleges").lean(),
   ]);
 
   const subjectsData = subjects.map((s: any) => ({
@@ -39,6 +40,11 @@ export default async function StudentUploadPage() {
     name: c.name,
     code: c.code,
   }));
+
+  // Get the list of college IDs this user can upload to
+  const assignedCollegeIds = ((currentUser as any)?.assignedColleges || []).map(
+    (id: any) => id.toString()
+  );
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -61,7 +67,7 @@ export default async function StudentUploadPage() {
         </div>
       )}
 
-      <UploadForm subjects={subjectsData} chapters={chaptersData} colleges={collegesData} />
+      <UploadForm subjects={subjectsData} chapters={chaptersData} colleges={collegesData} assignedColleges={assignedCollegeIds} />
     </div>
   );
 }

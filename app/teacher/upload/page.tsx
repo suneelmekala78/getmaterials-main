@@ -1,17 +1,24 @@
 import { UploadForm } from "@/components/teacher/UploadForm";
-import { connectDB, Subject, Chapter, College } from "@getmaterials/database";
+import { connectDB, Subject, Chapter, College, User } from "@getmaterials/database";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Upload Material - GetMaterials",
 };
 
 export default async function UploadPage() {
+  const session = await auth();
+  const user = session?.user as any;
+  if (!user) redirect("/login");
+
   await connectDB();
 
-  const [subjects, chapters, colleges] = await Promise.all([
+  const [subjects, chapters, colleges, currentUser] = await Promise.all([
     Subject.find({}).sort({ name: 1 }).lean(),
     Chapter.find({}).sort({ order: 1 }).lean(),
     College.find({ status: "active" }).sort({ name: 1 }).lean(),
+    User.findById(user.id).select("assignedColleges").lean(),
   ]);
 
   // Serialize for client
@@ -33,6 +40,10 @@ export default async function UploadPage() {
     code: c.code,
   }));
 
+  const assignedCollegeIds = ((currentUser as any)?.assignedColleges || []).map(
+    (id: any) => id.toString()
+  );
+
   return (
     <div className="max-w-3xl mx-auto">
       <div className="mb-8">
@@ -42,7 +53,7 @@ export default async function UploadPage() {
         </p>
       </div>
 
-      <UploadForm subjects={subjectsData} chapters={chaptersData} colleges={collegesData} />
+      <UploadForm subjects={subjectsData} chapters={chaptersData} colleges={collegesData} assignedColleges={assignedCollegeIds} />
     </div>
   );
 }

@@ -1,9 +1,16 @@
 import { connectDB, Subject } from "@getmaterials/database";
 import { Search, BookOpen, Beaker, Code, Calculator, Palette, Scale, Lightbulb } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Subjects - GetMaterials",
+  description: "Browse all subjects and find free study materials, notes, question papers, and video lectures.",
+  openGraph: {
+    title: "Subjects - GetMaterials",
+    description: "Browse all subjects and find free study materials, notes, question papers, and video lectures.",
+    type: "website",
+  },
 };
 
 const categoryIcons: Record<string, any> = {

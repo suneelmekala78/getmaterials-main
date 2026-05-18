@@ -190,6 +190,17 @@ export function MaterialReviews({ materialId, currentUserId }: { materialId: str
       </div>
 
       {/* Write review form */}
+      {!currentUserId && (
+        <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 text-center">
+          <p className="text-sm text-slate-600 mb-3">Want to share your thoughts on this material?</p>
+          <a
+            href={`/login?callbackUrl=${encodeURIComponent(`/materials`)}`}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-colors"
+          >
+            Login to Write a Review
+          </a>
+        </div>
+      )}
       {currentUserId && (
         <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
           <h3 className="text-sm font-semibold text-slate-700 mb-3">

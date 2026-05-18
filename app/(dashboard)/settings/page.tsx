@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
-import { User, Lock, Bell, LogOut, Save } from "lucide-react";
+import { User, Lock, Bell, LogOut, Save, GraduationCap, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import toast from "react-hot-toast";
 
@@ -25,6 +25,62 @@ export default function SettingsPage() {
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
+
+  // Role change request state
+  const [roleReason, setRoleReason] = useState("");
+  const [roleQualifications, setRoleQualifications] = useState("");
+  const [roleSubmitting, setRoleSubmitting] = useState(false);
+  const [roleRequest, setRoleRequest] = useState<{ status: string; createdAt: string } | null>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.role === "student") {
+      fetch("/api/role-change-requests")
+        .then((res) => res.json())
+        .then((data) => {
+          const pending = data.requests?.find((r: any) => r.status === "pending");
+          const latest = data.requests?.[0];
+          setRoleRequest(pending || latest || null);
+        })
+        .catch(() => {})
+        .finally(() => setRoleLoading(false));
+    } else {
+      setRoleLoading(false);
+    }
+  }, [user?.role]);
+
+  const handleRoleRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!roleReason.trim()) {
+      toast.error("Please provide a reason");
+      return;
+    }
+    setRoleSubmitting(true);
+    try {
+      const res = await fetch("/api/role-change-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toRole: "teacher",
+          reason: roleReason.trim(),
+          qualifications: roleQualifications.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Request submitted! We'll review it soon.");
+        setRoleRequest({ status: "pending", createdAt: new Date().toISOString() });
+        setRoleReason("");
+        setRoleQualifications("");
+      } else {
+        toast.error(data.error || "Failed to submit request");
+      }
+    } catch {
+      toast.error("Something went wrong");
+    } finally {
+      setRoleSubmitting(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -237,6 +293,126 @@ export default function SettingsPage() {
           ))}
         </div>
       </div>
+
+      {/* Become a Teacher — only for students */}
+      {user?.role === "student" && (
+        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
+            <GraduationCap className="w-5 h-5 text-slate-400" />
+            <h2 className="text-base font-semibold text-slate-900">Become a Teacher</h2>
+          </div>
+          <div className="p-6">
+            {roleLoading ? (
+              <p className="text-sm text-slate-500">Loading...</p>
+            ) : roleRequest?.status === "pending" ? (
+              <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                <Clock className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800">Request Pending</p>
+                  <p className="text-xs text-amber-600 mt-1">
+                    Your request to become a teacher is under review. We&apos;ll notify you once it&apos;s processed.
+                  </p>
+                  <p className="text-xs text-amber-500 mt-2">
+                    Submitted {new Date(roleRequest.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            ) : roleRequest?.status === "approved" ? (
+              <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-green-800">Request Approved!</p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Your teacher request was approved. Please log out and log back in to access teacher features.
+                  </p>
+                </div>
+              </div>
+            ) : roleRequest?.status === "rejected" ? (
+              <>
+                <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-xl mb-4">
+                  <XCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800">Previous Request Rejected</p>
+                    <p className="text-xs text-red-600 mt-1">
+                      Your previous request was not approved. You can submit a new one with more details.
+                    </p>
+                  </div>
+                </div>
+                <form onSubmit={handleRoleRequest} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Why do you want to become a teacher?</label>
+                    <textarea
+                      value={roleReason}
+                      onChange={(e) => setRoleReason(e.target.value)}
+                      rows={3}
+                      required
+                      maxLength={1000}
+                      placeholder="Explain your teaching experience, subjects you'd like to teach..."
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Qualifications (optional)</label>
+                    <input
+                      type="text"
+                      value={roleQualifications}
+                      onChange={(e) => setRoleQualifications(e.target.value)}
+                      maxLength={500}
+                      placeholder="e.g., B.Tech in CSE, 2 years teaching experience"
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={roleSubmitting}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                  >
+                    <GraduationCap className="w-4 h-4" />
+                    {roleSubmitting ? "Submitting..." : "Submit Request"}
+                  </button>
+                </form>
+              </>
+            ) : (
+              <form onSubmit={handleRoleRequest} className="space-y-4">
+                <p className="text-sm text-slate-600 mb-4">
+                  Want to contribute study materials? Apply to become a teacher and upload notes, PDFs, videos, and more for students.
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Why do you want to become a teacher?</label>
+                  <textarea
+                    value={roleReason}
+                    onChange={(e) => setRoleReason(e.target.value)}
+                    rows={3}
+                    required
+                    maxLength={1000}
+                    placeholder="Explain your teaching experience, subjects you'd like to teach..."
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Qualifications (optional)</label>
+                  <input
+                    type="text"
+                    value={roleQualifications}
+                    onChange={(e) => setRoleQualifications(e.target.value)}
+                    maxLength={500}
+                    placeholder="e.g., B.Tech in CSE, 2 years teaching experience"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={roleSubmitting}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-colors"
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  {roleSubmitting ? "Submitting..." : "Submit Request"}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Sign out */}
       <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">

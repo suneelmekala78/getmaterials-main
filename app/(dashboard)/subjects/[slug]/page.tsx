@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { connectDB, Subject, Chapter, Material } from "@getmaterials/database";
 import { FileText, Video, Link2, Image, ClipboardCheck, Download, Eye, Star } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -22,6 +23,37 @@ const typeColors: Record<string, string> = {
   image: "text-purple-500 bg-purple-50",
   assignment: "text-amber-500 bg-amber-50",
 };
+
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://getmaterials.com";
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  await connectDB();
+  const subject = await Subject.findOne({ slug, isActive: true }).select("name description").lean<any>();
+  if (!subject) return { title: "Subject Not Found" };
+
+  const description = subject.description || `Browse study materials for ${subject.name} on GetMaterials`;
+
+  return {
+    title: `${subject.name} - Study Materials | GetMaterials`,
+    description,
+    openGraph: {
+      title: `${subject.name} - Study Materials`,
+      description,
+      url: `${BASE_URL}/subjects/${slug}`,
+      siteName: "GetMaterials",
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: `${subject.name} - Study Materials`,
+      description,
+    },
+    alternates: {
+      canonical: `${BASE_URL}/subjects/${slug}`,
+    },
+  };
+}
 
 export default async function SubjectDetailPage({ params }: Props) {
   const { slug } = await params;
@@ -50,6 +82,13 @@ export default async function SubjectDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2 text-sm">
+        <Link href="/subjects" className="text-slate-400 hover:text-violet-600 transition-colors">Subjects</Link>
+        <span className="text-slate-300">/</span>
+        <span className="text-slate-700 font-medium">{(subject as any).name}</span>
+      </div>
+
       {/* Subject header */}
       <div className="bg-white rounded-2xl border border-slate-100 p-8">
         <div className="flex items-start justify-between">

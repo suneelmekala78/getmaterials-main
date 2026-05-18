@@ -15,8 +15,8 @@ export async function GET(req: NextRequest) {
     const subject = searchParams.get("subject");
     const chapter = searchParams.get("chapter");
     const type = searchParams.get("type");
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "12");
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") || "12")));
 
     const query: any = { status: "published", isPublic: true };
     if (subject) query.subject = subject;
@@ -92,14 +92,15 @@ export async function POST(req: NextRequest) {
       slug,
       status,
       uploadedBy: user.id,
-      attachments: body.attachments || [],
     });
 
-    // Update counts
-    await Promise.all([
-      Subject.findByIdAndUpdate(parsed.data.subject, { $inc: { materialsCount: 1 } }),
-      Chapter.findByIdAndUpdate(parsed.data.chapter, { $inc: { materialsCount: 1 } }),
-    ]);
+    // Only increment counts for published materials (not under_review)
+    if (status === "published") {
+      await Promise.all([
+        Subject.findByIdAndUpdate(parsed.data.subject, { $inc: { materialsCount: 1 } }),
+        Chapter.findByIdAndUpdate(parsed.data.chapter, { $inc: { materialsCount: 1 } }),
+      ]);
+    }
 
     // Index for search (non-blocking)
     const populatedMaterial: any = await Material.findById(material._id)

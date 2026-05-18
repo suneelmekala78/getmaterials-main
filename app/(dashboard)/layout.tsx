@@ -1,7 +1,4 @@
-import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { AppSidebar } from "@/components/layout/AppSidebar";
-import { AppTopbar } from "@/components/layout/AppTopbar";
 import { MobileShell } from "@/components/layout/MobileShell";
 
 export default async function DashboardLayout({
@@ -10,10 +7,19 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  if (!session?.user) redirect("/login");
 
+  // If user is logged in, show full shell with sidebar
+  if (session?.user) {
+    return (
+      <MobileShell user={session.user as any}>
+        {children}
+      </MobileShell>
+    );
+  }
+
+  // Guest users (browsing materials/subjects without login)
   return (
-    <MobileShell user={session.user as any}>
+    <MobileShell user={{ name: "Guest", role: "student" }}>
       {children}
     </MobileShell>
   );

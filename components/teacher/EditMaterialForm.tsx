@@ -53,8 +53,6 @@ interface MaterialData {
   chapter: string;
   college: string;
   tags: string[];
-  fileUrl: string;
-  externalUrl: string;
   thumbnailUrl: string;
   attachments: AttachmentData[];
 }
@@ -100,22 +98,17 @@ export function EditMaterialForm({ material, subjects, chapters, colleges }: Edi
   });
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [attachments, setAttachments] = useState<AttachmentItem[]>(() => {
-    // Always include the primary file as the first attachment
-    const primary: AttachmentItem = {
-      id: crypto.randomUUID(),
-      type: (material.type as AttachmentItem["type"]) || "pdf",
-      fileUrl: material.fileUrl || undefined,
-      externalUrl: material.externalUrl || undefined,
-      fileName: material.fileUrl ? material.title : undefined,
-    };
-    const extras: AttachmentItem[] = material.attachments.map((a) => ({
-      id: crypto.randomUUID(),
-      type: a.type as AttachmentItem["type"],
-      fileUrl: a.fileUrl || undefined,
-      externalUrl: a.externalUrl || undefined,
-      fileName: a.fileName || undefined,
-    }));
-    return [primary, ...extras];
+    if (material.attachments && material.attachments.length > 0) {
+      return material.attachments.map((a) => ({
+        id: crypto.randomUUID(),
+        type: a.type as AttachmentItem["type"],
+        fileUrl: a.fileUrl || undefined,
+        externalUrl: a.externalUrl || undefined,
+        fileName: a.fileName || undefined,
+      }));
+    }
+    // Fallback for legacy materials with no attachments array
+    return [{ id: crypto.randomUUID(), type: (material.type as AttachmentItem["type"]) || "pdf" }];
   });
 
   const filteredChapters = chapters.filter((c) => c.subject === formData.subject);
@@ -210,10 +203,8 @@ export function EditMaterialForm({ material, subjects, chapters, colleges }: Edi
           subject: formData.subject,
           chapter: formData.chapter,
           college: formData.college || undefined,
-          externalUrl: primary?.externalUrl || undefined,
-          fileUrl: primary?.fileUrl || undefined,
           thumbnailUrl: thumbnailUrl || undefined,
-          attachments: uploadedAttachments.slice(1),
+          attachments: uploadedAttachments,
           tags: formData.tags.split(",").map((t) => t.trim()).filter(Boolean),
         }),
       });

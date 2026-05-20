@@ -41,10 +41,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
-        <AuthProvider>{children}</AuthProvider>
-        <Suspense fallback={null}>
-          <ReferralTracker />
-        </Suspense>
+        <AuthProvider>
+          {children}
+          <Suspense fallback={null}>
+            <ReferralTracker />
+          </Suspense>
+        </AuthProvider>
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
       </body>
     </html>

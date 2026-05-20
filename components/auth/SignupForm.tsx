@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { getReferralData, clearReferralData } from "@/components/providers/ReferralTracker";
 
 export function SignupForm() {
   const router = useRouter();
@@ -23,16 +24,18 @@ export function SignupForm() {
     setLoading(true);
 
     try {
+      const referralData = getReferralData();
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role, referral: referralData }),
       });
 
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Signup failed");
       } else {
+        clearReferralData();
         setStep("verify");
         setSuccess("Verification code sent to your email!");
       }

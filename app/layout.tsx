@@ -3,6 +3,8 @@ import "./globals.css";
 import { Poppins } from "next/font/google";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toaster } from "react-hot-toast";
+import { Suspense } from "react";
+import { ReferralTracker } from "@/components/providers/ReferralTracker";
 
 const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700", "800"],
@@ -40,6 +42,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
         <AuthProvider>{children}</AuthProvider>
+        <Suspense fallback={null}>
+          <ReferralTracker />
+        </Suspense>
         <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
       </body>
     </html>

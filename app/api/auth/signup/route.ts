@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { connectDB, User, Otp } from "@getmaterials/database";
+import { connectDB, User, Otp, Referral } from "@getmaterials/database";
 import { signupSchema } from "@getmaterials/shared";
 import { sendEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
@@ -50,6 +50,20 @@ export async function POST(req: NextRequest) {
       role,
       status: role === "teacher" ? "pending" : "active",
     });
+
+    // Save referral tracking data
+    const referral = body.referral;
+    if (referral && (referral.source || referral.referrer || referral.campaign)) {
+      await Referral.create({
+        user: user._id,
+        source: (referral.source || "direct").slice(0, 100),
+        medium: (referral.medium || "").slice(0, 100),
+        campaign: (referral.campaign || "").slice(0, 100),
+        referrer: (referral.referrer || "").slice(0, 100),
+        referralCode: (referral.referralCode || "").slice(0, 50),
+        landingPage: (referral.landingPage || "/").slice(0, 500),
+      }).catch(() => {}); // Don't fail signup if referral tracking fails
+    }
 
     // Generate 6-digit OTP for email verification
     const code = crypto.randomInt(100000, 999999).toString();

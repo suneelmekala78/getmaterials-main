@@ -208,7 +208,9 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
     const errors: Record<string, string> = {};
     if (!formData.title.trim()) errors.title = "Title is required";
     if (!formData.subject) errors.subject = "Please select a subject";
-    if (!formData.chapter) errors.chapter = "Please select a chapter";
+    if (!formData.chapter && formData.materialCategory !== "question_paper" && formData.materialCategory !== "syllabus") {
+      errors.chapter = "Please select a chapter";
+    }
 
     const hasFileOrUrl = attachments.some((a) =>
       (a.type === "video" || a.type === "link") ? !!a.externalUrl : !!a.file
@@ -232,21 +234,33 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
       // Upload thumbnail if provided
       let thumbnailUrl = "";
       if (thumbnail) {
-        const thumbData = new FormData();
-        thumbData.append("file", thumbnail);
-        thumbData.append("folder", "thumbnails");
-
-        const thumbRes = await fetch("/api/upload", {
+        const presignRes = await fetch("/api/upload/presign", {
           method: "POST",
-          body: thumbData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileName: thumbnail.name,
+            fileType: thumbnail.type,
+            fileSize: thumbnail.size,
+            folder: "thumbnails",
+          }),
         });
 
-        if (!thumbRes.ok) {
-          const data = await thumbRes.json();
-          throw new Error(data.error || "Failed to upload thumbnail");
+        if (!presignRes.ok) {
+          const data = await presignRes.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to get upload URL for thumbnail");
         }
 
-        const { fileUrl } = await thumbRes.json();
+        const { presignedUrl, fileUrl } = await presignRes.json();
+        const uploadRes = await fetch(presignedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": thumbnail.type },
+          body: thumbnail,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error("Failed to upload thumbnail");
+        }
+
         thumbnailUrl = fileUrl;
       }
 
@@ -266,21 +280,34 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
           if (!attachment.file) {
             throw new Error("Please select a file for all file attachments");
           }
-          const uploadData = new FormData();
-          uploadData.append("file", attachment.file);
-          uploadData.append("folder", "materials");
 
-          const uploadRes = await fetch("/api/upload", {
+          const presignRes = await fetch("/api/upload/presign", {
             method: "POST",
-            body: uploadData,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileName: attachment.file.name,
+              fileType: attachment.file.type,
+              fileSize: attachment.file.size,
+              folder: "materials",
+            }),
+          });
+
+          if (!presignRes.ok) {
+            const data = await presignRes.json().catch(() => ({}));
+            throw new Error(data.error || "Failed to get upload URL");
+          }
+
+          const { presignedUrl, fileUrl } = await presignRes.json();
+          const uploadRes = await fetch(presignedUrl, {
+            method: "PUT",
+            headers: { "Content-Type": attachment.file.type },
+            body: attachment.file,
           });
 
           if (!uploadRes.ok) {
-            const data = await uploadRes.json();
-            throw new Error(data.error || "Failed to upload file");
+            throw new Error("Failed to upload file");
           }
 
-          const { fileUrl } = await uploadRes.json();
           uploadedAttachments.push({
             type: attachment.type,
             fileUrl,
@@ -307,7 +334,7 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
           section: formData.section || undefined,
           semester: formData.semester ? parseInt(formData.semester) : undefined,
           subject: formData.subject,
-          chapter: formData.chapter,
+          chapter: formData.chapter || undefined,
           college: uploadTarget === "college" ? formData.college || undefined : undefined,
           batch: formData.batch || undefined,
           thumbnailUrl: thumbnailUrl || undefined,
@@ -516,7 +543,7 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
           <div id="field-chapter">
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-sm font-medium text-slate-700">
-                Chapter *
+                Chapter {formData.materialCategory !== "question_paper" && formData.materialCategory !== "syllabus" ? "*" : "(Optional)"}
               </label>
               {formData.subject ? (
                 <button
@@ -567,7 +594,7 @@ export function UploadForm({ subjects: initialSubjects, chapters: initialChapter
             <select
               value={formData.chapter}
               onChange={(e) => { setFormData({ ...formData, chapter: e.target.value }); clearFieldError("chapter"); }}
-              required
+              required={formData.materialCategory !== "question_paper" && formData.materialCategory !== "syllabus"}
               disabled={!formData.subject}
               className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:ring-2 transition-all disabled:opacity-50 ${
                 fieldErrors.chapter

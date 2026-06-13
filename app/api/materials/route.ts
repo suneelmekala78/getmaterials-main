@@ -96,10 +96,13 @@ export async function POST(req: NextRequest) {
 
     // Only increment counts for published materials (not under_review)
     if (status === "published") {
-      await Promise.all([
+      const updates: Promise<any>[] = [
         Subject.findByIdAndUpdate(parsed.data.subject, { $inc: { materialsCount: 1 } }),
-        Chapter.findByIdAndUpdate(parsed.data.chapter, { $inc: { materialsCount: 1 } }),
-      ]);
+      ];
+      if (parsed.data.chapter) {
+        updates.push(Chapter.findByIdAndUpdate(parsed.data.chapter, { $inc: { materialsCount: 1 } }));
+      }
+      await Promise.all(updates);
     }
 
     // Index for search (non-blocking)

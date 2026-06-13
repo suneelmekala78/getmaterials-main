@@ -147,12 +147,27 @@ export function EditMaterialForm({ material, subjects, chapters, colleges }: Edi
       // Upload new thumbnail if provided
       let thumbnailUrl = material.thumbnailUrl;
       if (thumbnail) {
-        const thumbData = new FormData();
-        thumbData.append("file", thumbnail);
-        thumbData.append("folder", "thumbnails");
-        const thumbRes = await fetch("/api/upload", { method: "POST", body: thumbData });
-        if (!thumbRes.ok) throw new Error("Failed to upload thumbnail");
-        const { fileUrl } = await thumbRes.json();
+        const presignRes = await fetch("/api/upload/presign", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileName: thumbnail.name,
+            fileType: thumbnail.type,
+            fileSize: thumbnail.size,
+            folder: "thumbnails",
+          }),
+        });
+        if (!presignRes.ok) {
+          const data = await presignRes.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to get upload URL for thumbnail");
+        }
+        const { presignedUrl, fileUrl } = await presignRes.json();
+        const uploadRes = await fetch(presignedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": thumbnail.type },
+          body: thumbnail,
+        });
+        if (!uploadRes.ok) throw new Error("Failed to upload thumbnail");
         thumbnailUrl = fileUrl;
       }
 
@@ -166,12 +181,27 @@ export function EditMaterialForm({ material, subjects, chapters, colleges }: Edi
           });
         } else if (attachment.file) {
           // New file uploaded
-          const uploadData = new FormData();
-          uploadData.append("file", attachment.file);
-          uploadData.append("folder", "materials");
-          const uploadRes = await fetch("/api/upload", { method: "POST", body: uploadData });
+          const presignRes = await fetch("/api/upload/presign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileName: attachment.file.name,
+              fileType: attachment.file.type,
+              fileSize: attachment.file.size,
+              folder: "materials",
+            }),
+          });
+          if (!presignRes.ok) {
+            const data = await presignRes.json().catch(() => ({}));
+            throw new Error(data.error || "Failed to get upload URL");
+          }
+          const { presignedUrl, fileUrl } = await presignRes.json();
+          const uploadRes = await fetch(presignedUrl, {
+            method: "PUT",
+            headers: { "Content-Type": attachment.file.type },
+            body: attachment.file,
+          });
           if (!uploadRes.ok) throw new Error("Failed to upload file");
-          const { fileUrl } = await uploadRes.json();
           uploadedAttachments.push({
             type: attachment.type,
             fileUrl,

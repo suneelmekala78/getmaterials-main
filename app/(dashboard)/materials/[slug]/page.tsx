@@ -22,6 +22,7 @@ import {
 import Link from "next/link";
 import { MaterialReviews } from "@/components/MaterialReviews";
 import DownloadButton from "@/components/DownloadButton";
+import { ShareButton } from "@/components/ShareButton";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -82,7 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ogImage = material.thumbnailUrl || `${BASE_URL}/getmaterials.jpeg`;
 
   return {
-    title: `${material.title} - GetMaterials`,
+    title: { absolute: `${material.title} - GetMaterials` },
     description: plainDescription,
     keywords: material.tags?.length ? material.tags.join(", ") : undefined,
     openGraph: {
@@ -96,6 +97,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           width: 1200,
           height: 630,
           alt: material.title,
+          type: "image/jpeg",
         },
       ],
       type: "article",
@@ -337,6 +339,11 @@ export default async function MaterialViewPage({ params }: Props) {
                 <Download className="w-4 h-4" /> Download Assignment
               </a>
             )}
+            <ShareButton
+              title={material.title}
+              description={plainDescription}
+              url={`${BASE_URL}/materials/${slug}`}
+            />
           </div>
         </div>
 

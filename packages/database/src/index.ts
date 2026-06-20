@@ -27,3 +27,4 @@ export { Poll, type IPoll } from "./models/poll";
 export { Review, type IReview } from "./models/review";
 export { RoleChangeRequest, type IRoleChangeRequest } from "./models/role-change-request";
 export { Referral, type IReferral } from "./models/referral";
+export { RefreshToken, type IRefreshToken } from "./models/refresh-token";

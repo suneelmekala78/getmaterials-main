@@ -39,3 +39,14 @@ button, a {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Marketing page styles */
+.section { padding: 80px 0; }
+.section-sm { padding: 60px 0; }
+
+.bg-gradient-soft {
+  background: linear-gradient(135deg, rgba(177,0,255,0.03) 0%, rgba(177,0,255,0.08) 100%);
+}
+.bg-gradient-purple {
+  background: linear-gradient(135deg, #b100ff, #8b00cc);
+}

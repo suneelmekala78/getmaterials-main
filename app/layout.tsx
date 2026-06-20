@@ -14,13 +14,14 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: {
-    default: "GetMaterials - Free Study Materials Platform",
+    default: "GetMaterials — Free Study Materials, Notes & Resources for Students",
     template: "%s | GetMaterials",
   },
   description: "Access free study materials, notes, question papers, videos, and resources uploaded by verified teachers. Download PDFs, watch video lectures, and excel in your exams.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://getmaterials.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://getmaterials.in"),
   icons: {
     icon: "/getmaterials.jpeg",
+    apple: "/getmaterials.jpeg",
   },
   openGraph: {
     siteName: "GetMaterials",
@@ -31,6 +32,34 @@ export const metadata: Metadata = {
     card: "summary",
     images: ["/getmaterials.jpeg"],
   },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || undefined,
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "EducationalOrganization",
+  name: "GetMaterials",
+  url: "https://getmaterials.in",
+  logo: "https://getmaterials.in/getmaterials.jpeg",
+  description:
+    "Free, community-driven platform where verified teachers share study materials and students access them without paying.",
+  founder: {
+    "@type": "Person",
+    name: "Suneel Mekala",
+  },
+  sameAs: [
+    "https://twitter.com/getmaterials_in",
+    "https://instagram.com/getmaterials.in",
+    "https://linkedin.com/company/getmaterials",
+  ],
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "INR",
+    description: "Free study materials for students",
+  },
 };
 
 export default function RootLayout({
@@ -40,6 +69,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className={`${poppins.variable} antialiased`}>
         <AuthProvider>
           {children}

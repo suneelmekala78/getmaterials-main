@@ -38,7 +38,9 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/subjects") ||
     pathname.startsWith("/api/chapters") ||
     pathname.startsWith("/api/search") ||
-    pathname.startsWith("/api/college-assignments")
+    pathname.startsWith("/api/college-assignments") ||
+    pathname.startsWith("/api/contact") ||
+    pathname.startsWith("/api/feedback")
   ) {
     return NextResponse.next();
   }
@@ -77,7 +79,11 @@ export function middleware(req: NextRequest) {
   }
 
   if (isProtectedApi && !sessionCookie) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Allow Bearer token auth (mobile app) — actual validation happens in route handler via getUser()
+    const authHeader = req.headers.get("authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   return NextResponse.next();

@@ -27,8 +27,8 @@ const studentLinks = [
   { href: "/quizzes", icon: ClipboardCheck, label: "Quizzes" },
   { href: "/requests", icon: MessageSquare, label: "Requests" },
   { href: "/polls", icon: BarChart3, label: "Polls" },
-  { href: "/donate", icon: Heart, label: "Donate" },
-  { href: "/donations", icon: History, label: "My Donations" },
+  { href: "/donate", icon: Heart, label: "Buy me a chai ☕" },
+  { href: "/donations", icon: History, label: "My Contributions" },
 ];
 
 const teacherLinks = [
@@ -40,8 +40,8 @@ const teacherLinks = [
   { href: "/teacher/quizzes", icon: ClipboardCheck, label: "Quizzes" },
   { href: "/teacher/polls", icon: BarChart3, label: "Polls" },
   { href: "/teacher/requests", icon: MessageSquare, label: "Requests" },
-  { href: "/donate", icon: Heart, label: "Donate" },
-  { href: "/donations", icon: History, label: "My Donations" },
+  { href: "/donate", icon: Heart, label: "Buy me a chai ☕" },
+  { href: "/donations", icon: History, label: "My Contributions" },
 ];
 
 interface AppSidebarProps {

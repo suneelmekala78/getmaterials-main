@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { FaEnvelope, FaMapMarkerAlt, FaClock } from "react-icons/fa";
+import { FaEnvelope, FaMapMarkerAlt, FaClock, FaPhone, FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import ContactForm from "@/components/marketing/ContactForm";
 
 export const metadata: Metadata = {
@@ -37,7 +38,8 @@ export default function ContactPage() {
             <div className="space-y-5">
               {[
                 { icon: FaEnvelope, title: "Email Us", text: "getmaterials.in@gmail.com", sub: "We reply within 24 hours" },
-                { icon: FaMapMarkerAlt, title: "Location", text: "Hyderabad, India", sub: "Remote-first team" },
+                { icon: FaPhone, title: "Call Us", text: "+91 88862 83701", sub: "Mon – Sat, 9am – 7pm IST" },
+                { icon: FaMapMarkerAlt, title: "Office", text: "Workafella Cyber Crown, Hitech City, Hyderabad", sub: "Telangana, India" },
                 { icon: FaClock, title: "Response Time", text: "Usually within a day", sub: "Mon – Sun, 9am – 9pm IST" },
               ].map((c) => (
                 <div key={c.title} className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -49,6 +51,16 @@ export default function ContactPage() {
                   <p className="text-xs text-gray-400 mt-0.5">{c.sub}</p>
                 </div>
               ))}
+              {/* Social Links */}
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <h3 className="font-bold text-[15px] mb-3">Follow Us</h3>
+                <div className="flex gap-3">
+                  <a href="https://linkedin.com/company/getmaterials" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-[var(--primary)] hover:text-white transition"><FaLinkedinIn className="text-sm" /></a>
+                  <a href="https://instagram.com/getmaterials.in" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-[var(--primary)] hover:text-white transition"><FaInstagram className="text-sm" /></a>
+                  <a href="https://x.com/getmaterials" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-[var(--primary)] hover:text-white transition"><FaXTwitter className="text-sm" /></a>
+                  <a href="https://youtube.com/@GetMaterials" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-[var(--primary)] hover:text-white transition"><FaYoutube className="text-sm" /></a>
+                </div>
+              </div>
             </div>
             {/* Form */}
             <div className="lg:col-span-2">

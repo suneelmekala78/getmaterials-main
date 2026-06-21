@@ -8,10 +8,10 @@ export default function DonateForm() {
     <div className="bg-white rounded-3xl border border-gray-100 p-8 md:p-10 text-center space-y-5">
       <div className="flex items-center justify-center gap-2">
         <FaQrcode className="text-[var(--primary)] text-lg" />
-        <h3 className="text-lg font-bold">Scan to Donate</h3>
+        <h3 className="text-lg font-bold">Buy me a chai ☕</h3>
       </div>
       <div className="bg-gray-50 rounded-2xl p-6 inline-block">
-        <Image src="/qrcode.jpeg" alt="Donation QR Code" width={220} height={220} className="rounded-xl" />
+        <Image src="/qrcode.jpeg" alt="Support QR Code" width={220} height={220} className="rounded-xl" />
       </div>
       <p className="text-sm text-gray-500">Scan with any UPI app (Google Pay, PhonePe, Paytm, etc.)</p>
     </div>

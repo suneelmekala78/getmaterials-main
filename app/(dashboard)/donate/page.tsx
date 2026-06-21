@@ -20,9 +20,9 @@ export default function DonatePage() {
         <div className="w-14 h-14 bg-pink-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Heart className="w-6 h-6 text-pink-500" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Support Free Education</h1>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">Buy me a Chai ☕</h1>
         <p className="text-slate-500">
-          Your donation keeps GetMaterials free for everyone. Every rupee counts.
+          Your support keeps GetMaterials free for everyone. Every rupee counts.
         </p>
       </div>
 
@@ -30,10 +30,10 @@ export default function DonatePage() {
       <div className="bg-white rounded-2xl p-6 sm:p-8 border border-slate-100 text-center space-y-4">
         <div className="flex items-center justify-center gap-2">
           <QrCode className="w-5 h-5 text-violet-500" />
-          <h3 className="text-base font-semibold text-slate-900">Scan to Donate</h3>
+          <h3 className="text-base font-semibold text-slate-900">Buy me a chai ☕</h3>
         </div>
         <div className="bg-slate-50 rounded-2xl p-6 inline-block">
-          <Image src="/qrcode.jpeg" alt="Donation QR Code" width={220} height={220} className="rounded-xl" />
+          <Image src="/qrcode.jpeg" alt="Support QR Code" width={220} height={220} className="rounded-xl" />
         </div>
         <p className="text-sm text-slate-500">Scan with any UPI app (Google Pay, PhonePe, Paytm, etc.)</p>
       </div>
@@ -43,7 +43,7 @@ export default function DonatePage() {
         {[
           { icon: Shield, title: "Transparent", desc: "Monthly spending reports" },
           { icon: Users, title: "Help Students", desc: "Keep education free" },
-          { icon: Sparkles, title: "No Ads", desc: "Donations replace ads" },
+          { icon: Sparkles, title: "No Ads", desc: "Your support replaces ads" },
         ].map((item) => (
           <div key={item.title} className="bg-white rounded-xl p-5 border border-slate-100 text-center">
             <item.icon className="w-6 h-6 text-violet-500 mx-auto mb-2" />

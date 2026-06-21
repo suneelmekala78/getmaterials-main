@@ -46,7 +46,7 @@ const MarketingNavbar = () => {
             href="/support"
             className="bg-[var(--primary)] text-white py-2.5 px-5 rounded-xl font-semibold text-sm shadow-[0_4px_14px_rgba(177,0,255,0.25)] hover:-translate-y-0.5 transition-all"
           >
-            Donate
+            Buy me a chai ☕
           </Link>
         </div>
 
@@ -64,7 +64,7 @@ const MarketingNavbar = () => {
           <Link href="/how-to-use" onClick={() => setOpen(false)} className="py-2 font-semibold text-gray-600 hover:text-[var(--primary)]">How to Use</Link>
           <div className="flex gap-3 mt-2 pt-3 border-t border-gray-100">
             <Link href="/login" className="flex-1 text-center border-2 border-[var(--primary)] text-[var(--primary)] py-2 rounded-xl font-semibold text-sm">Add Notes</Link>
-            <Link href="/support" className="flex-1 text-center bg-[var(--primary)] text-white py-2 rounded-xl font-semibold text-sm">Donate</Link>
+            <Link href="/support" className="flex-1 text-center bg-[var(--primary)] text-white py-2 rounded-xl font-semibold text-sm">Buy me a chai ☕</Link>
           </div>
         </div>
       )}

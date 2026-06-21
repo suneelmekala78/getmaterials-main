@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { Search, Menu, LogOut, User, ChevronDown } from "lucide-react";
+import { Search, Menu, LogOut, User, ChevronDown, Home, Info, Phone, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
@@ -48,6 +48,20 @@ export function AppTopbar({ user, onMenuClick }: AppTopbarProps) {
       </form>
 
       <div className="flex items-center gap-4">
+        <nav className="hidden md:flex items-center gap-1">
+          <Link href="/" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-[var(--primary)] rounded-lg hover:bg-gray-50 transition">
+            <Home className="w-3.5 h-3.5" /> Home
+          </Link>
+          <Link href="/about" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-[var(--primary)] rounded-lg hover:bg-gray-50 transition">
+            <Info className="w-3.5 h-3.5" /> About
+          </Link>
+          <Link href="/contact" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-[var(--primary)] rounded-lg hover:bg-gray-50 transition">
+            <Phone className="w-3.5 h-3.5" /> Contact
+          </Link>
+          <Link href="/how-to-use" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-[var(--primary)] rounded-lg hover:bg-gray-50 transition">
+            <HelpCircle className="w-3.5 h-3.5" /> Help
+          </Link>
+        </nav>
 
         <div className="relative">
           <button

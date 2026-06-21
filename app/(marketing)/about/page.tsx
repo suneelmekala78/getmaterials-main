@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { FaGraduationCap, FaHandsHelping, FaLightbulb, FaGlobe, FaHeart, FaRocket } from "react-icons/fa";
+import { FaGraduationCap, FaHandsHelping, FaLightbulb, FaGlobe, FaHeart, FaRocket, FaEnvelope, FaPhone, FaMapMarkerAlt } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -127,6 +127,32 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
+      <section className="section">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <p className="text-[var(--primary)] font-bold text-sm uppercase tracking-wider mb-2">Reach Out</p>
+            <h2 className="text-3xl font-extrabold mb-4">Get in touch with us</h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-3xl mx-auto mb-12">
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
+              <FaEnvelope className="text-[var(--primary)] text-xl mx-auto mb-2" />
+              <h3 className="font-bold text-sm mb-1">Email</h3>
+              <a href="mailto:getmaterials.in@gmail.com" className="text-sm text-gray-500 hover:text-[var(--primary)]">getmaterials.in@gmail.com</a>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
+              <FaPhone className="text-[var(--primary)] text-xl mx-auto mb-2" />
+              <h3 className="font-bold text-sm mb-1">Phone</h3>
+              <a href="tel:+918886283701" className="text-sm text-gray-500 hover:text-[var(--primary)]">+91 88862 83701</a>
+            </div>
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
+              <FaMapMarkerAlt className="text-[var(--primary)] text-xl mx-auto mb-2" />
+              <h3 className="font-bold text-sm mb-1">Office</h3>
+              <p className="text-sm text-gray-500">Workafella Cyber Crown, Hitech City, Hyderabad</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="section bg-gradient-soft">
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-extrabold mb-4">Want to be part of the mission?</h2>
@@ -138,7 +164,7 @@ export default function AboutPage() {
               Get in Touch
             </Link>
             <Link href="/support" className="border-2 border-gray-200 text-gray-700 font-semibold px-8 py-3.5 rounded-xl text-[15px] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all">
-              Donate to Support
+              Buy me a chai ☕
             </Link>
           </div>
         </div>

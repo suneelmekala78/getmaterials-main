@@ -47,7 +47,7 @@ export default function DonationHistoryPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Donation History</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Contribution History</h1>
         <p className="text-slate-500 mt-1">Track your contributions to free education.</p>
       </div>
 
@@ -55,18 +55,18 @@ export default function DonationHistoryPage() {
       <div className="bg-gradient-to-r from-pink-500 to-violet-600 rounded-2xl p-6 text-white">
         <div className="flex items-center gap-3 mb-2">
           <Heart className="w-5 h-5" />
-          <span className="text-sm font-medium opacity-90">Total Donated</span>
+          <span className="text-sm font-medium opacity-90">Total Contributed</span>
         </div>
         <p className="text-3xl font-bold">₹{total.toLocaleString("en-IN")}</p>
-        <p className="text-sm opacity-80 mt-1">{donations.filter(d => d.status === "completed").length} successful donations</p>
+        <p className="text-sm opacity-80 mt-1">{donations.filter(d => d.status === "completed").length} successful contributions</p>
       </div>
 
       {/* Donation list */}
       {donations.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
           <Heart className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-          <p className="text-sm font-medium text-slate-600">No donations yet</p>
-          <p className="text-xs text-slate-400 mt-1">Your donations will appear here after you contribute.</p>
+          <p className="text-sm font-medium text-slate-600">No contributions yet</p>
+          <p className="text-xs text-slate-400 mt-1">Your contributions will appear here after you support us.</p>
         </div>
       ) : (
         <div className="space-y-3">

@@ -36,7 +36,7 @@ export default function Footer() {
             <ul className="space-y-2.5">
               <li><Link href="/materials" className="text-sm text-gray-500 hover:text-[var(--primary)]">Browse Materials</Link></li>
               <li><Link href="/about" className="text-sm text-gray-500 hover:text-[var(--primary)]">About Us</Link></li>
-              <li><Link href="/support" className="text-sm text-gray-500 hover:text-[var(--primary)]">Support / Donate</Link></li>
+              <li><Link href="/support" className="text-sm text-gray-500 hover:text-[var(--primary)]">Buy me a chai ☕</Link></li>
               <li><Link href="/feedback" className="text-sm text-gray-500 hover:text-[var(--primary)]">Feedback</Link></li>
               <li><Link href="/how-to-use" className="text-sm text-gray-500 hover:text-[var(--primary)]">How to Use</Link></li>
             </ul>
@@ -52,13 +52,16 @@ export default function Footer() {
               <li><Link href="/materials" className="text-sm text-gray-500 hover:text-[var(--primary)]">Physics</Link></li>
             </ul>
           </div>
-          {/* Legal */}
+          {/* Legal & Contact */}
           <div>
-            <h4 className="font-bold text-sm uppercase tracking-wider text-gray-900 mb-4">Legal</h4>
+            <h4 className="font-bold text-sm uppercase tracking-wider text-gray-900 mb-4">Legal & Contact</h4>
             <ul className="space-y-2.5">
               <li><Link href="/privacy" className="text-sm text-gray-500 hover:text-[var(--primary)]">Privacy Policy</Link></li>
               <li><Link href="/terms" className="text-sm text-gray-500 hover:text-[var(--primary)]">Terms of Service</Link></li>
               <li><Link href="/contact" className="text-sm text-gray-500 hover:text-[var(--primary)]">Contact Us</Link></li>
+              <li><a href="mailto:getmaterials.in@gmail.com" className="text-sm text-gray-500 hover:text-[var(--primary)]">getmaterials.in@gmail.com</a></li>
+              <li><a href="tel:+918886283701" className="text-sm text-gray-500 hover:text-[var(--primary)]">+91 88862 83701</a></li>
+              <li><span className="text-sm text-gray-500">Workafella Cyber Crown, Hitech City, Hyderabad</span></li>
             </ul>
           </div>
         </div>

@@ -1,12 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { connectDB, User } from "@getmaterials/database";
+import { getUser } from "@/lib/get-user";
+
+// GET /api/user/profile - get current user profile
+export async function GET() {
+  try {
+    const authUser = await getUser();
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await connectDB();
+    const user = await User.findById(authUser.id).select(
+      "name email avatar role status bio qualifications college"
+    );
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        role: user.role,
+        status: user.status,
+        bio: user.bio,
+        qualifications: user.qualifications,
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Failed to fetch profile" },
+      { status: 500 }
+    );
+  }
+}
 
 // PATCH /api/user/profile - update user profile
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const authUser = await getUser();
+    if (!authUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -29,7 +66,7 @@ export async function PATCH(req: NextRequest) {
     await connectDB();
 
     const user = await User.findByIdAndUpdate(
-      session.user.id,
+      authUser.id,
       { name: name.trim() },
       { new: true }
     ).select("name email role");

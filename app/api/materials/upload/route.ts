@@ -64,9 +64,9 @@ export async function POST(req: NextRequest) {
       else if (mimeType.includes("video")) fileType = "video";
       else if (mimeType.includes("image")) fileType = "image";
 
-      const key = generateS3Key("materials", file.name);
+      const key = generateS3Key("materials", file.name, authUser.id);
       const buffer = Buffer.from(await file.arrayBuffer());
-      await uploadToS3(buffer, key, file.type);
+      await uploadToS3(key, buffer, file.type);
       fileUrl = getS3Url(key);
       fileName = file.name;
       fileSize = file.size;

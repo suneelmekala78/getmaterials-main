@@ -18,7 +18,7 @@ export async function sendPushToUser(
   notification: NotificationPayload
 ): Promise<void> {
   await connectDB();
-  const user = await User.findById(userId).select("pushDevices").lean();
+  const user = await User.findById(userId).select("pushDevices").lean() as any;
 
   if (!user?.pushDevices?.length) return;
 

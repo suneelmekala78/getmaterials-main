@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB, Material, Review } from "@getmaterials/database";
 import { getUser } from "@/lib/get-user";
 
+interface UserNotification {
+  id: string;
+  type: "review" | "download";
+  icon: string;
+  iconColor: string;
+  title: string;
+  time: string | Date;
+  isRead: boolean;
+}
+
 // GET /api/user/notifications - Get user notifications based on activity
 export async function GET(req: NextRequest) {
   try {
@@ -30,9 +40,9 @@ export async function GET(req: NextRequest) {
       .lean();
 
     // Build notifications from reviews
-    const notifications = recentReviews.map((review: any) => ({
+    const notifications: UserNotification[] = recentReviews.map((review: any) => ({
       id: review._id?.toString(),
-      type: "review" as const,
+      type: "review",
       icon: "chatbubble",
       iconColor: "#10B981",
       title: `${review.user?.name || "Someone"} reviewed your material "${review.material?.title || "Unknown"}"`,
@@ -45,7 +55,7 @@ export async function GET(req: NextRequest) {
       if (mat.downloads >= 100) {
         notifications.push({
           id: `download-${mat._id}`,
-          type: "download" as const,
+          type: "download",
           icon: "download",
           iconColor: "#3B82F6",
           title: `Your material "${mat.title}" reached ${mat.downloads} downloads!`,

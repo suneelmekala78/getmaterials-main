@@ -53,7 +53,7 @@ export default function PrivacyPage() {
             <div>
               <h2 className="text-xl font-bold mb-3">6. Your Rights</h2>
               <p className="text-gray-500 leading-relaxed">
-                You can request to view, update, or delete your personal data at any time by contacting us at getmaterials.in@gmail.com. You can also delete your account from the app settings.
+                You can request to view, update, or delete your personal data at any time by contacting us at getmaterials.in@gmail.com or +91 9603083867. You can also delete your account from the app settings.
               </p>
             </div>
             <div>
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
             <div>
               <h2 className="text-xl font-bold mb-3">8. Contact</h2>
               <p className="text-gray-500 leading-relaxed">
-                If you have questions about this privacy policy, contact us at <strong>getmaterials.in@gmail.com</strong>.
+                If you have questions about this privacy policy, contact us at <strong>getmaterials.in@gmail.com</strong> or <strong>+91 9603083867</strong>.
               </p>
             </div>
           </div>

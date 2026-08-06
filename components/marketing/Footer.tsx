@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
+import {
+  CONTACT_EMAIL,
+  CONTACT_PHONE,
+  CONTACT_PHONE_E164,
+  CONTACT_OFFICE,
+} from "@getmaterials/shared";
 
 export default function Footer() {
   return (
@@ -59,9 +65,9 @@ export default function Footer() {
               <li><Link href="/privacy" className="text-sm text-gray-500 hover:text-[var(--primary)]">Privacy Policy</Link></li>
               <li><Link href="/terms" className="text-sm text-gray-500 hover:text-[var(--primary)]">Terms of Service</Link></li>
               <li><Link href="/contact" className="text-sm text-gray-500 hover:text-[var(--primary)]">Contact Us</Link></li>
-              <li><a href="mailto:getmaterials.in@gmail.com" className="text-sm text-gray-500 hover:text-[var(--primary)]">getmaterials.in@gmail.com</a></li>
-              <li><a href="tel:+918886283701" className="text-sm text-gray-500 hover:text-[var(--primary)]">+91 88862 83701</a></li>
-              <li><span className="text-sm text-gray-500">Workafella Cyber Crown, Hitech City, Hyderabad</span></li>
+              <li><a href={`mailto:${CONTACT_EMAIL}`} className="text-sm text-gray-500 hover:text-[var(--primary)]">{CONTACT_EMAIL}</a></li>
+              <li><a href={`tel:${CONTACT_PHONE_E164}`} className="text-sm text-gray-500 hover:text-[var(--primary)]">{CONTACT_PHONE}</a></li>
+              <li><span className="text-sm text-gray-500">{CONTACT_OFFICE}</span></li>
             </ul>
           </div>
         </div>

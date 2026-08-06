@@ -2,6 +2,12 @@ import type { Metadata } from "next";
 import { FaEnvelope, FaMapMarkerAlt, FaClock, FaPhone, FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import ContactForm from "@/components/marketing/ContactForm";
+import {
+  CONTACT_EMAIL,
+  CONTACT_PHONE,
+  CONTACT_PHONE_E164,
+  CONTACT_OFFICE,
+} from "@getmaterials/shared";
 
 export const metadata: Metadata = {
   title: "Contact Us — Get in Touch with GetMaterials",
@@ -37,17 +43,47 @@ export default function ContactPage() {
             {/* Info cards */}
             <div className="space-y-5">
               {[
-                { icon: FaEnvelope, title: "Email Us", text: "getmaterials.in@gmail.com", sub: "We reply within 24 hours" },
-                { icon: FaPhone, title: "Call Us", text: "+91 88862 83701", sub: "Mon – Sat, 9am – 7pm IST" },
-                { icon: FaMapMarkerAlt, title: "Office", text: "Workafella Cyber Crown, Hitech City, Hyderabad", sub: "Telangana, India" },
-                { icon: FaClock, title: "Response Time", text: "Usually within a day", sub: "Mon – Sun, 9am – 9pm IST" },
+                {
+                  icon: FaEnvelope,
+                  title: "Email Us",
+                  text: CONTACT_EMAIL,
+                  href: `mailto:${CONTACT_EMAIL}`,
+                  sub: "We reply within 24 hours",
+                },
+                {
+                  icon: FaPhone,
+                  title: "Call Us",
+                  text: CONTACT_PHONE,
+                  href: `tel:${CONTACT_PHONE_E164}`,
+                  sub: "Mon – Sat, 9am – 7pm IST",
+                },
+                {
+                  icon: FaMapMarkerAlt,
+                  title: "Office",
+                  text: CONTACT_OFFICE,
+                  href: undefined as string | undefined,
+                  sub: "Telangana, India",
+                },
+                {
+                  icon: FaClock,
+                  title: "Response Time",
+                  text: "Usually within a day",
+                  href: undefined as string | undefined,
+                  sub: "Mon – Sun, 9am – 9pm IST",
+                },
               ].map((c) => (
                 <div key={c.title} className="bg-white rounded-2xl border border-gray-100 p-5">
                   <div className="w-10 h-10 rounded-xl bg-[rgba(177,0,255,0.08)] flex items-center justify-center mb-3">
                     <c.icon className="text-[var(--primary)]" />
                   </div>
                   <h3 className="font-bold text-[15px] mb-1">{c.title}</h3>
-                  <p className="text-sm text-gray-700">{c.text}</p>
+                  {c.href ? (
+                    <a href={c.href} className="text-sm text-gray-700 hover:text-[var(--primary)] transition">
+                      {c.text}
+                    </a>
+                  ) : (
+                    <p className="text-sm text-gray-700">{c.text}</p>
+                  )}
                   <p className="text-xs text-gray-400 mt-0.5">{c.sub}</p>
                 </div>
               ))}

@@ -54,7 +54,7 @@ export default function TermsPage() {
             </div>
             <div>
               <h2 className="text-xl font-bold mb-3">9. Contact</h2>
-              <p className="text-gray-500 leading-relaxed">For questions about these terms, contact us at <strong>getmaterials.in@gmail.com</strong>.</p>
+              <p className="text-gray-500 leading-relaxed">For questions about these terms, contact us at <strong>getmaterials.in@gmail.com</strong> or <strong>+91 9603083867</strong>.</p>
             </div>
           </div>
         </div>

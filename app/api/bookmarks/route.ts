@@ -1,30 +1,40 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { connectDB, User, Material } from "@getmaterials/database";
+import { getUser } from "@/lib/get-user";
 
 export const dynamic = "force-dynamic";
+
+const materialSelect =
+  "title slug type subject views downloads createdAt program branch semester rating thumbnailUrl uploadedBy";
 
 // GET /api/bookmarks - get user's bookmarked materials
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const authUser = await getUser();
+    if (!authUser?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
 
-    const user = await User.findById(session.user.id).select("bookmarks");
+    const user = await User.findById(authUser.id).select("bookmarks");
     if (!user || !user.bookmarks?.length) {
       return NextResponse.json({ bookmarks: [] });
     }
 
     const materials = await Material.find({ _id: { $in: user.bookmarks } })
       .populate("subject", "name slug")
-      .select("title slug type subject views createdAt")
+      .populate("uploadedBy", "name role")
+      .select(materialSelect)
       .lean();
 
-    return NextResponse.json({ bookmarks: materials });
+    // Preserve bookmark order
+    const byId = new Map(materials.map((m: any) => [m._id.toString(), m]));
+    const ordered = user.bookmarks
+      .map((id: any) => byId.get(id.toString()))
+      .filter(Boolean);
+
+    return NextResponse.json({ bookmarks: ordered });
   } catch {
     return NextResponse.json({ error: "Failed to fetch bookmarks" }, { status: 500 });
   }
@@ -33,8 +43,8 @@ export async function GET() {
 // POST /api/bookmarks - add a bookmark
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const authUser = await getUser();
+    if (!authUser?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -45,7 +55,12 @@ export async function POST(request: Request) {
 
     await connectDB();
 
-    await User.findByIdAndUpdate(session.user.id, {
+    const material = await Material.findById(materialId).select("_id");
+    if (!material) {
+      return NextResponse.json({ error: "Material not found" }, { status: 404 });
+    }
+
+    await User.findByIdAndUpdate(authUser.id, {
       $addToSet: { bookmarks: materialId },
     });
 
@@ -58,8 +73,8 @@ export async function POST(request: Request) {
 // DELETE /api/bookmarks - remove a bookmark
 export async function DELETE(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
+    const authUser = await getUser();
+    if (!authUser?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -70,7 +85,7 @@ export async function DELETE(request: Request) {
 
     await connectDB();
 
-    await User.findByIdAndUpdate(session.user.id, {
+    await User.findByIdAndUpdate(authUser.id, {
       $pull: { bookmarks: materialId },
     });
 

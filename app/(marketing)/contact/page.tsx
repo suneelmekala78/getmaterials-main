@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import { FaEnvelope, FaMapMarkerAlt, FaClock, FaPhone, FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa";
+import { FaEnvelope, FaMapMarkerAlt, FaClock, FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import ContactForm from "@/components/marketing/ContactForm";
 import {
   CONTACT_EMAIL,
-  CONTACT_PHONE,
-  CONTACT_PHONE_E164,
   CONTACT_OFFICE,
-} from "@getmaterials/shared";
+} from "@/lib/shared";
 
 export const metadata: Metadata = {
   title: "Contact Us — Get in Touch with GetMaterials",
@@ -49,13 +47,6 @@ export default function ContactPage() {
                   text: CONTACT_EMAIL,
                   href: `mailto:${CONTACT_EMAIL}`,
                   sub: "We reply within 24 hours",
-                },
-                {
-                  icon: FaPhone,
-                  title: "Call Us",
-                  text: CONTACT_PHONE,
-                  href: `tel:${CONTACT_PHONE_E164}`,
-                  sub: "Mon – Sat, 9am – 7pm IST",
                 },
                 {
                   icon: FaMapMarkerAlt,

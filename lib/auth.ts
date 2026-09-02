@@ -1,16 +1,30 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
-import { connectDB, User } from "@getmaterials/database";
+import { connectDB, User } from "@/lib/database";
+
+const API_INTERNAL_URL =
+  process.env.API_INTERNAL_URL || "http://localhost:4000";
+
+async function verifyPhoneOtp(credentials: Record<string, unknown>) {
+  const phone = credentials.phone as string;
+  const code = credentials.code as string;
+
+  const res = await fetch(`${API_INTERNAL_URL}/api/auth/phone/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, code }),
+  });
+
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.user ?? null;
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
     Credentials({
+      id: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
@@ -31,8 +45,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         );
         if (!isValid) return null;
 
-        // Reject unverified email users
-        if (!user.emailVerified) {
+        if (!user.emailVerified && !user.phoneVerified) {
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 
@@ -46,48 +59,43 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
+    Credentials({
+      id: "phone",
+      name: "Phone",
+      credentials: {
+        phone: { label: "Phone", type: "tel" },
+        code: { label: "OTP", type: "text" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.phone || !credentials?.code) return null;
+
+        const user = await verifyPhoneOtp(credentials as Record<string, unknown>);
+        if (!user) return null;
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.avatar,
+          role: user.role,
+          status: user.status,
+        };
+      },
+    }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === "google") {
-        await connectDB();
-        const existingUser = await User.findOne({ email: user.email });
-
-        if (!existingUser) {
-          const newUser = await User.create({
-            email: user.email,
-            name: user.name,
-            avatar: user.image,
-            role: "student",
-            status: "active",
-            emailVerified: new Date(),
-          });
-          (user as any).id = newUser._id.toString();
-          (user as any).role = "student";
-          (user as any).status = "active";
-        } else {
-          if (existingUser.status === "suspended") return false;
-          (user as any).id = existingUser._id.toString();
-          (user as any).role = existingUser.role;
-          (user as any).status = existingUser.status;
-        }
-      }
-      return true;
-    },
     async jwt({ token, user }) {
       if (user) {
         token.id = (user as any).id;
         token.role = (user as any).role;
         token.status = (user as any).status;
-        token.accessTokenExpires = Date.now() + 15 * 60 * 1000; // 15 min
+        token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
       }
 
-      // Access token still valid — skip DB query for performance
       if (Date.now() < (token.accessTokenExpires as number)) {
         return token;
       }
 
-      // Access token expired — re-validate from DB (acts as "refresh")
       if (token.id) {
         try {
           await connectDB();
@@ -123,7 +131,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   session: {
     strategy: "jwt",
-    maxAge: 365 * 24 * 60 * 60, // 1 year (effectively infinite)
+    maxAge: 365 * 24 * 60 * 60,
   },
   trustHost: true,
   cookies: {

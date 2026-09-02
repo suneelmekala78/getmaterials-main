@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { MobileShell } from "@/components/layout/MobileShell";
-import { connectDB, User } from "@getmaterials/database";
+import { PublicChrome } from "@/components/layout/PublicChrome";
+import { connectDB, User } from "@/lib/database";
 
 export default async function TeacherLayout({
   children,
@@ -16,7 +16,6 @@ export default async function TeacherLayout({
     redirect("/dashboard");
   }
 
-  // Always check latest status from DB to avoid stale JWT cache
   let currentStatus = user.status;
   if (currentStatus === "pending") {
     await connectDB();
@@ -44,9 +43,5 @@ export default async function TeacherLayout({
     );
   }
 
-  return (
-    <MobileShell user={user}>
-      {children}
-    </MobileShell>
-  );
+  return <PublicChrome>{children}</PublicChrome>;
 }

@@ -2,10 +2,10 @@ import Link from "next/link";
 
 export default function Testimonials() {
   const testimonials = [
-    { name: "Lakshmi Sujatha", role: "B.Tech Student", text: "GetMaterials saved me so much time during exam prep. I found all the handwritten notes I needed for Mathematics and Chemistry in one place. Highly recommend!", rating: 5 },
+    { name: "Harshitha", role: "B.Tech Student", text: "GetMaterials saved me so much time during exam prep. I found all the handwritten notes I needed for Mathematics and Chemistry in one place. Highly recommend!", rating: 5 },
     { name: "Sai Reddy", role: "ECE Student", text: "The web development course materials are incredibly well-organized. I went from zero to building my first website using the free resources here.", rating: 5 },
-    { name: "Chemarthi Venkatesh", role: "B.Tech Student", text: "I love how the materials are curated by real teachers. The quality is much better than random PDFs you find online. And it's completely free!", rating: 5 },
-    { name: "Abbireddy Ajay", role: "Web Developer", text: "As a teacher, I upload my notes here to help students beyond my classroom. The platform is simple and the students genuinely appreciate it.", rating: 5 },
+    { name: "Vardhan", role: "B.Tech Student", text: "I love how the materials are curated by real teachers. The quality is much better than random PDFs you find online. And it's completely free!", rating: 5 },
+    { name: "Ramani", role: "Web Developer", text: "As a teacher, I upload my notes here to help students beyond my classroom. The platform is simple and the students genuinely appreciate it.", rating: 5 },
   ];
 
   return (
@@ -39,7 +39,7 @@ export default function Testimonials() {
         </div>
         <div className="text-center mt-8">
           <Link href="/feedback" className="inline-flex items-center gap-1 text-sm font-semibold text-[var(--primary)] border border-[var(--primary)] px-5 py-2 rounded-full hover:bg-[var(--primary)] hover:text-white transition">
-            Read all feedback →
+            Give your feedback →
           </Link>
         </div>
       </div>

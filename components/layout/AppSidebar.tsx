@@ -8,8 +8,6 @@ import {
   Bookmark,
   ClipboardCheck,
   MessageSquare,
-  Heart,
-  History,
   Settings,
   Search,
   FileText,
@@ -23,12 +21,11 @@ const studentLinks = [
   { href: "/subjects", icon: BookOpen, label: "Subjects" },
   { href: "/materials", icon: FileText, label: "Materials" },
   { href: "/upload", icon: Upload, label: "Upload" },
+  { href: "/my-materials", icon: FileText, label: "My Materials" },
   { href: "/bookmarks", icon: Bookmark, label: "Bookmarks" },
   { href: "/quizzes", icon: ClipboardCheck, label: "Quizzes" },
   { href: "/requests", icon: MessageSquare, label: "Requests" },
   { href: "/polls", icon: BarChart3, label: "Polls" },
-  { href: "/donate", icon: Heart, label: "Buy me a chai ☕" },
-  { href: "/donations", icon: History, label: "My Contributions" },
 ];
 
 const teacherLinks = [
@@ -40,8 +37,6 @@ const teacherLinks = [
   { href: "/teacher/quizzes", icon: ClipboardCheck, label: "Quizzes" },
   { href: "/teacher/polls", icon: BarChart3, label: "Polls" },
   { href: "/teacher/requests", icon: MessageSquare, label: "Requests" },
-  { href: "/donate", icon: Heart, label: "Buy me a chai ☕" },
-  { href: "/donations", icon: History, label: "My Contributions" },
 ];
 
 interface AppSidebarProps {

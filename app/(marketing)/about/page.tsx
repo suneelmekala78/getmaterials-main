@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import { FaGraduationCap, FaHandsHelping, FaLightbulb, FaGlobe, FaHeart, FaRocket, FaEnvelope, FaPhone, FaMapMarkerAlt } from "react-icons/fa";
-import Image from "next/image";
+import { FaGraduationCap, FaHandsHelping, FaLightbulb, FaGlobe, FaHeart, FaRocket, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
 import Link from "next/link";
 import {
   CONTACT_EMAIL,
-  CONTACT_PHONE,
-  CONTACT_PHONE_E164,
   CONTACT_OFFICE,
-} from "@getmaterials/shared";
+} from "@/lib/shared";
 
 export const metadata: Metadata = {
   title: "About Us — Our Mission to Make Education Free",
@@ -29,10 +26,6 @@ const values = [
   { icon: FaGlobe, title: "Open & Accessible", desc: "No registration walls for browsing. No premium tiers. Education should be a right, not a product." },
   { icon: FaHeart, title: "Built with Passion", desc: "GetMaterials is a passion project by students and educators who believe in free knowledge sharing." },
   { icon: FaRocket, title: "Always Improving", desc: "We ship features and improvements regularly based on community feedback. The best is yet to come." },
-];
-
-const team = [
-  { name: "Suneel Mekala", role: "Founder & Developer", image: "/suneel.jpeg" },
 ];
 
 export default function AboutPage() {
@@ -112,26 +105,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team */}
-      <section className="section">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <p className="text-[var(--primary)] font-bold text-sm uppercase tracking-wider mb-2">Our Team</p>
-            <h2 className="text-3xl font-extrabold mb-4">The person behind GetMaterials</h2>
-            <p className="text-gray-500 max-w-lg mx-auto">Built with passion by a student who believes education should be free for everyone.</p>
-          </div>
-          <div className="flex justify-center">
-            {team.map((t) => (
-              <div key={t.name} className="text-center">
-                <Image src={t.image} alt={t.name} width={80} height={80} className="w-20 h-20 rounded-full object-cover mx-auto mb-3" />
-                <p className="font-bold text-sm">{t.name}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{t.role}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* CTA */}
       <section className="section">
         <div className="max-w-6xl mx-auto px-6">
@@ -144,11 +117,6 @@ export default function AboutPage() {
               <FaEnvelope className="text-[var(--primary)] text-xl mx-auto mb-2" />
               <h3 className="font-bold text-sm mb-1">Email</h3>
               <a href={`mailto:${CONTACT_EMAIL}`} className="text-sm text-gray-500 hover:text-[var(--primary)]">{CONTACT_EMAIL}</a>
-            </div>
-            <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
-              <FaPhone className="text-[var(--primary)] text-xl mx-auto mb-2" />
-              <h3 className="font-bold text-sm mb-1">Phone</h3>
-              <a href={`tel:${CONTACT_PHONE_E164}`} className="text-sm text-gray-500 hover:text-[var(--primary)]">{CONTACT_PHONE}</a>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center">
               <FaMapMarkerAlt className="text-[var(--primary)] text-xl mx-auto mb-2" />
@@ -165,12 +133,9 @@ export default function AboutPage() {
           <p className="text-gray-500 mb-8 max-w-lg mx-auto">
             Whether you&apos;re a student who wants to help, a teacher who wants to share, or someone who believes in free education — there&apos;s a place for you.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="flex items-center justify-center">
             <Link href="/contact" className="bg-[var(--primary)] text-white font-bold px-8 py-3.5 rounded-xl text-[15px] shadow-[0_4px_14px_rgba(177,0,255,0.25)] hover:-translate-y-0.5 transition-all">
               Get in Touch
-            </Link>
-            <Link href="/support" className="border-2 border-gray-200 text-gray-700 font-semibold px-8 py-3.5 rounded-xl text-[15px] hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all">
-              Buy me a chai ☕
             </Link>
           </div>
         </div>

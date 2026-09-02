@@ -6,55 +6,74 @@ import Link from "next/link";
 
 export function ResetPasswordForm() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
 
+  const [email, setEmail] = useState(searchParams.get("email") ?? "");
+  const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  if (!token) {
-    return (
-      <div className="text-center space-y-4">
-        <p className="text-sm text-red-600">Invalid reset link. Please request a new one.</p>
-        <Link href="/forgot-password" className="text-sm text-[var(--primary)] font-semibold hover:underline">
-          Request new link
-        </Link>
-      </div>
-    );
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setInfo("");
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
 
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ email: email.trim(), code, password }),
       });
 
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Reset failed");
-      } else {
-        setSuccess(true);
+        return;
       }
+      setSuccess(true);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError("");
+    setInfo("");
+    setResending(true);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Could not resend the code");
+        return;
+      }
+      setInfo("A new code has been sent to your email.");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -84,6 +103,45 @@ export function ResetPasswordForm() {
           {error}
         </div>
       )}
+      {info && (
+        <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg">
+          {info}
+        </div>
+      )}
+
+      <label className="block">
+        <span className="text-sm font-medium">Email</span>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          required
+          className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:border-[var(--primary)] transition"
+        />
+      </label>
+
+      <label className="block">
+        <span className="text-sm font-medium">Reset code</span>
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+          placeholder="000000"
+          required
+          maxLength={6}
+          autoComplete="one-time-code"
+          className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-center tracking-[0.4em] font-mono font-semibold focus:outline-none focus:border-[var(--primary)] transition"
+        />
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={resending || !email.trim()}
+          className="mt-1 text-xs text-[var(--primary)] font-semibold hover:underline disabled:opacity-50"
+        >
+          {resending ? "Sending..." : "Resend code"}
+        </button>
+      </label>
 
       <label className="block">
         <span className="text-sm font-medium">New Password</span>
@@ -94,7 +152,8 @@ export function ResetPasswordForm() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter new password"
             required
-            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-10 text-sm focus:outline-none focus:border-[var(--primary)] transition"
+            minLength={8}
+            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-14 text-sm focus:outline-none focus:border-[var(--primary)] transition"
           />
           <button
             type="button"
@@ -116,7 +175,7 @@ export function ResetPasswordForm() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Confirm new password"
             required
-            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-10 text-sm focus:outline-none focus:border-[var(--primary)] transition"
+            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-14 text-sm focus:outline-none focus:border-[var(--primary)] transition"
           />
           <button
             type="button"
@@ -130,11 +189,18 @@ export function ResetPasswordForm() {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || code.length !== 6}
         className="w-full py-2.5 bg-[var(--primary)] text-white font-semibold rounded-lg shadow-[0_6px_18px_rgba(177,0,255,0.12)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Resetting..." : "Reset Password"}
       </button>
+
+      <p className="text-center text-xs text-gray-400">
+        Didn&apos;t request this?{" "}
+        <Link href="/login" className="text-[var(--primary)] font-semibold hover:underline">
+          Back to login
+        </Link>
+      </p>
     </form>
   );
 }

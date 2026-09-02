@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Plus, Trash2, Edit3, Eye, Users } from "lucide-react";
 import toast from "react-hot-toast";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface Quiz {
   _id: string;
@@ -40,6 +41,8 @@ export default function TeacherQuizzesPage() {
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [attemptStats, setAttemptStats] = useState<AttemptStats | null>(null);
   const [attemptsLoading, setAttemptsLoading] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetch("/api/teacher/quizzes")
@@ -66,6 +69,23 @@ export default function TeacherQuizzesPage() {
     }
   };
 
+  const deleteQuiz = async () => {
+    if (!deleteId || deleting) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/teacher/quizzes/${deleteId}`, { method: "DELETE" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to delete quiz");
+      setQuizzes((prev) => prev.filter((quiz) => quiz._id !== deleteId));
+      toast.success("Quiz deleted");
+      setDeleteId(null);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete quiz");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -75,7 +95,7 @@ export default function TeacherQuizzesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">My Quizzes</h1>
@@ -97,11 +117,18 @@ export default function TeacherQuizzesPage() {
           </div>
           <p className="text-slate-600 font-medium">No quizzes yet</p>
           <p className="text-slate-400 text-sm mt-1">Create your first quiz for students!</p>
+          <Link
+            href="/teacher/quizzes/create"
+            className="inline-flex items-center gap-2 mt-4 px-4 py-2.5 bg-[var(--primary)] text-white text-sm font-semibold rounded-xl hover:opacity-90"
+          >
+            <Plus className="w-4 h-4" />
+            Create Quiz
+          </Link>
         </div>
       ) : (
         <div className="grid gap-4">
           {quizzes.map((quiz) => (
-            <div key={quiz._id} className="bg-white rounded-xl border border-slate-100 p-5 flex items-center justify-between">
+            <div key={quiz._id} className="bg-white rounded-xl border border-slate-100 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h3 className="font-semibold text-slate-900">{quiz.title}</h3>
                 <div className="flex items-center gap-3 mt-1">
@@ -115,13 +142,34 @@ export default function TeacherQuizzesPage() {
                   <span className="text-xs text-slate-400">• {quiz.attempts || 0} attempts</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 justify-end">
+                <Link
+                  href={`/quizzes/${quiz._id}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  Preview
+                </Link>
                 <button
                   onClick={() => viewAttempts(quiz._id, quiz.title)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
                 >
                   <Users className="w-3.5 h-3.5" />
                   Responses
+                </button>
+                <Link
+                  href={`/teacher/quizzes/${quiz._id}/edit`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-700 bg-violet-50 border border-violet-200 rounded-lg hover:bg-violet-100 transition-colors"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  Edit
+                </Link>
+                <button
+                  onClick={() => setDeleteId(quiz._id)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete
                 </button>
                 <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
                   quiz.isActive ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
@@ -218,6 +266,17 @@ export default function TeacherQuizzesPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(deleteId)}
+        title="Delete this quiz?"
+        message="This will also remove student attempts. This action cannot be undone."
+        confirmLabel={deleting ? "Deleting..." : "Delete Quiz"}
+        onConfirm={deleteQuiz}
+        onCancel={() => {
+          if (!deleting) setDeleteId(null);
+        }}
+      />
     </div>
   );
 }

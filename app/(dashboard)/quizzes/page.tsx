@@ -1,136 +1,408 @@
 import { auth } from "@/lib/auth";
-import { connectDB, Subject, Quiz, QuizAttempt } from "@getmaterials/database";
-import { ClipboardCheck, BookOpen, Trophy, ArrowRight } from "lucide-react";
+import { connectDB, Subject, Quiz, QuizAttempt } from "@/lib/database";
+import { ClipboardCheck, Clock, HelpCircle, Plus, Trophy, Users } from "lucide-react";
 import Link from "next/link";
+import QuizzesFilterSidebar from "@/components/quizzes/QuizzesFilterSidebar";
+import QuizzesToolbar from "@/components/quizzes/QuizzesToolbar";
+import QuizCard, { type QuizCardData } from "@/components/quizzes/QuizCard";
+import { formatCount, quizzesHref, type QuizzesQuery } from "@/components/quizzes/query";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Quizzes - GetMaterials",
+  description: "Test your knowledge with chapter-wise quizzes created by teachers.",
 };
 
-export default async function QuizzesPage() {
+const PAGE_SIZE = 8;
+
+interface Props {
+  searchParams: Promise<{
+    q?: string;
+    subject?: string;
+    tab?: string;
+    sort?: string;
+    view?: string;
+    page?: string;
+  }>;
+}
+
+export default async function QuizzesPage({ searchParams }: Props) {
+  const params = await searchParams;
   const session = await auth();
-  if (!session?.user) return null;
+  const userId = (session?.user as any)?.id as string | undefined;
+  const role = (session?.user as any)?.role as string | undefined;
 
   await connectDB();
 
-  const [subjects, quizzes, attempts] = await Promise.all([
-    Subject.find({ isActive: true }).lean(),
-    Quiz.find({ isActive: true })
-      .populate("subject", "name")
+  const current: QuizzesQuery = {
+    q: params.q,
+    subject: params.subject,
+    tab: params.tab,
+    sort: params.sort,
+    view: params.view,
+  };
+
+  const subjectDoc = params.subject
+    ? await Subject.findOne({ slug: params.subject }).select("_id").lean()
+    : null;
+
+  const filter: Record<string, unknown> = { isActive: true };
+  if (params.subject) {
+    filter.subject = subjectDoc ? (subjectDoc as any)._id : { $in: [] };
+  }
+  if (params.q?.trim()) {
+    filter.$or = [
+      { title: { $regex: params.q.trim(), $options: "i" } },
+      { description: { $regex: params.q.trim(), $options: "i" } },
+    ];
+  }
+  if (params.tab === "new") {
+    const since = new Date();
+    since.setDate(since.getDate() - 30);
+    filter.createdAt = { $gte: since };
+  }
+
+  const userAttempts = userId
+    ? await QuizAttempt.find({ user: userId }).select("quiz score").lean()
+    : [];
+  const attemptedIds = [...new Set(userAttempts.map((item: any) => String(item.quiz)))];
+
+  if (params.tab === "mine" && userId) {
+    if (role === "teacher" || role === "admin") {
+      filter.createdBy = userId;
+    } else {
+      filter._id = { $in: attemptedIds };
+    }
+  }
+
+  const sortKey = params.sort || (params.tab === "popular" ? "attempts" : "latest");
+  const sort: Record<string, 1 | -1> =
+    sortKey === "attempts"
+      ? { attempts: -1, createdAt: -1 }
+      : sortKey === "duration"
+        ? { duration: 1, createdAt: -1 }
+        : { createdAt: -1 };
+
+  const page = Math.max(1, Number(params.page) || 1);
+  const skip = (page - 1) * PAGE_SIZE;
+  const view = params.view === "grid" ? "grid" : "list";
+
+  const [
+    totalMatching,
+    quizzes,
+    totalQuizzes,
+    attemptAgg,
+    durationAgg,
+    subjectCounts,
+    topScorers,
+    attemptedQuizDocs,
+  ] = await Promise.all([
+    Quiz.countDocuments(filter),
+    Quiz.find(filter)
+      .populate("subject", "name slug")
       .populate("chapter", "title")
-      .select("title subject chapter duration questions attempts")
-      .sort({ createdAt: -1 })
-      .limit(20)
+      .sort(sort)
+      .skip(skip)
+      .limit(PAGE_SIZE)
       .lean(),
-    QuizAttempt.find({ user: session.user.id }).lean(),
+    Quiz.countDocuments({ isActive: true }),
+    QuizAttempt.aggregate([{ $group: { _id: null, total: { $sum: 1 }, avg: { $avg: "$score" } } }]),
+    Quiz.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: null, avg: { $avg: "$duration" }, attempts: { $sum: "$attempts" } } },
+    ]),
+    Quiz.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: "$subject", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]),
+    QuizAttempt.aggregate([
+      {
+        $group: {
+          _id: "$user",
+          attempts: { $sum: 1 },
+          avgScore: { $avg: "$score" },
+        },
+      },
+      { $sort: { avgScore: -1, attempts: -1 } },
+      { $limit: 5 },
+      { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "user" } },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+      { $project: { attempts: 1, avgScore: 1, name: "$user.name", avatar: "$user.avatar" } },
+    ]),
+    attemptedIds.length
+      ? Quiz.find({ _id: { $in: attemptedIds } }).select("passingScore").lean()
+      : Promise.resolve([]),
   ]);
 
-  const avgScore = attempts.length
-    ? Math.round(attempts.reduce((sum: number, a: any) => sum + a.score, 0) / attempts.length)
+  const subjectIds = subjectCounts.map((row: any) => row._id).filter(Boolean);
+  const subjectDocs = subjectIds.length
+    ? await Subject.find({ _id: { $in: subjectIds } }).select("name slug").lean()
+    : [];
+  const subjectMap = new Map(subjectDocs.map((item: any) => [String(item._id), item]));
+  const subjects = subjectCounts
+    .map((row: any) => {
+      const subject = subjectMap.get(String(row._id));
+      if (!subject) return null;
+      return { value: subject.slug, label: subject.name, count: row.count };
+    })
+    .filter(Boolean) as { value: string; label: string; count: number }[];
+
+  const leaderboard = topScorers
+    .filter((row: any) => row.name)
+    .map((row: any) => ({
+      id: String(row._id),
+      name: row.name as string,
+      avatar: row.avatar as string | undefined,
+      attempts: row.attempts as number,
+      avgScore: Math.round(row.avgScore || 0),
+    }));
+
+  const cards: QuizCardData[] = quizzes.map((quiz: any) => ({
+    id: String(quiz._id),
+    title: quiz.title,
+    description: quiz.description || "",
+    subject: quiz.subject?.name,
+    chapter: quiz.chapter?.title,
+    questions: quiz.questions?.length || 0,
+    duration: quiz.duration,
+    attempts: quiz.attempts || 0,
+    passingScore: quiz.passingScore || 60,
+    attempted: attemptedIds.includes(String(quiz._id)),
+  }));
+
+  const totalPages = Math.max(1, Math.ceil(totalMatching / PAGE_SIZE));
+  const avgScore = attemptAgg[0]?.avg ? Math.round(attemptAgg[0].avg) : 0;
+  const totalAttempts = attemptAgg[0]?.total || durationAgg[0]?.attempts || 0;
+  const avgDuration = durationAgg[0]?.avg ? Math.round(durationAgg[0].avg) : 0;
+
+  const myAvg = userAttempts.length
+    ? Math.round(userAttempts.reduce((sum: number, item: any) => sum + (item.score || 0), 0) / userAttempts.length)
     : 0;
-  const subjectsCovered = new Set(attempts.map((a: any) => a.quiz?.toString())).size;
+  const myBest = userAttempts.length
+    ? Math.max(...userAttempts.map((item: any) => item.score || 0))
+    : 0;
+  const passingMap = new Map(
+    (attemptedQuizDocs as any[]).map((quiz) => [String(quiz._id), quiz.passingScore || 60])
+  );
+  const bestByQuiz = new Map<string, number>();
+  for (const item of userAttempts as any[]) {
+    const id = String(item.quiz);
+    bestByQuiz.set(id, Math.max(bestByQuiz.get(id) || 0, item.score || 0));
+  }
+  const myPassed = [...bestByQuiz.entries()].filter(
+    ([id, score]) => score >= (passingMap.get(id) || 60)
+  ).length;
+  const uniqueAttempted = attemptedIds.length;
+  const progressPct = totalQuizzes ? Math.round((uniqueAttempted / totalQuizzes) * 100) : 0;
+
+  const canCreate = role === "teacher" || role === "admin";
+
+  const queryForPage = (nextPage: number) => quizzesHref(current, { page: String(nextPage) });
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Quizzes</h1>
-          <p className="text-slate-500 mt-1">Test your knowledge with chapter-wise quizzes.</p>
-        </div>
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-amber-50 border border-amber-100 rounded-xl">
-          <Trophy className="w-5 h-5 text-amber-600" />
+    <div className="max-w-7xl mx-auto">
+      <p className="text-sm text-slate-400 mb-4">
+        <Link href="/" className="hover:text-[var(--primary)]">Home</Link>
+        <span className="mx-1.5">›</span>
+        <span className="text-slate-600">Quizzes</span>
+      </p>
+
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+        <div className="flex items-start gap-3">
+          <div className="w-12 h-12 rounded-2xl bg-violet-100 text-[var(--primary)] flex items-center justify-center shrink-0">
+            <ClipboardCheck className="w-6 h-6" />
+          </div>
           <div>
-            <p className="text-xs text-amber-600 font-medium">Avg Score</p>
-            <p className="text-lg font-bold text-amber-700">{avgScore || "—"}%</p>
+            <h1 className="text-3xl font-extrabold text-slate-900">Quizzes</h1>
+            <p className="text-slate-500 mt-1">Test your knowledge and improve your skills with practice quizzes.</p>
           </div>
         </div>
+        {canCreate && (
+          <div className="flex items-center gap-2">
+            <Link
+              href="/teacher/quizzes"
+              className="inline-flex items-center gap-2 border border-slate-200 text-slate-700 font-bold px-4 py-2.5 rounded-xl text-sm hover:bg-white"
+            >
+              Manage Quizzes
+            </Link>
+            <Link
+              href="/teacher/quizzes/create"
+              className="inline-flex items-center gap-2 bg-[var(--primary)] text-white font-bold px-4 py-2.5 rounded-xl text-sm hover:opacity-90"
+            >
+              <Plus className="w-4 h-4" />
+              Create Quiz
+            </Link>
+          </div>
+        )}
       </div>
 
-      {/* Quiz stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         {[
-          { label: "Quizzes Taken", value: String(attempts.length), icon: ClipboardCheck, color: "bg-violet-50 text-violet-600" },
-          { label: "Avg. Score", value: avgScore ? `${avgScore}%` : "—", icon: Trophy, color: "bg-amber-50 text-amber-600" },
-          { label: "Quizzes Attempted", value: String(subjectsCovered), icon: BookOpen, color: "bg-emerald-50 text-emerald-600" },
-        ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-xl p-5 border border-slate-100">
-            <div className={`w-10 h-10 rounded-xl ${stat.color} flex items-center justify-center mb-3`}>
-              <stat.icon className="w-5 h-5" />
+          { icon: ClipboardCheck, tint: "bg-violet-50 text-violet-600", value: totalQuizzes ? `${formatCount(totalQuizzes)}+` : "0", label: "Total Quizzes" },
+          { icon: Users, tint: "bg-emerald-50 text-emerald-600", value: totalAttempts ? `${formatCount(totalAttempts)}+` : "0", label: "Attempts" },
+          { icon: Trophy, tint: "bg-amber-50 text-amber-600", value: avgScore ? `${avgScore}%` : "—", label: "Average Score" },
+          { icon: Clock, tint: "bg-blue-50 text-blue-600", value: avgDuration ? `${avgDuration} min` : "—", label: "Avg. Duration" },
+        ].map((item) => (
+          <div key={item.label} className="bg-white rounded-2xl border border-slate-100 px-4 py-3 flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${item.tint}`}>
+              <item.icon className="w-4 h-4" />
             </div>
-            <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
-            <p className="text-sm text-slate-500">{stat.label}</p>
+            <div>
+              <p className="text-sm font-extrabold text-slate-900 leading-tight">{item.value}</p>
+              <p className="text-[11px] text-slate-500">{item.label}</p>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Available Quizzes */}
-      {quizzes.length > 0 && (
-        <div>
-          <h2 className="text-lg font-semibold text-slate-900 mb-4">Available Quizzes</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {quizzes.map((quiz: any) => (
-              <Link
-                key={quiz._id.toString()}
-                href={`/quizzes/${quiz._id.toString()}`}
-                className="group bg-white rounded-xl p-5 border border-slate-100 hover:border-violet-100 hover:shadow-md transition-all"
-              >
-                <h3 className="text-sm font-semibold text-slate-900 group-hover:text-violet-600 transition-colors mb-1">
-                  {quiz.title}
-                </h3>
-                <p className="text-xs text-slate-500 mb-3">
-                  {quiz.subject?.name} {quiz.chapter && `• ${quiz.chapter.title}`}
-                </p>
-                <div className="flex items-center gap-4 text-xs text-slate-400">
-                  <span>{quiz.questions?.length || 0} questions</span>
-                  <span>{quiz.duration} min</span>
-                  <span>{quiz.attempts || 0} attempts</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_260px] gap-6 items-start">
+        <QuizzesFilterSidebar current={current} subjects={subjects} />
 
-      {/* Available quizzes by subject */}
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Browse by Subject</h2>
-        {subjects.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {subjects.map((subject: any) => (
-              <Link
-                key={subject._id.toString()}
-                href={`/subjects/${subject.slug}`}
-                className="group bg-white rounded-xl p-5 border border-slate-100 hover:border-violet-100 hover:shadow-md transition-all flex items-center gap-4"
-              >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-100 to-blue-50 flex items-center justify-center shrink-0">
-                  <BookOpen className="w-5 h-5 text-violet-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-slate-900 group-hover:text-violet-600 transition-colors truncate">
-                    {subject.name}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {subject.chaptersCount || 0} chapters
-                  </p>
-                </div>
-                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-violet-500 group-hover:translate-x-0.5 transition-all" />
+        <div>
+          <QuizzesToolbar current={current} showMine={Boolean(userId)} />
+          {cards.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center mt-5">
+              <HelpCircle className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+              <p className="text-slate-500">No quizzes match your filters.</p>
+              <Link href="/quizzes" className="text-sm text-[var(--primary)] hover:underline mt-2 inline-block">
+                Clear filters
               </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl p-12 border border-slate-100 text-center">
-            <div className="w-16 h-16 bg-violet-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <ClipboardCheck className="w-7 h-7 text-violet-400" />
             </div>
-            <h3 className="text-lg font-semibold text-slate-800 mb-2">No quizzes available yet</h3>
-            <p className="text-sm text-slate-500 max-w-sm mx-auto">
-              Quizzes will appear here once teachers create them for their subjects.
-            </p>
+          ) : (
+            <div className={view === "grid" ? "mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4" : "mt-5 space-y-3"}>
+              {cards.map((quiz) => (
+                <QuizCard key={quiz.id} quiz={quiz} view={view} />
+              ))}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-1">
+              {page > 1 && (
+                <Link href={queryForPage(page - 1)} className="px-3 py-1.5 text-sm rounded-lg hover:bg-white">
+                  Prev
+                </Link>
+              )}
+              {Array.from({ length: Math.min(totalPages, 7) }, (_, index) => {
+                const n = index + 1;
+                return (
+                  <Link
+                    key={n}
+                    href={queryForPage(n)}
+                    className={`min-w-8 h-8 px-2 rounded-lg text-sm font-semibold flex items-center justify-center ${
+                      n === page ? "bg-[var(--primary)] text-white" : "text-slate-600 hover:bg-white"
+                    }`}
+                  >
+                    {n}
+                  </Link>
+                );
+              })}
+              {totalPages > 7 && <span className="px-2 text-slate-400">…</span>}
+              {totalPages > 7 && (
+                <Link
+                  href={queryForPage(totalPages)}
+                  className={`min-w-8 h-8 px-2 rounded-lg text-sm font-semibold flex items-center justify-center ${
+                    page === totalPages ? "bg-[var(--primary)] text-white" : "text-slate-600 hover:bg-white"
+                  }`}
+                >
+                  {totalPages}
+                </Link>
+              )}
+              {page < totalPages && (
+                <Link href={queryForPage(page + 1)} className="px-3 py-1.5 text-sm rounded-lg hover:bg-white">
+                  Next
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+
+        <aside className="space-y-5 xl:sticky xl:top-24">
+          <div className="bg-white rounded-2xl border border-slate-100 p-5">
+            <h3 className="font-bold text-slate-900 text-sm mb-4">Your Quiz Progress</h3>
+            <div className="flex items-center justify-center mb-4">
+              <div className="relative w-24 h-24">
+                <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                  <path
+                    className="text-slate-100"
+                    stroke="currentColor"
+                    strokeWidth="3.5"
+                    fill="none"
+                    d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31"
+                  />
+                  <path
+                    className="text-[var(--primary)]"
+                    stroke="currentColor"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    fill="none"
+                    strokeDasharray={`${progressPct}, 100`}
+                    d="M18 2.5a15.5 15.5 0 1 1 0 31 15.5 15.5 0 0 1 0-31"
+                  />
+                </svg>
+                <span className="absolute inset-0 flex items-center justify-center text-lg font-extrabold text-slate-900">
+                  {progressPct}%
+                </span>
+              </div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <Row label="Quizzes Attempted" value={String(uniqueAttempted)} />
+              <Row label="Average Score" value={userAttempts.length ? `${myAvg}%` : "—"} />
+              <Row label="Best Score" value={userAttempts.length ? `${myBest}%` : "—"} />
+              <Row label="Passed" value={String(myPassed)} />
+            </div>
           </div>
-        )}
+
+          <div className="bg-white rounded-2xl border border-slate-100 p-5">
+            <h3 className="font-bold text-slate-900 text-sm mb-4">Top Scorers</h3>
+            {leaderboard.length === 0 ? (
+              <p className="text-xs text-slate-400">No attempts yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {leaderboard.map((row, index) => {
+                  const isYou = userId && row.id === userId;
+                  return (
+                    <div
+                      key={row.id}
+                      className={`flex items-center gap-3 rounded-xl px-2 py-1.5 -mx-2 ${
+                        isYou ? "bg-violet-50" : ""
+                      }`}
+                    >
+                      <span className="w-5 text-xs font-bold text-slate-400">{index + 1}</span>
+                      {row.avatar ? (
+                        <img src={row.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center">
+                          {row.name.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-slate-900 truncate">
+                          {row.name}
+                          {isYou ? " (You)" : ""}
+                        </p>
+                        <p className="text-[11px] text-slate-400">{row.attempts} attempts</p>
+                      </div>
+                      <span className="text-xs font-bold text-violet-700">{row.avgScore}%</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </aside>
       </div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-slate-500">{label}</span>
+      <span className="font-semibold text-slate-900">{value}</span>
     </div>
   );
 }

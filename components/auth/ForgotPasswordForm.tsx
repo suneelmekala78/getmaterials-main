@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function ForgotPasswordForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,30 +24,15 @@ export function ForgotPasswordForm() {
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "Something went wrong");
-      } else {
-        setSent(true);
+        return;
       }
+      router.push(`/reset-password?email=${encodeURIComponent(email.trim())}`);
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-
-  if (sent) {
-    return (
-      <div className="text-center space-y-4">
-        <div className="w-14 h-14 bg-green-50 rounded-full flex items-center justify-center mx-auto">
-          <span className="text-2xl">📧</span>
-        </div>
-        <p className="text-sm text-gray-600">
-          If an account exists with <span className="font-semibold">{email}</span>,
-          you&apos;ll receive a password reset link shortly.
-        </p>
-        <p className="text-xs text-gray-400">Check your spam folder if you don&apos;t see it.</p>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -55,6 +41,10 @@ export function ForgotPasswordForm() {
           {error}
         </div>
       )}
+
+      <p className="text-sm text-gray-600">
+        Enter your registered email and we&apos;ll send you a 6-digit reset code.
+      </p>
 
       <label className="block">
         <span className="text-sm font-medium">Email</span>
@@ -73,7 +63,7 @@ export function ForgotPasswordForm() {
         disabled={loading}
         className="w-full py-2.5 bg-[var(--primary)] text-white font-semibold rounded-lg shadow-[0_6px_18px_rgba(177,0,255,0.12)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? "Sending..." : "Send reset link"}
+        {loading ? "Sending code..." : "Send reset code"}
       </button>
     </form>
   );

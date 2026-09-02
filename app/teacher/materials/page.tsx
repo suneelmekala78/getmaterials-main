@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { connectDB, Material } from "@getmaterials/database";
+import { connectDB, Material } from "@/lib/database";
 import { FileText, Video, Link2, Eye, Plus, Clock, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { TeacherMaterialActions } from "@/components/TeacherMaterialActions";

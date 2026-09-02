@@ -7,18 +7,16 @@ const protectedPaths = [
   "/bookmarks",
   "/settings",
   "/teacher",
-  "/donate",
-  "/donations",
   "/polls",
   "/quizzes",
   "/requests",
+  "/my-materials",
 ];
 
 // API routes that require authentication
 const protectedApiPaths = [
   "/api/bookmarks",
   "/api/upload",
-  "/api/donations",
   "/api/polls",
   "/api/quizzes",
   "/api/requests",

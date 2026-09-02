@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { connectDB, Material, Subject, User } from "@getmaterials/database";
+import { connectDB, Material, Subject, User } from "@/lib/database";
 import { BookOpen, FileText, Video, Bookmark, Clock } from "lucide-react";
 import Link from "next/link";
 import { PollWidget } from "@/components/PollWidget";

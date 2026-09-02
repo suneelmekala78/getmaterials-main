@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { connectDB, Subject, Chapter, Material } from "@getmaterials/database";
+import { connectDB, Subject, Chapter, Material } from "@/lib/database";
 import { FileText, Video, Link2, Image, ClipboardCheck, Download, Eye, Star } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -82,12 +82,13 @@ export default async function SubjectDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm">
-        <Link href="/subjects" className="text-slate-400 hover:text-violet-600 transition-colors">Subjects</Link>
-        <span className="text-slate-300">/</span>
-        <span className="text-slate-700 font-medium">{(subject as any).name}</span>
-      </div>
+      <p className="text-sm text-slate-400 mb-4">
+        <Link href="/" className="hover:text-[var(--primary)]">Home</Link>
+        <span className="mx-1.5">›</span>
+        <Link href="/subjects" className="hover:text-[var(--primary)]">Subjects</Link>
+        <span className="mx-1.5">›</span>
+        <span className="text-slate-600">{(subject as any).name}</span>
+      </p>
 
       {/* Subject header */}
       <div className="bg-white rounded-2xl border border-slate-100 p-8">

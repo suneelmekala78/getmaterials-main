@@ -1,7 +1,9 @@
 import { UploadForm } from "@/components/teacher/UploadForm";
-import { connectDB, Subject, Chapter, College, User } from "@getmaterials/database";
+import { connectDB, Subject, Chapter, College, User } from "@/lib/database";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { CloudUpload, FileText, Image as ImageIcon, Link2, Video } from "lucide-react";
 
 export const metadata = {
   title: "Upload Material - GetMaterials",
@@ -21,7 +23,6 @@ export default async function UploadPage() {
     User.findById(user.id).select("assignedColleges").lean(),
   ]);
 
-  // Serialize for client
   const subjectsData = subjects.map((s: any) => ({
     id: s._id.toString(),
     name: s.name,
@@ -47,15 +48,46 @@ export default async function UploadPage() {
   );
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">Upload Material</h1>
-        <p className="text-slate-500 mt-1">
-          Share study materials with students. Upload PDFs, videos, links, and more.
-        </p>
+    <div className="max-w-7xl mx-auto">
+      <p className="text-sm text-slate-400 mb-4">
+        <Link href="/teacher/dashboard" className="hover:text-[var(--primary)]">Home</Link>
+        <span className="mx-1.5">›</span>
+        <span className="text-slate-600">Upload Material</span>
+      </p>
+
+      <div className="flex items-start justify-between gap-6 mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-900">Upload Study Material</h1>
+          <p className="text-slate-500 mt-1">Share quality content and help students learn better.</p>
+        </div>
+        <div className="hidden md:flex items-center gap-3 pr-2">
+          <span className="w-12 h-12 rounded-2xl bg-violet-100 text-violet-600 flex items-center justify-center">
+            <CloudUpload className="w-6 h-6" />
+          </span>
+          <span className="w-9 h-9 rounded-xl bg-red-50 text-red-500 flex items-center justify-center">
+            <FileText className="w-4 h-4" />
+          </span>
+          <span className="w-9 h-9 rounded-xl bg-blue-50 text-blue-500 flex items-center justify-center">
+            <Video className="w-4 h-4" />
+          </span>
+          <span className="w-9 h-9 rounded-xl bg-purple-50 text-purple-500 flex items-center justify-center">
+            <ImageIcon className="w-4 h-4" />
+          </span>
+          <span className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
+            <Link2 className="w-4 h-4" />
+          </span>
+        </div>
       </div>
 
-      <UploadForm subjects={subjectsData} chapters={chaptersData} colleges={collegesData} assignedColleges={assignedCollegeIds} />
+      <UploadForm
+        key="create-upload"
+        subjects={subjectsData}
+        chapters={chaptersData}
+        colleges={collegesData}
+        assignedColleges={assignedCollegeIds}
+        userRole={user.role}
+        successRedirect="/teacher/materials"
+      />
     </div>
   );
 }

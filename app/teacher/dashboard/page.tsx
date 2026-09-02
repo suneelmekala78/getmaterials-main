@@ -1,6 +1,5 @@
-import mongoose from "mongoose";
 import { auth } from "@/lib/auth";
-import { connectDB, Material } from "@getmaterials/database";
+import { connectDB, Material } from "@/lib/database";
 import { FileText, Video, Eye, Download, TrendingUp, Upload } from "lucide-react";
 import Link from "next/link";
 
@@ -14,7 +13,8 @@ export default async function TeacherDashboardPage() {
 
   await connectDB();
 
-  const userId = new mongoose.Types.ObjectId(user.id);
+  // Use string id — avoid a second mongoose instance from `import mongoose from "mongoose"`
+  const userId = user.id;
   const [totalMaterials, totalViews, totalDownloads, recentMaterials] =
     await Promise.all([
       Material.countDocuments({ uploadedBy: userId }),
@@ -26,7 +26,7 @@ export default async function TeacherDashboardPage() {
         { $match: { uploadedBy: userId } },
         { $group: { _id: null, total: { $sum: "$downloads" } } },
       ]),
-      Material.find({ uploadedBy: user.id })
+      Material.find({ uploadedBy: userId })
         .populate("subject", "name")
         .sort({ createdAt: -1 })
         .limit(5)

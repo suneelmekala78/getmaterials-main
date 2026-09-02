@@ -1,25 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { signOut } from "next-auth/react";
-import { Search, Menu, LogOut, User, ChevronDown, Home, Info, Phone, HelpCircle } from "lucide-react";
+import { Search, Menu, Home, HelpCircle, ClipboardCheck, Upload } from "lucide-react";
 import Link from "next/link";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { NotificationBell } from "@/components/layout/NotificationBell";
+import { ProfileDrawer, type ProfileUser } from "@/components/layout/ProfileDrawer";
 
 interface AppTopbarProps {
-  user: {
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-    role?: string;
-  };
+  user: ProfileUser;
   onMenuClick?: () => void;
 }
 
 export function AppTopbar({ user, onMenuClick }: AppTopbarProps) {
-  const [showProfile, setShowProfile] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showLogout, setShowLogout] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const uploadHref = user.role === "teacher" ? "/teacher/upload" : "/upload";
+  const quizzesHref = user.role === "teacher" ? "/teacher/quizzes" : "/quizzes";
+  const isGuest = !user.email && user.name === "Guest";
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,70 +44,51 @@ export function AppTopbar({ user, onMenuClick }: AppTopbarProps) {
         </div>
       </form>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <nav className="hidden md:flex items-center gap-1">
           <Link href="/" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-[var(--primary)] rounded-lg hover:bg-gray-50 transition">
             <Home className="w-3.5 h-3.5" /> Home
           </Link>
-          <Link href="/about" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-[var(--primary)] rounded-lg hover:bg-gray-50 transition">
-            <Info className="w-3.5 h-3.5" /> About
-          </Link>
-          <Link href="/contact" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-[var(--primary)] rounded-lg hover:bg-gray-50 transition">
-            <Phone className="w-3.5 h-3.5" /> Contact
+          <Link href={quizzesHref} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-[var(--primary)] rounded-lg hover:bg-gray-50 transition">
+            <ClipboardCheck className="w-3.5 h-3.5" /> Quizzes
           </Link>
           <Link href="/how-to-use" className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:text-[var(--primary)] rounded-lg hover:bg-gray-50 transition">
             <HelpCircle className="w-3.5 h-3.5" /> Help
           </Link>
         </nav>
 
-        <div className="relative">
-          <button
-            onClick={() => setShowProfile(!showProfile)}
-            className="flex items-center gap-2"
+        {isGuest ? (
+          <Link
+            href="/login"
+            className="border-2 border-[var(--primary)] text-[var(--primary)] py-1.5 px-3 rounded-xl font-semibold text-sm hover:bg-[var(--primary)] hover:text-white transition"
           >
-            <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold text-sm">
+            Login
+          </Link>
+        ) : (
+          <>
+            <NotificationBell />
+            <button
+              type="button"
+              onClick={() => setProfileOpen(true)}
+              className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold text-sm"
+              aria-label="Open profile"
+            >
               {user.name?.charAt(0)?.toUpperCase() || "U"}
-            </div>
-            <div className="hidden sm:block text-left">
-              <p className="text-sm font-semibold leading-tight">{user.name}</p>
-              <p className="text-xs text-gray-500 capitalize">{user.role}</p>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-          </button>
-
-          {showProfile && (
-            <div className="absolute right-0 top-12 w-52 bg-white rounded-xl border border-gray-200 shadow-lg py-2 z-50">
-              <div className="px-4 py-2 border-b border-gray-100">
-                <p className="text-sm font-semibold">{user.name}</p>
-                <p className="text-xs text-gray-500">{user.email}</p>
-              </div>
-              <Link
-                href="/settings"
-                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
-                onClick={() => setShowProfile(false)}
-              >
-                <User className="w-4 h-4" /> Settings
-              </Link>
-              <button
-                onClick={() => { setShowProfile(false); setShowLogout(true); }}
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-              >
-                <LogOut className="w-4 h-4" /> Log out
-              </button>
-            </div>
-          )}
-        </div>
+            </button>
+            <Link
+              href={uploadHref}
+              className="hidden sm:inline-flex items-center gap-1.5 bg-[var(--primary)] text-white py-1.5 px-3 rounded-xl font-semibold text-sm hover:opacity-90"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              Upload
+            </Link>
+          </>
+        )}
       </div>
 
-      <ConfirmDialog
-        open={showLogout}
-        title="Log out"
-        message="Are you sure you want to log out?"
-        confirmLabel="Log out"
-        variant="warning"
-        onConfirm={() => signOut({ callbackUrl: "/login" })}
-        onCancel={() => setShowLogout(false)}
-      />
+      {!isGuest && (
+        <ProfileDrawer open={profileOpen} onClose={() => setProfileOpen(false)} user={user} />
+      )}
     </header>
   );
 }

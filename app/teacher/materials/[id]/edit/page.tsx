@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth";
-import { connectDB, Material, Subject, Chapter, College } from "@getmaterials/database";
+import { connectDB, Material, Subject, Chapter, College } from "@/lib/database";
+import { normalizeTags } from "@/lib/tags";
 import { redirect, notFound } from "next/navigation";
 import { EditMaterialForm } from "@/components/teacher/EditMaterialForm";
 
@@ -27,7 +28,6 @@ export default async function EditMaterialPage({
   const material = await Material.findById(id).lean();
   if (!material) notFound();
 
-  // Only uploader or admin
   if ((material as any).uploadedBy.toString() !== user.id && user.role !== "admin") {
     redirect("/teacher/materials");
   }
@@ -38,46 +38,49 @@ export default async function EditMaterialPage({
     College.find({ status: "active" }).sort({ name: 1 }).lean(),
   ]);
 
-  const subjectsData = subjects.map((s: any) => ({
-    id: s._id.toString(),
-    name: s.name,
-    slug: s.slug,
-  }));
-
-  const chaptersData = chapters.map((c: any) => ({
-    id: c._id.toString(),
-    title: c.title,
-    subject: c.subject.toString(),
-  }));
-
-  const collegesData = colleges.map((c: any) => ({
-    id: c._id.toString(),
-    name: c.name,
-    code: c.code,
-  }));
-
+  const doc = material as any;
+  const rawTagsDoc = await Material.collection.findOne(
+    { _id: doc._id },
+    { projection: { tags: 1 } }
+  );
   const materialData = {
-    id: (material as any)._id.toString(),
-    title: (material as any).title,
-    description: (material as any).description || "",
-    type: (material as any).type,
-    materialCategory: (material as any).materialCategory || "notes",
-    program: (material as any).program || "btech",
-    subject: (material as any).subject.toString(),
-    chapter: (material as any).chapter.toString(),
-    college: (material as any).college?.toString() || "",
-    tags: (material as any).tags || [],
-    thumbnailUrl: (material as any).thumbnailUrl || "",
-    attachments: ((material as any).attachments || []).map((a: any) => ({
+    id: doc._id.toString(),
+    title: doc.title,
+    description: doc.description || "",
+    type: doc.type,
+    materialCategory: doc.materialCategory || "notes",
+    program: doc.program || "",
+    branch: doc.branch || "",
+    section: doc.section || "",
+    semester: doc.semester || "",
+    batch: doc.batch || "",
+    isPublic: doc.isPublic !== false,
+    status: doc.status || "published",
+    subject: doc.subject.toString(),
+    chapter: doc.chapter?.toString() || "",
+    college: doc.college?.toString() || "",
+    collegeIds: [
+      ...new Set(
+        [
+          doc.college?.toString(),
+          ...((doc.colleges || []).map((item: any) => item.toString())),
+        ].filter(Boolean)
+      ),
+    ],
+    tags: normalizeTags(rawTagsDoc?.tags ?? doc.tags),
+    thumbnailUrl: doc.thumbnailUrl || doc.coverUrl || doc.cover || "",
+    attachments: (doc.attachments || []).map((a: any) => ({
       type: a.type,
-      fileUrl: a.fileUrl || "",
+      fileUrl: a.fileUrl || a.url || "",
       externalUrl: a.externalUrl || "",
       fileName: a.fileName || "",
+      mimeType: a.mimeType || "",
+      fileSize: a.fileSize || 0,
     })),
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-slate-900">Edit Material</h1>
         <p className="text-slate-500 mt-1">Update your study material details and files.</p>
@@ -85,9 +88,24 @@ export default async function EditMaterialPage({
 
       <EditMaterialForm
         material={materialData}
-        subjects={subjectsData}
-        chapters={chaptersData}
-        colleges={collegesData}
+        subjects={subjects.map((s: any) => ({
+          id: s._id.toString(),
+          name: s.name,
+          slug: s.slug,
+        }))}
+        chapters={chapters.map((c: any) => ({
+          id: c._id.toString(),
+          title: c.title,
+          subject: c.subject.toString(),
+        }))}
+        colleges={colleges.map((c: any) => ({
+          id: c._id.toString(),
+          name: c.name,
+          code: c.code,
+          programs: c.programs || [],
+          branches: c.branches || [],
+        }))}
+        userRole={user.role}
       />
     </div>
   );

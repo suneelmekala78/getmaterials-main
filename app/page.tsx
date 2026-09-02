@@ -1,7 +1,10 @@
-import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
 import type { Metadata } from "next";
 import Hero from "@/components/marketing/Hero";
+import HomeStats from "@/components/marketing/HomeStats";
+import MissionStory from "@/components/marketing/MissionStory";
+import CoreValues from "@/components/marketing/CoreValues";
+import Impact from "@/components/marketing/Impact";
+import BePartCTA from "@/components/marketing/BePartCTA";
 import Features from "@/components/marketing/Features";
 import Subjects from "@/components/marketing/Subjects";
 import HowItWorks from "@/components/marketing/HowItWorks";
@@ -71,16 +74,6 @@ const jsonLd = {
 };
 
 export default async function HomePage() {
-  const session = await auth();
-
-  if (session?.user) {
-    const role = (session.user as any).role;
-    if (role === "teacher") {
-      redirect("/teacher/dashboard");
-    }
-    redirect("/dashboard");
-  }
-
   return (
     <div className="bg-white">
       <MarketingNavbar />
@@ -90,6 +83,11 @@ export default async function HomePage() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Hero />
+        <HomeStats />
+        <MissionStory />
+        <CoreValues />
+        <Impact />
+        <BePartCTA />
         <Features />
         <Subjects />
         <HowItWorks />

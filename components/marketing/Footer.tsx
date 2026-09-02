@@ -3,10 +3,8 @@ import { FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import {
   CONTACT_EMAIL,
-  CONTACT_PHONE,
-  CONTACT_PHONE_E164,
   CONTACT_OFFICE,
-} from "@getmaterials/shared";
+} from "@/lib/shared";
 
 export default function Footer() {
   return (
@@ -41,8 +39,9 @@ export default function Footer() {
             <h4 className="font-bold text-sm uppercase tracking-wider text-gray-900 mb-4">Platform</h4>
             <ul className="space-y-2.5">
               <li><Link href="/materials" className="text-sm text-gray-500 hover:text-[var(--primary)]">Browse Materials</Link></li>
+              <li><Link href="/colleges" className="text-sm text-gray-500 hover:text-[var(--primary)]">Colleges</Link></li>
+              <li><Link href="/quizzes" className="text-sm text-gray-500 hover:text-[var(--primary)]">Quizzes</Link></li>
               <li><Link href="/about" className="text-sm text-gray-500 hover:text-[var(--primary)]">About Us</Link></li>
-              <li><Link href="/support" className="text-sm text-gray-500 hover:text-[var(--primary)]">Buy me a chai ☕</Link></li>
               <li><Link href="/feedback" className="text-sm text-gray-500 hover:text-[var(--primary)]">Feedback</Link></li>
               <li><Link href="/how-to-use" className="text-sm text-gray-500 hover:text-[var(--primary)]">How to Use</Link></li>
             </ul>
@@ -66,19 +65,17 @@ export default function Footer() {
               <li><Link href="/terms" className="text-sm text-gray-500 hover:text-[var(--primary)]">Terms of Service</Link></li>
               <li><Link href="/contact" className="text-sm text-gray-500 hover:text-[var(--primary)]">Contact Us</Link></li>
               <li><a href={`mailto:${CONTACT_EMAIL}`} className="text-sm text-gray-500 hover:text-[var(--primary)]">{CONTACT_EMAIL}</a></li>
-              <li><a href={`tel:${CONTACT_PHONE_E164}`} className="text-sm text-gray-500 hover:text-[var(--primary)]">{CONTACT_PHONE}</a></li>
               <li><span className="text-sm text-gray-500">{CONTACT_OFFICE}</span></li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-gray-200 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-400">
-            © {new Date().getFullYear()} GetMaterials. Built by{" "}
+          <p className="text-sm text-gray-400">© {new Date().getFullYear()} GetMaterials.</p>
+          {/* Built by{" "}
             <a href="https://suneelmekala.com" target="_blank" rel="noopener noreferrer" className="text-[var(--primary)] font-semibold hover:underline">
               Suneel Mekala
-            </a>
-          </p>
+            </a> */}
           <p className="text-sm text-gray-400">Made with ❤️ for students everywhere</p>
         </div>
       </div>

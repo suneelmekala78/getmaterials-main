@@ -56,9 +56,9 @@ export default function ForTeachers() {
               </div>
               <div className="bg-white rounded-2xl p-5 shadow-sm">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-white text-xs font-bold">AA</div>
+                  <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center text-white text-xs font-bold">PS</div>
                   <div>
-                    <p className="text-sm font-semibold">Prof. Lakshmi Sujatha</p>
+                    <p className="text-sm font-semibold">Prof. Sujatha</p>
                     <p className="text-xs text-gray-400">Uploaded yesterday</p>
                   </div>
                 </div>

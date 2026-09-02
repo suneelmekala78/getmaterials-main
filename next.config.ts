@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@getmaterials/ui", "@getmaterials/shared", "@getmaterials/database"],
+  serverExternalPackages: ["mongoose", "mongodb"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "*.amazonaws.com" },

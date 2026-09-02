@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "How to Use GetMaterials",
   description:
-    "Learn how to use GetMaterials to find, download, and upload study materials. Step-by-step guide for students and teachers.",
+    "Learn how to browse materials, take quizzes, upload files, and use GetMaterials on web and mobile.",
   alternates: { canonical: "https://getmaterials.in/how-to-use" },
 };
 
@@ -11,18 +11,16 @@ export default function HowToUsePage() {
   return (
     <main className="py-16 px-6">
       <div className="max-w-4xl mx-auto">
-        {/* Hero */}
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">
             How to Use <span className="text-[var(--primary)]">GetMaterials</span>
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Your complete guide to finding, downloading, and sharing study materials. 
-            Whether you&apos;re a student or teacher, we&apos;ve got you covered.
+            Find study materials, take quizzes, and share notes with your college.
+            Use the header to open Materials, Colleges, Quizzes, Upload, or your profile.
           </p>
         </div>
 
-        {/* For Students */}
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
@@ -36,12 +34,12 @@ export default function HowToUsePage() {
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">Browse Materials</h3>
                 <p className="text-slate-600 mb-3">
-                  Go to the <strong>Materials</strong> page. You can browse all available study materials without signing up. 
-                  Use filters to narrow down by subject, type (PDF, Video, etc.), or search by keyword.
+                  Open <strong>Materials</strong> in the header. Filter by subject, type (PDF, video, link), category, college, or semester.
+                  Switch between grid and list view. You can browse public materials without signing in.
                 </p>
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
                   <p className="text-sm text-slate-500">
-                    💡 <strong>Tip:</strong> No signup required to browse and view materials!
+                    💡 <strong>Tip:</strong> Open a material to read About, Topics, Preview, Videos, and Reviews in one page.
                   </p>
                 </div>
               </div>
@@ -49,42 +47,36 @@ export default function HowToUsePage() {
             <div className="flex gap-5">
               <div className="flex-shrink-0 w-8 h-8 bg-violet-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">Select Your Program & Subject</h3>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">Find Your College</h3>
                 <p className="text-slate-600 mb-3">
-                  Choose your program (B.Tech, M.Tech, BCA, etc.), then select the subject you need materials for. 
-                  You&apos;ll see all chapters and materials organized neatly.
+                  Go to <strong>Colleges</strong> to see institutions on GetMaterials. Filter by location, program, or branch,
+                  then open a college to view materials shared for that campus.
                 </p>
               </div>
             </div>
             <div className="flex gap-5">
               <div className="flex-shrink-0 w-8 h-8 bg-violet-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">Download or View</h3>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">Take Quizzes</h3>
                 <p className="text-slate-600 mb-3">
-                  Click on any material to view its details. You can preview PDFs, watch videos, or download files directly. 
-                  Create a free account to bookmark materials and track your downloads.
+                  Sign in and open <strong>Quizzes</strong>. Filter by subject, search, and start a quiz.
+                  Your progress, average score, and best score appear on the right. Use <strong>My Quizzes</strong> to revisit quizzes you already attempted.
                 </p>
               </div>
             </div>
             <div className="flex gap-5">
               <div className="flex-shrink-0 w-8 h-8 bg-violet-600 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">College-Specific Materials</h3>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">Your Account</h3>
                 <p className="text-slate-600 mb-3">
-                  If your college is registered on GetMaterials, you can find materials specifically curated for your college. 
-                  These are organized by your college&apos;s programs, branches (CSE, ECE, etc.), semesters, and even sections (A, B, C).
+                  After login, click your avatar to open the profile menu: Dashboard, My Materials, Upload, Quizzes, Bookmarks, and Settings.
+                  Use <strong>Upload</strong> to share notes. Student uploads go through review before they are published.
                 </p>
-                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                  <p className="text-sm text-blue-700">
-                    📋 <strong>College materials include:</strong> Notes, Question Papers, Lab Manuals, Syllabi, Assignments, and Reference materials — all aligned with your curriculum.
-                  </p>
-                </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* For Teachers */}
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
@@ -98,8 +90,7 @@ export default function HowToUsePage() {
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">Create an Account & Apply as Teacher</h3>
                 <p className="text-slate-600 mb-3">
-                  Sign up for a free account, then request a role change to &quot;Teacher&quot; from your settings. 
-                  Our admin team will review and approve your request.
+                  Sign up, then request a role change to Teacher from Settings. After approval, Upload and Quizzes appear in the header and profile menu.
                 </p>
               </div>
             </div>
@@ -108,33 +99,27 @@ export default function HowToUsePage() {
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">Upload Materials</h3>
                 <p className="text-slate-600 mb-3">
-                  Once approved, go to the <strong>Upload</strong> page. You can upload:
+                  Open <strong>Upload</strong> and fill in title, subject, chapter, and who can see it (Public or College Only).
+                  Then add files in two separate steps:
                 </p>
                 <ul className="list-disc pl-5 space-y-1 text-slate-600 mb-3">
-                  <li><strong>For Everyone:</strong> Select program, subject, and chapter — available to all students.</li>
-                  <li><strong>For Specific College:</strong> Select college, program, branch, section, and semester — visible only to that college&apos;s students.</li>
+                  <li><strong>Cover image (optional):</strong> thumbnail or banner shown on material cards. Students do not download this as a study file.</li>
+                  <li><strong>Study files & links:</strong> PDFs, documents, images, YouTube videos, or web links that students will actually open.</li>
                 </ul>
+                <p className="text-slate-600">
+                  Save as Draft, or publish. Teacher uploads go live; student uploads wait for review.
+                </p>
               </div>
             </div>
             <div className="flex gap-5">
               <div className="flex-shrink-0 w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
               <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">Choose Material Type</h3>
-                <p className="text-slate-600 mb-3">Upload different types of study materials:</p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-                  {[
-                    { label: "Notes", emoji: "📝" },
-                    { label: "Question Papers", emoji: "📄" },
-                    { label: "Lab Manuals", emoji: "🔬" },
-                    { label: "Syllabus", emoji: "📋" },
-                    { label: "Assignments", emoji: "✍️" },
-                    { label: "Reference", emoji: "📚" },
-                  ].map((item) => (
-                    <div key={item.label} className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 flex items-center gap-2">
-                      <span>{item.emoji}</span> {item.label}
-                    </div>
-                  ))}
-                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">Create and Manage Quizzes</h3>
+                <p className="text-slate-600 mb-3">
+                  Open <strong>Quizzes</strong> in the header (or your profile menu) to see your quizzes.
+                  Use <strong>Create Quiz</strong> to add MCQ questions, duration, and a passing score.
+                  From the same page you can preview, view responses, edit, or delete a quiz.
+                </p>
               </div>
             </div>
             <div className="flex gap-5">
@@ -142,15 +127,27 @@ export default function HowToUsePage() {
               <div>
                 <h3 className="text-lg font-semibold text-slate-900 mb-2">Manage Your Materials</h3>
                 <p className="text-slate-600">
-                  View analytics, track downloads, and manage all your uploaded materials from the teacher dashboard. 
-                  Edit or remove materials at any time.
+                  Open My Materials from your profile to edit, replace files, change the cover image, or remove uploads.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* College Structure */}
+        <section className="mb-16">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+              <span className="text-xl">📱</span>
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900">On the Mobile App</h2>
+          </div>
+          <p className="text-slate-600 mb-4">
+            The bottom tabs are Home, Categories, Upload, <strong>Quizzes</strong>, and Profile.
+            Tap the menu icon (three bars) at the top left to open the sidebar for Saved, Downloads, Settings, and more.
+            GetMaterials stays in the center of the home header.
+          </p>
+        </section>
+
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
@@ -208,7 +205,6 @@ export default function HowToUsePage() {
           </div>
         </section>
 
-        {/* FAQ */}
         <section>
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center">
@@ -218,12 +214,14 @@ export default function HowToUsePage() {
           </div>
           <div className="space-y-4">
             {[
-              { q: "Do I need to sign up to view materials?", a: "No! You can browse and view all public materials without creating an account. Signup is only needed for downloading, bookmarking, and uploading." },
-              { q: "Is GetMaterials free?", a: "Yes, GetMaterials is completely free for all students and teachers. We believe education should be accessible to everyone." },
-              { q: "How do I find materials for my specific college?", a: "If your college is registered, you'll see college-specific materials when you sign in. These are organized by your college's programs, branches, and semesters." },
-              { q: "Can students upload materials?", a: "Yes! Students can upload materials too. However, student uploads go through a review process before being published to maintain quality." },
-              { q: "What file formats are supported?", a: "We support PDFs, images, video links (YouTube, etc.), external links, and assignment files. The maximum file size is 25MB per attachment." },
-              { q: "How do I become a teacher on GetMaterials?", a: "Create an account, go to Settings, and request a role change to Teacher. Our admin team will review and approve your request, usually within 24 hours." },
+              { q: "Do I need to sign up to view materials?", a: "No. You can browse and view public materials without an account. Sign in to take quizzes, bookmark, upload, and track downloads." },
+              { q: "Is GetMaterials free?", a: "Yes. GetMaterials is free for students and teachers." },
+              { q: "How do I find materials for my college?", a: "Open Colleges, find your campus, or filter Materials by college. College-only uploads are visible after you sign in." },
+              { q: "Can students upload materials?", a: "Yes. Students can upload from Upload. Those files go through review before they are published." },
+              { q: "Where do I add a thumbnail vs a PDF?", a: "On Upload, step 2 is the cover image (listing banner). Step 3 is study files and links — PDFs, videos, and URLs students will open." },
+              { q: "How do quizzes work?", a: "Students start a quiz from Quizzes. Teachers create, edit, and delete quizzes from Quizzes in the header, and can view student responses." },
+              { q: "What file formats are supported?", a: "PDFs, images, video files or YouTube links, documents, and web links. Max size is 100MB per study file. Cover images should be under 5MB." },
+              { q: "How do I become a teacher on GetMaterials?", a: "Create an account, go to Settings, and request a role change to Teacher. We review requests, usually within 24 hours." },
             ].map((faq, i) => (
               <div key={i} className="bg-white border border-slate-200 rounded-xl p-5">
                 <h3 className="font-semibold text-slate-900 mb-2">{faq.q}</h3>

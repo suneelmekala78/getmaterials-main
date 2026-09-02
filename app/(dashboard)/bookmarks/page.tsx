@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { connectDB, User, Material } from "@getmaterials/database";
+import { connectDB, User, Material } from "@/lib/database";
 import { Bookmark, FileText, Video, Link2, Clock, Trash2 } from "lucide-react";
 import Link from "next/link";
 import RemoveBookmarkButton from "./RemoveBookmarkButton";

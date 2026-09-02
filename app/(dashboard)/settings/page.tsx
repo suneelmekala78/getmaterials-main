@@ -14,6 +14,11 @@ export default function SettingsPage() {
   const [name, setName] = useState(user?.name || "");
   const [saving, setSaving] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [savedPhone, setSavedPhone] = useState("");
+  const [phoneCode, setPhoneCode] = useState("");
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [phoneLoading, setPhoneLoading] = useState(false);
 
   // Change password state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -32,6 +37,18 @@ export default function SettingsPage() {
   const [roleSubmitting, setRoleSubmitting] = useState(false);
   const [roleRequest, setRoleRequest] = useState<{ status: string; createdAt: string } | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/user/profile")
+      .then((res) => res.json())
+      .then((data) => {
+        const value = String(data.user?.phone || "");
+        setPhone(value);
+        setSavedPhone(value);
+        if (data.user?.name) setName(data.user.name);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (user?.role === "student") {
@@ -104,6 +121,52 @@ export default function SettingsPage() {
     }
   };
 
+  const sendPhoneOtp = async () => {
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      toast.error("Enter a valid 10-digit Indian mobile number");
+      return;
+    }
+    setPhoneLoading(true);
+    try {
+      const res = await fetch("/api/user/phone/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send OTP");
+      setPhoneOtpSent(true);
+      setPhoneCode("");
+      toast.success("OTP sent to your mobile number");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send OTP");
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const confirmPhone = async () => {
+    if (phoneCode.length !== 6) return;
+    setPhoneLoading(true);
+    try {
+      const res = await fetch("/api/user/phone/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, code: phoneCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Invalid OTP");
+      setSavedPhone(phone);
+      setPhoneOtpSent(false);
+      setPhoneCode("");
+      toast.success("Mobile number updated");
+    } catch (error: any) {
+      toast.error(error.message || "Invalid or expired OTP");
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
@@ -152,6 +215,67 @@ export default function SettingsPage() {
             <p className="text-xs text-slate-400 mt-1">Email cannot be changed.</p>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Mobile Number
+            </label>
+            <div className="flex rounded-xl border border-slate-200 overflow-hidden focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/20">
+              <span className="inline-flex items-center px-3 bg-slate-50 border-r border-slate-200 text-sm text-slate-600">
+                +91
+              </span>
+              <input
+                type="tel"
+                inputMode="numeric"
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value.replace(/\D/g, "").slice(0, 10));
+                  setPhoneOtpSent(false);
+                  setPhoneCode("");
+                }}
+                maxLength={10}
+                placeholder="9876543210"
+                className="flex-1 min-w-0 px-4 py-2.5 text-sm focus:outline-none"
+              />
+              {phone === savedPhone && savedPhone ? (
+                <span className="inline-flex items-center px-3 text-xs font-semibold text-emerald-600">
+                  Verified
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={sendPhoneOtp}
+                  disabled={phoneLoading || phone.length !== 10}
+                  className="px-4 text-xs font-semibold text-violet-600 hover:bg-violet-50 disabled:text-slate-300"
+                >
+                  {phoneLoading ? "Sending..." : phoneOtpSent ? "Resend" : "Verify"}
+                </button>
+              )}
+            </div>
+            {phoneOtpSent && phone !== savedPhone && (
+              <div className="flex gap-2 mt-2">
+                <input
+                  value={phoneCode}
+                  onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="6-digit OTP"
+                  className="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm tracking-[0.3em] text-center focus:outline-none focus:border-violet-500"
+                />
+                <button
+                  type="button"
+                  onClick={confirmPhone}
+                  disabled={phoneLoading || phoneCode.length !== 6}
+                  className="px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+                >
+                  Confirm
+                </button>
+              </div>
+            )}
+            <p className="text-xs text-slate-400 mt-1">
+              Adding or changing your number requires OTP verification.
+            </p>
+          </div>
+
           <button
             type="submit"
             disabled={saving}
@@ -176,6 +300,14 @@ export default function SettingsPage() {
             setPwSuccess("");
             if (newPassword !== confirmPassword) {
               setPwError("Passwords do not match");
+              return;
+            }
+            if (newPassword.length < 8) {
+              setPwError("New password must be at least 8 characters");
+              return;
+            }
+            if (newPassword === currentPassword) {
+              setPwError("New password must be different from your current password");
               return;
             }
             setPwLoading(true);

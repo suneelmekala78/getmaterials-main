@@ -38,28 +38,27 @@ function loadPdfJs() {
 }
 
 export function pdfProxyUrl(url: string) {
-  return `/api/pdf-proxy?url=${encodeURIComponent(url)}`;
+  return url;
 }
 
 function getPdfDoc(url: string) {
-  const proxy = pdfProxyUrl(url);
-  if (!pdfDocCache.has(proxy)) {
+  if (!pdfDocCache.has(url)) {
     const loading = loadPdfJs()
       .then((pdfjs) =>
         pdfjs.getDocument({
-          url: proxy,
+          url,
           withCredentials: false,
-          disableRange: true,
-          disableStream: true,
+          disableRange: false,
+          disableStream: false,
         }).promise
       )
       .catch((error: unknown) => {
-        pdfDocCache.delete(proxy);
+        pdfDocCache.delete(url);
         throw error;
       });
-    pdfDocCache.set(proxy, loading);
+    pdfDocCache.set(url, loading);
   }
-  return pdfDocCache.get(proxy)!;
+  return pdfDocCache.get(url)!;
 }
 
 async function renderPdfPage(url: string, pageNum: number, scale: number) {
@@ -394,7 +393,14 @@ function PdfPreview({ url, title, hideShell = false }: { url: string; title: str
   const body = (
     <>
       {error ? (
-        <p className="text-sm text-slate-500">{error}</p>
+        <div className="space-y-3">
+          <p className="text-sm text-slate-500">{error}</p>
+          <iframe
+            title={title}
+            src={url}
+            className="w-full h-[70vh] rounded-xl border border-slate-200 bg-white"
+          />
+        </div>
       ) : (
         <>
           <div className="flex items-center gap-2">

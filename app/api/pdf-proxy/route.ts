@@ -25,18 +25,6 @@ export async function GET(req: NextRequest) {
     return new Response("Invalid PDF url", { status: 400 });
   }
 
-  const upstream = await fetch(url, { cache: "force-cache" });
-  if (!upstream.ok || !upstream.body) {
-    return new Response("Unable to load PDF", { status: 502 });
-  }
-
-  const contentType = upstream.headers.get("content-type") || "application/pdf";
-  return new Response(upstream.body, {
-    status: 200,
-    headers: {
-      "Content-Type": contentType.includes("pdf") ? "application/pdf" : "application/pdf",
-      "Cache-Control": "public, max-age=3600",
-      "X-Content-Type-Options": "nosniff",
-    },
-  });
+  // Never stream the PDF through Amplify/CloudFront — large files 413.
+  return Response.redirect(url, 302);
 }

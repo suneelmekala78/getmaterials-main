@@ -3,8 +3,6 @@ import { auth } from "@/lib/auth";
 import { signAccessToken } from "@/lib/jwt";
 import { resolveApiOrigin } from "@/lib/api-origin";
 
-const API_ORIGIN = resolveApiOrigin();
-
 /**
  * Proxies a request to Nest, attaching a Bearer JWT when a NextAuth session exists.
  * Use for dedicated routes under /api/auth/* that must not hit NextAuth catch-all.
@@ -15,7 +13,7 @@ export async function proxyToNest(
   opts?: { requireSession?: boolean }
 ) {
   const incoming = new URL(req.url);
-  const targetUrl = `${API_ORIGIN}${nestPath}${incoming.search}`;
+  const targetUrl = `${resolveApiOrigin()}${nestPath}${incoming.search}`;
 
   const headers = new Headers();
   const contentType = req.headers.get("content-type");

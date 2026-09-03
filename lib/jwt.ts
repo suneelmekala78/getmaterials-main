@@ -1,13 +1,18 @@
 import { SignJWT } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || process.env.AUTH_SECRET || "fallback-dev-secret"
-);
-
 const ACCESS_TOKEN_EXPIRY = "15m";
 
+function getSecret() {
+  return new TextEncoder().encode(
+    process.env.JWT_SECRET ||
+      process.env.AUTH_SECRET ||
+      process.env.NEXTAUTH_SECRET ||
+      "fallback-dev-secret",
+  );
+}
+
 export interface JWTPayload {
-  sub: string; // user id
+  sub: string;
   email: string;
   name: string;
   role: string;
@@ -22,5 +27,5 @@ export async function signAccessToken(payload: JWTPayload): Promise<string> {
     .setExpirationTime(ACCESS_TOKEN_EXPIRY)
     .setIssuer("getmaterials")
     .setAudience("getmaterials-mobile")
-    .sign(JWT_SECRET);
+    .sign(getSecret());
 }

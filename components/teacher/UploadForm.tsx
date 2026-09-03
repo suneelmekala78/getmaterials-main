@@ -520,7 +520,9 @@ export function UploadForm({
       toast.error(
         raw === "Failed to fetch"
           ? "Upload could not reach storage. Check the API is running and try again."
-          : raw || "Something went wrong",
+          : /unauthorized/i.test(raw)
+            ? "Your session was rejected by the API. Log out, log back in, and try again."
+            : raw || "Something went wrong",
         { id: "upload" }
       );
     } finally {

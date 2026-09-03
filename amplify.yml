@@ -6,7 +6,7 @@ frontend:
         - npm ci
     build:
       commands:
-        - (env | grep -E '^(MONGODB_URI|AUTH_SECRET|AUTH_URL|JWT_SECRET|API_INTERNAL_URL|NEXT_PUBLIC_)' || true) >> .env.production
+        - node scripts/write-runtime-env.mjs
         - npm run build
   artifacts:
     baseDirectory: .next

@@ -3,6 +3,16 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB, User } from "@/lib/database";
 
+if (!process.env.AUTH_SECRET && process.env.NEXTAUTH_SECRET) {
+  process.env.AUTH_SECRET = process.env.NEXTAUTH_SECRET;
+}
+if (!process.env.AUTH_URL && process.env.NEXTAUTH_URL) {
+  process.env.AUTH_URL = process.env.NEXTAUTH_URL;
+}
+if (!process.env.JWT_SECRET && (process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET)) {
+  process.env.JWT_SECRET = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+}
+
 // Phone OTP login — disabled until SMS provider is ready.
 // import { resolveApiOrigin } from "@/lib/api-origin";
 // const API_INTERNAL_URL = resolveApiOrigin();
@@ -22,6 +32,8 @@ import { connectDB, User } from "@/lib/database";
 // }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   providers: [
     Credentials({
       id: "credentials",
@@ -85,6 +97,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.sub = user.id;
         token.id = (user as any).id;
         token.role = (user as any).role;
         token.status = (user as any).status;
@@ -116,12 +129,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.error === "UserRevoked") {
         return { ...session, expires: new Date(0).toISOString() } as any;
       }
-      if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
-        (session.user as any).status = token.status;
-      }
-      return session;
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: String(token.id || token.sub || ""),
+          role: token.role,
+          status: token.status,
+        },
+      };
     },
   },
   pages: {
@@ -132,7 +148,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     strategy: "jwt",
     maxAge: 365 * 24 * 60 * 60,
   },
-  trustHost: true,
   cookies: {
     sessionToken: {
       name: "getmaterials-main-session",

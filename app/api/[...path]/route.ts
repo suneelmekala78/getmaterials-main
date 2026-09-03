@@ -3,8 +3,6 @@ import { auth } from "@/lib/auth";
 import { signAccessToken } from "@/lib/jwt";
 import { resolveApiOrigin } from "@/lib/api-origin";
 
-const API_ORIGIN = resolveApiOrigin();
-
 type Ctx = { params: Promise<{ path: string[] }> };
 
 export const runtime = "nodejs";
@@ -14,7 +12,7 @@ async function proxy(req: NextRequest, ctx: Ctx) {
   const { path } = await ctx.params;
   const targetPath = path.join("/");
   const incoming = new URL(req.url);
-  const targetUrl = `${API_ORIGIN}/api/${targetPath}${incoming.search}`;
+  const targetUrl = `${resolveApiOrigin()}/api/${targetPath}${incoming.search}`;
 
   const headers = new Headers();
   const contentType = req.headers.get("content-type");

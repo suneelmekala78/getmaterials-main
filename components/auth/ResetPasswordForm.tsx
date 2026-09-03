@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { OtpCodeInput } from "./OtpCodeInput";
 
 export function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -121,27 +122,23 @@ export function ResetPasswordForm() {
         />
       </label>
 
-      <label className="block">
+      <div className="block">
         <span className="auth-label">Reset code</span>
-        <input
-          type="text"
+        <OtpCodeInput
           value={code}
-          onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-          placeholder="000000"
-          required
-          maxLength={6}
-          autoComplete="one-time-code"
-          className="auth-input text-center tracking-[0.4em] font-mono font-semibold"
+          onChange={setCode}
+          disabled={loading}
+          autoFocus
         />
         <button
           type="button"
           onClick={handleResend}
           disabled={resending || !email.trim()}
-          className="mt-1.5 text-sm font-medium text-[var(--primary)] hover:underline disabled:opacity-50"
+          className="mt-2 text-sm font-medium text-[var(--primary)] hover:underline disabled:opacity-50"
         >
           {resending ? "Sending..." : "Resend code"}
         </button>
-      </label>
+      </div>
 
       <label className="block">
         <span className="auth-label">New password</span>

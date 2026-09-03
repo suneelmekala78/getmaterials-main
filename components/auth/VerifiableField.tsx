@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { OtpCodeInput } from "./OtpCodeInput";
 
 export type VerifyChannel = "email" | "phone";
 
@@ -184,24 +185,21 @@ export function VerifiableField({
       </div>
 
       {codeSent && !verified && (
-        <div className="mt-2 flex items-center gap-2">
-          <input
-            type="text"
+        <div className="mt-3 space-y-2">
+          <OtpCodeInput
             value={code}
-            onChange={(e) => {
-              setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+            onChange={(next) => {
+              setCode(next);
               setError("");
             }}
-            placeholder="000000"
-            maxLength={6}
-            autoComplete="one-time-code"
-            className="auth-input flex-1 text-center tracking-[0.4em] font-mono font-semibold"
+            disabled={confirming}
+            autoFocus
           />
           <button
             type="button"
             onClick={confirmCode}
             disabled={confirming || code.length !== 6}
-            className="auth-btn w-auto shrink-0 px-5"
+            className="auth-btn"
           >
             {confirming ? "Checking..." : "Confirm"}
           </button>

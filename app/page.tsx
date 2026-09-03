@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     locale: "en_IN",
     images: [
       {
-        url: "/og-image.png",
+        url: "/images/hero.png",
         width: 1200,
         height: 630,
         alt: "GetMaterials - Free Study Materials for Students",
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     title: "GetMaterials — Free Study Materials for Students",
     description:
       "Access thousands of free study materials curated by verified teachers.",
-    images: ["/og-image.png"],
+    images: ["/images/hero.png"],
   },
   alternates: {
     canonical: "https://getmaterials.in",

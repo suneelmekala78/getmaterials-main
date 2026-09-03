@@ -14,8 +14,9 @@ interface AppTopbarProps {
 export function AppTopbar({ user, onMenuClick }: AppTopbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
-  const uploadHref = user.role === "teacher" ? "/teacher/upload" : "/upload";
-  const quizzesHref = user.role === "teacher" ? "/teacher/quizzes" : "/quizzes";
+  const isTeacher = user.role === "teacher" && user.status !== "pending";
+  const uploadHref = isTeacher ? "/teacher/upload" : "/upload";
+  const quizzesHref = isTeacher ? "/teacher/quizzes" : "/quizzes";
   const isGuest = !user.email && user.name === "Guest";
 
   const handleSearch = (e: React.FormEvent) => {

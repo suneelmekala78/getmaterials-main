@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { signAccessToken } from "@/lib/jwt";
+import { resolveApiOrigin } from "@/lib/api-origin";
 
-const API_ORIGIN =
-  process.env.API_INTERNAL_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:4000";
+const API_ORIGIN = resolveApiOrigin();
 
 type Ctx = { params: Promise<{ path: string[] }> };
 
@@ -51,7 +49,7 @@ async function proxy(req: NextRequest, ctx: Ctx) {
   } catch (error) {
     console.error("API proxy error:", targetUrl, error);
     return NextResponse.json(
-      { error: "API server unavailable. Is Nest running on port 4000?" },
+      { error: "API server unavailable. Please try again." },
       { status: 502 }
     );
   }

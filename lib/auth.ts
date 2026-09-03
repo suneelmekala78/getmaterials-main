@@ -3,23 +3,23 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB, User } from "@/lib/database";
 
-const API_INTERNAL_URL =
-  process.env.API_INTERNAL_URL || "http://localhost:4000";
+// Phone OTP login — disabled until SMS provider is ready.
+// import { resolveApiOrigin } from "@/lib/api-origin";
+// const API_INTERNAL_URL = resolveApiOrigin();
 
-async function verifyPhoneOtp(credentials: Record<string, unknown>) {
-  const phone = credentials.phone as string;
-  const code = credentials.code as string;
-
-  const res = await fetch(`${API_INTERNAL_URL}/api/auth/phone/verify`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ phone, code }),
-  });
-
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.user ?? null;
-}
+// Phone OTP login — disabled until SMS provider is ready.
+// async function verifyPhoneOtp(credentials: Record<string, unknown>) {
+//   const phone = credentials.phone as string;
+//   const code = credentials.code as string;
+//   const res = await fetch(`${API_INTERNAL_URL}/api/auth/phone/verify`, {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({ phone, code }),
+//   });
+//   if (!res.ok) return null;
+//   const data = await res.json();
+//   return data.user ?? null;
+// }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -59,29 +59,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
-    Credentials({
-      id: "phone",
-      name: "Phone",
-      credentials: {
-        phone: { label: "Phone", type: "tel" },
-        code: { label: "OTP", type: "text" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.phone || !credentials?.code) return null;
-
-        const user = await verifyPhoneOtp(credentials as Record<string, unknown>);
-        if (!user) return null;
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.avatar,
-          role: user.role,
-          status: user.status,
-        };
-      },
-    }),
+    // Phone OTP login — disabled until SMS provider is ready.
+    // Credentials({
+    //   id: "phone",
+    //   name: "Phone",
+    //   credentials: {
+    //     phone: { label: "Phone", type: "tel" },
+    //     code: { label: "OTP", type: "text" },
+    //   },
+    //   async authorize(credentials) {
+    //     if (!credentials?.phone || !credentials?.code) return null;
+    //     const user = await verifyPhoneOtp(credentials as Record<string, unknown>);
+    //     if (!user) return null;
+    //     return {
+    //       id: user.id,
+    //       email: user.email,
+    //       name: user.name,
+    //       image: user.avatar,
+    //       role: user.role,
+    //       status: user.status,
+    //     };
+    //   },
+    // }),
   ],
   callbacks: {
     async jwt({ token, user }) {

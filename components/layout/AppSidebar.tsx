@@ -43,12 +43,13 @@ interface AppSidebarProps {
   user: {
     name?: string | null;
     role?: string;
+    status?: string;
   };
 }
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
-  const links = user.role === "teacher" ? teacherLinks : studentLinks;
+  const links = user.role === "teacher" && user.status !== "pending" ? teacherLinks : studentLinks;
 
   return (
     <aside className="flex flex-col w-64 h-screen bg-white border-r border-black/10 sticky top-0 overflow-y-auto">

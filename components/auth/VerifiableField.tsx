@@ -120,12 +120,12 @@ export function VerifiableField({
       type="button"
       onClick={sendCode}
       disabled={disabled || sending || !isValid || cooldown > 0}
-      className="shrink-0 px-3 text-xs font-semibold text-[var(--primary)] hover:bg-[var(--primary)]/5 disabled:text-gray-300 disabled:hover:bg-transparent disabled:cursor-not-allowed transition"
+      className="shrink-0 h-[46px] px-4 rounded-xl text-sm font-semibold bg-[#F3E8FF] text-[var(--primary)] hover:bg-[#ead5ff] disabled:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed transition"
     >
       {sending
         ? "Sending..."
         : cooldown > 0
-          ? `Resend ${cooldown}s`
+          ? `${cooldown}s`
           : codeSent
             ? "Resend"
             : "Verify"}
@@ -133,13 +133,8 @@ export function VerifiableField({
   );
 
   const verifiedBadge = (
-    <span className="shrink-0 inline-flex items-center gap-1 px-3 text-xs font-semibold text-green-600">
-      <svg
-        viewBox="0 0 20 20"
-        fill="currentColor"
-        className="w-4 h-4"
-        aria-hidden="true"
-      >
+    <span className="shrink-0 inline-flex h-[46px] items-center gap-1 px-3 text-sm font-semibold text-emerald-600">
+      <svg viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4" aria-hidden="true">
         <path
           fillRule="evenodd"
           d="M16.7 5.3a1 1 0 0 1 0 1.4l-7.5 7.5a1 1 0 0 1-1.4 0L3.3 9.7a1 1 0 0 1 1.4-1.4l3.3 3.3 6.8-6.8a1 1 0 0 1 1.4 0Z"
@@ -152,37 +147,39 @@ export function VerifiableField({
 
   return (
     <div className="block">
-      <span className="text-sm font-medium">{label}</span>
+      <span className="auth-label">{label}</span>
 
-      <div
-        className={`mt-1 flex items-stretch rounded-lg border overflow-hidden transition ${
-          verified
-            ? "border-green-300 bg-green-50/40"
-            : "border-gray-200 focus-within:border-[var(--primary)]"
-        }`}
-      >
-        {channel === "phone" && (
-          <span className="inline-flex items-center px-3 bg-gray-50 text-sm font-medium text-gray-600 border-r border-gray-200">
-            +91
-          </span>
-        )}
-        <input
-          type={channel === "phone" ? "tel" : "email"}
-          inputMode={channel === "phone" ? "numeric" : "email"}
-          value={value}
-          onChange={(e) =>
-            handleValueChange(
-              channel === "phone"
-                ? e.target.value.replace(/\D/g, "").slice(0, 10)
-                : e.target.value
-            )
-          }
-          placeholder={channel === "phone" ? "98765 43210" : "you@example.com"}
-          required
-          disabled={disabled || verified}
-          maxLength={channel === "phone" ? 10 : undefined}
-          className="flex-1 min-w-0 px-3 py-2.5 text-sm bg-transparent focus:outline-none disabled:text-gray-500"
-        />
+      <div className="flex items-center gap-2">
+        <div
+          className={`flex min-w-0 flex-1 items-stretch overflow-hidden rounded-xl border ${
+            verified
+              ? "border-emerald-300 bg-emerald-50/50"
+              : "border-slate-200 bg-slate-50 focus-within:border-[var(--primary)] focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(177,0,255,0.1)]"
+          }`}
+        >
+          {channel === "phone" && (
+            <span className="inline-flex items-center px-3 text-sm font-medium text-slate-600 border-r border-slate-200">
+              +91
+            </span>
+          )}
+          <input
+            type={channel === "phone" ? "tel" : "email"}
+            inputMode={channel === "phone" ? "numeric" : "email"}
+            value={value}
+            onChange={(e) =>
+              handleValueChange(
+                channel === "phone"
+                  ? e.target.value.replace(/\D/g, "").slice(0, 10)
+                  : e.target.value
+              )
+            }
+            placeholder={channel === "phone" ? "98765 43210" : "you@example.com"}
+            required
+            disabled={disabled || verified}
+            maxLength={channel === "phone" ? 10 : undefined}
+            className="min-w-0 flex-1 bg-transparent px-3.5 py-3 text-[0.9375rem] outline-none disabled:text-slate-500"
+          />
+        </div>
         {verified ? verifiedBadge : verifyButton}
       </div>
 
@@ -198,28 +195,28 @@ export function VerifiableField({
             placeholder="000000"
             maxLength={6}
             autoComplete="one-time-code"
-            className="flex-1 min-w-0 rounded-lg border border-gray-200 px-3 py-2 text-sm text-center tracking-[0.4em] font-mono font-semibold focus:outline-none focus:border-[var(--primary)] transition"
+            className="auth-input flex-1 text-center tracking-[0.4em] font-mono font-semibold"
           />
           <button
             type="button"
             onClick={confirmCode}
             disabled={confirming || code.length !== 6}
-            className="shrink-0 px-4 py-2 text-xs font-semibold text-white bg-[var(--primary)] rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+            className="auth-btn w-auto shrink-0 px-5"
           >
             {confirming ? "Checking..." : "Confirm"}
           </button>
         </div>
       )}
 
-      {error && <p className="mt-1 text-xs text-red-600">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-red-600">{error}</p>}
       {!error && info && !verified && (
-        <p className="mt-1 text-xs text-gray-500">{info}</p>
+        <p className="mt-1.5 text-xs text-slate-500">{info}</p>
       )}
       {!error && !info && !verified && (
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1.5 text-xs text-slate-400">
           {channel === "phone"
-            ? "Tap Verify to receive an OTP by SMS"
-            : "Tap Verify to receive a code by email"}
+            ? "We’ll send a 6-digit code to this number"
+            : "We’ll send a 6-digit code to this email"}
         </p>
       )}
     </div>

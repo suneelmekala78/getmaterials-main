@@ -37,6 +37,10 @@ export default function SettingsPage() {
   const [roleSubmitting, setRoleSubmitting] = useState(false);
   const [roleRequest, setRoleRequest] = useState<{ status: string; createdAt: string } | null>(null);
   const [roleLoading, setRoleLoading] = useState(true);
+  const [colleges, setColleges] = useState<{ _id: string; name: string; code?: string }[]>([]);
+  const [roleCollege, setRoleCollege] = useState("");
+  const [collegeMissing, setCollegeMissing] = useState(false);
+  const [requestedCollegeName, setRequestedCollegeName] = useState("");
 
   useEffect(() => {
     fetch("/api/user/profile")
@@ -47,6 +51,13 @@ export default function SettingsPage() {
         setSavedPhone(value);
         if (data.user?.name) setName(data.user.name);
       })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/college-directory")
+      .then((res) => res.json())
+      .then((data) => setColleges(data.colleges || []))
       .catch(() => {});
   }, []);
 
@@ -72,6 +83,14 @@ export default function SettingsPage() {
       toast.error("Please provide a reason");
       return;
     }
+    if (!collegeMissing && !roleCollege) {
+      toast.error("Select your college");
+      return;
+    }
+    if (collegeMissing && requestedCollegeName.trim().length < 3) {
+      toast.error("Enter the college name to request");
+      return;
+    }
     setRoleSubmitting(true);
     try {
       const res = await fetch("/api/role-change-requests", {
@@ -81,6 +100,10 @@ export default function SettingsPage() {
           toRole: "teacher",
           reason: roleReason.trim(),
           qualifications: roleQualifications.trim() || undefined,
+          college: collegeMissing ? undefined : roleCollege,
+          requestedCollegeName: collegeMissing
+            ? requestedCollegeName.trim()
+            : undefined,
         }),
       });
       const data = await res.json();
@@ -442,7 +465,7 @@ export default function SettingsPage() {
                 <div>
                   <p className="text-sm font-medium text-amber-800">Request Pending</p>
                   <p className="text-xs text-amber-600 mt-1">
-                    Your request to become a teacher is under review. We&apos;ll notify you once it&apos;s processed.
+                    Your request to become a teacher is under review. You can keep using the site as a student in the meantime.
                   </p>
                   <p className="text-xs text-amber-500 mt-2">
                     Submitted {new Date(roleRequest.createdAt).toLocaleDateString()}
@@ -494,6 +517,43 @@ export default function SettingsPage() {
                       className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">College you teach at</label>
+                    {!collegeMissing && (
+                      <select
+                        value={roleCollege}
+                        onChange={(e) => setRoleCollege(e.target.value)}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                      >
+                        <option value="">Select college</option>
+                        {colleges.map((c) => (
+                          <option key={c._id} value={c._id}>
+                            {c.name}{c.code ? ` (${c.code})` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <label className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={collegeMissing}
+                        onChange={(e) => {
+                          setCollegeMissing(e.target.checked);
+                          if (e.target.checked) setRoleCollege("");
+                        }}
+                      />
+                      My college isn&apos;t listed — request to add it
+                    </label>
+                    {collegeMissing && (
+                      <input
+                        type="text"
+                        value={requestedCollegeName}
+                        onChange={(e) => setRequestedCollegeName(e.target.value)}
+                        placeholder="College name"
+                        className="mt-2 w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                      />
+                    )}
+                  </div>
                   <button
                     type="submit"
                     disabled={roleSubmitting}
@@ -507,7 +567,7 @@ export default function SettingsPage() {
             ) : (
               <form onSubmit={handleRoleRequest} className="space-y-4">
                 <p className="text-sm text-slate-600 mb-4">
-                  Want to contribute study materials? Apply to become a teacher and upload notes, PDFs, videos, and more for students.
+                  Want to contribute study materials? Apply to become a teacher. You keep full student access while we review your request.
                 </p>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Why do you want to become a teacher?</label>
@@ -523,7 +583,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Qualifications (optional)</label>
-                  <input
+                    <input
                     type="text"
                     value={roleQualifications}
                     onChange={(e) => setRoleQualifications(e.target.value)}
@@ -531,6 +591,43 @@ export default function SettingsPage() {
                     placeholder="e.g., B.Tech in CSE, 2 years teaching experience"
                     className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">College you teach at</label>
+                  {!collegeMissing && (
+                    <select
+                      value={roleCollege}
+                      onChange={(e) => setRoleCollege(e.target.value)}
+                      className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                    >
+                      <option value="">Select college</option>
+                      {colleges.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.name}{c.code ? ` (${c.code})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <label className="mt-2 flex items-center gap-2 text-sm text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={collegeMissing}
+                      onChange={(e) => {
+                        setCollegeMissing(e.target.checked);
+                        if (e.target.checked) setRoleCollege("");
+                      }}
+                    />
+                    My college isn&apos;t listed — request to add it
+                  </label>
+                  {collegeMissing && (
+                    <input
+                      type="text"
+                      value={requestedCollegeName}
+                      onChange={(e) => setRequestedCollegeName(e.target.value)}
+                      placeholder="College name"
+                      className="mt-2 w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                    />
+                  )}
                 </div>
                 <button
                   type="submit"

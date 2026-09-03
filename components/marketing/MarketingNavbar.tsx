@@ -25,9 +25,10 @@ const MarketingNavbar = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const pathname = usePathname();
   const { data: session, status } = useSession();
-  const user = session?.user as { name?: string; email?: string; image?: string; role?: string } | undefined;
-  const quizzesHref = user?.role === "teacher" ? "/teacher/quizzes" : "/quizzes";
-  const uploadHref = user?.role === "teacher" ? "/teacher/upload" : "/upload";
+  const user = session?.user as { name?: string; email?: string; image?: string; role?: string; status?: string } | undefined;
+  const isTeacher = user?.role === "teacher" && user?.status !== "pending";
+  const quizzesHref = isTeacher ? "/teacher/quizzes" : "/quizzes";
+  const uploadHref = isTeacher ? "/teacher/upload" : "/upload";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);

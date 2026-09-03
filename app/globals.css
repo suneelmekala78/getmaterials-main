@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @source "../app";
 @source "../components";
-@source "../../packages/ui/src";
 
 :root {
   --primary: #b100ff;
@@ -33,6 +32,72 @@ body {
 
 h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
+}
+
+.auth-label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.auth-input {
+  display: block;
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 0.8rem 0.95rem;
+  font-size: 0.9375rem;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.auth-input::placeholder {
+  color: #94a3b8;
+}
+
+.auth-input:focus {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(177, 0, 255, 0.1);
+}
+
+.auth-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  box-shadow: 0 10px 24px rgba(177, 0, 255, 0.22);
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.auth-btn:hover {
+  transform: translateY(-1px);
+}
+
+.auth-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.auth-toggle {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.auth-toggle:hover {
+  color: var(--primary);
 }
 
 button, a {

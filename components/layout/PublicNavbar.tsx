@@ -76,7 +76,7 @@ export function PublicNavbar() {
                 <>
                   {/* Dashboard link */}
                   <Link
-                    href={user.role === "teacher" ? "/teacher/dashboard" : "/dashboard"}
+                    href={user.role === "teacher" && user.status !== "pending" ? "/teacher/dashboard" : "/dashboard"}
                     className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-violet-600 hover:bg-violet-50 rounded-lg transition-colors"
                   >
                     <LayoutDashboard className="w-4 h-4" />
@@ -102,7 +102,7 @@ export function PublicNavbar() {
                           <p className="text-xs text-slate-500">{user.email}</p>
                         </div>
                         <Link
-                          href={user.role === "teacher" ? "/teacher/dashboard" : "/dashboard"}
+                          href={user.role === "teacher" && user.status !== "pending" ? "/teacher/dashboard" : "/dashboard"}
                           className="flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
                           onClick={() => setShowProfile(false)}
                         >
@@ -189,7 +189,7 @@ export function PublicNavbar() {
             })}
             {user && (
               <Link
-                href={user.role === "teacher" ? "/teacher/dashboard" : "/dashboard"}
+                href={user.role === "teacher" && user.status !== "pending" ? "/teacher/dashboard" : "/dashboard"}
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50"
               >

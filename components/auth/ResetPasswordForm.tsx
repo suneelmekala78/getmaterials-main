@@ -88,7 +88,7 @@ export function ResetPasswordForm() {
         </p>
         <Link
           href="/login"
-          className="inline-block px-6 py-2.5 bg-[var(--primary)] text-white font-semibold rounded-lg text-sm hover:-translate-y-0.5 transition-all"
+          className="auth-btn"
         >
           Go to Login
         </Link>
@@ -97,32 +97,32 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
-        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg">
+        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl">
           {error}
         </div>
       )}
       {info && (
-        <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg">
+        <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-100 rounded-xl">
           {info}
         </div>
       )}
 
       <label className="block">
-        <span className="text-sm font-medium">Email</span>
+        <span className="auth-label">Email</span>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
           required
-          className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm focus:outline-none focus:border-[var(--primary)] transition"
+          className="auth-input"
         />
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium">Reset code</span>
+        <span className="auth-label">Reset code</span>
         <input
           type="text"
           value={code}
@@ -131,20 +131,20 @@ export function ResetPasswordForm() {
           required
           maxLength={6}
           autoComplete="one-time-code"
-          className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-center tracking-[0.4em] font-mono font-semibold focus:outline-none focus:border-[var(--primary)] transition"
+          className="auth-input text-center tracking-[0.4em] font-mono font-semibold"
         />
         <button
           type="button"
           onClick={handleResend}
           disabled={resending || !email.trim()}
-          className="mt-1 text-xs text-[var(--primary)] font-semibold hover:underline disabled:opacity-50"
+          className="mt-1.5 text-sm font-medium text-[var(--primary)] hover:underline disabled:opacity-50"
         >
           {resending ? "Sending..." : "Resend code"}
         </button>
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium">New Password</span>
+        <span className="auth-label">New password</span>
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}
@@ -153,21 +153,21 @@ export function ResetPasswordForm() {
             placeholder="Enter new password"
             required
             minLength={8}
-            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-14 text-sm focus:outline-none focus:border-[var(--primary)] transition"
+            className="auth-input pr-16"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+            className="auth-toggle absolute right-3.5 top-1/2 -translate-y-1/2"
           >
             {showPassword ? "Hide" : "Show"}
           </button>
         </div>
-        <p className="mt-1 text-xs text-gray-400">Min 8 chars, 1 uppercase, 1 number</p>
+        <p className="mt-1.5 text-xs text-slate-400">Min 8 characters, 1 uppercase, 1 number</p>
       </label>
 
       <label className="block">
-        <span className="text-sm font-medium">Confirm Password</span>
+        <span className="auth-label">Confirm password</span>
         <div className="relative">
           <input
             type={showConfirm ? "text" : "password"}
@@ -175,12 +175,12 @@ export function ResetPasswordForm() {
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Confirm new password"
             required
-            className="mt-1 block w-full rounded-lg border border-gray-200 px-3 py-2.5 pr-14 text-sm focus:outline-none focus:border-[var(--primary)] transition"
+            className="auth-input pr-16"
           />
           <button
             type="button"
             onClick={() => setShowConfirm(!showConfirm)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs"
+            className="auth-toggle absolute right-3.5 top-1/2 -translate-y-1/2"
           >
             {showConfirm ? "Hide" : "Show"}
           </button>
@@ -190,12 +190,12 @@ export function ResetPasswordForm() {
       <button
         type="submit"
         disabled={loading || code.length !== 6}
-        className="w-full py-2.5 bg-[var(--primary)] text-white font-semibold rounded-lg shadow-[0_6px_18px_rgba(177,0,255,0.12)] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="auth-btn"
       >
-        {loading ? "Resetting..." : "Reset Password"}
+        {loading ? "Resetting..." : "Reset password"}
       </button>
 
-      <p className="text-center text-xs text-gray-400">
+      <p className="text-center text-sm text-slate-400">
         Didn&apos;t request this?{" "}
         <Link href="/login" className="text-[var(--primary)] font-semibold hover:underline">
           Back to login

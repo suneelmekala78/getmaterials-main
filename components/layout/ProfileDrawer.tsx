@@ -23,10 +23,11 @@ export type ProfileUser = {
   email?: string | null;
   image?: string | null;
   role?: string;
+  status?: string;
 };
 
-function drawerLinks(role?: string) {
-  const isTeacher = role === "teacher";
+function drawerLinks(role?: string, status?: string) {
+  const isTeacher = role === "teacher" && status !== "pending";
   return [
     { href: "/settings", label: "My Profile", icon: User },
     {
@@ -122,7 +123,7 @@ export function ProfileDrawer({
           </div>
 
           <nav className="flex-1 overflow-y-auto px-3 py-3">
-            {drawerLinks(user.role).map((item) => {
+            {drawerLinks(user.role, user.status).map((item) => {
               const Icon = item.icon;
               return (
                 <Link

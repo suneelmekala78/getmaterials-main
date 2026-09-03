@@ -2,11 +2,16 @@ import { SignJWT } from "jose";
 
 const ACCESS_TOKEN_EXPIRY = "15m";
 
+/** Avoid Next.js build-time inlining so Amplify runtime secrets are used. */
+function readEnv(...parts: string[]) {
+  return process.env[parts.join("_")];
+}
+
 function getSecret() {
   return new TextEncoder().encode(
-    process.env.JWT_SECRET ||
-      process.env.AUTH_SECRET ||
-      process.env.NEXTAUTH_SECRET ||
+    readEnv("JWT", "SECRET") ||
+      readEnv("AUTH", "SECRET") ||
+      readEnv("NEXTAUTH", "SECRET") ||
       "fallback-dev-secret",
   );
 }

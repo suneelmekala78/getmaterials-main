@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB, User } from "@/lib/database";
+import { resolveApiOrigin } from "@/lib/api-origin";
 
 if (!process.env.AUTH_SECRET && process.env.NEXTAUTH_SECRET) {
   process.env.AUTH_SECRET = process.env.NEXTAUTH_SECRET;
@@ -61,6 +62,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 
+        let accessToken: string | undefined;
+        try {
+          const tokenRes = await fetch(`${resolveApiOrigin()}/api/auth/web-session`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          });
+          const tokenData = await tokenRes.json().catch(() => null);
+          if (tokenRes.ok && tokenData?.accessToken) {
+            accessToken = tokenData.accessToken;
+          }
+        } catch (error) {
+          console.error("[website-auth] web-session token failed", error);
+        }
+
         return {
           id: user._id.toString(),
           email: user.email,
@@ -68,6 +87,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           image: user.avatar,
           role: user.role,
           status: user.status,
+          accessToken,
         };
       },
     }),
@@ -101,6 +121,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = (user as any).id;
         token.role = (user as any).role;
         token.status = (user as any).status;
+        token.accessToken = (user as any).accessToken;
         token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
       }
 
@@ -131,6 +152,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
       return {
         ...session,
+        accessToken: token.accessToken,
         user: {
           ...session.user,
           id: String(token.id || token.sub || ""),

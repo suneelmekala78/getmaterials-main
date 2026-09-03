@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { signAccessToken } from "@/lib/jwt";
+import { getExpressAccessToken } from "@/lib/express-token";
 import { resolveApiOrigin } from "@/lib/api-origin";
 
 /**
@@ -20,16 +19,8 @@ export async function proxyToNest(
   if (contentType) headers.set("content-type", contentType);
 
   try {
-    const session = await auth();
-    const user = session?.user as any;
-    if (user?.id && user?.email) {
-      const accessToken = await signAccessToken({
-        sub: String(user.id),
-        email: String(user.email),
-        name: String(user.name || user.email),
-        role: String(user.role || "student"),
-        status: String(user.status || "active"),
-      });
+    const accessToken = await getExpressAccessToken();
+    if (accessToken) {
       headers.set("authorization", `Bearer ${accessToken}`);
     } else if (opts?.requireSession) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

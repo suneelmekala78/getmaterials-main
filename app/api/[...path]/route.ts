@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { signAccessToken } from "@/lib/jwt";
+import { getExpressAccessToken } from "@/lib/express-token";
 import { resolveApiOrigin } from "@/lib/api-origin";
 
 type Ctx = { params: Promise<{ path: string[] }> };
@@ -18,20 +17,9 @@ async function proxy(req: NextRequest, ctx: Ctx) {
   const contentType = req.headers.get("content-type");
   if (contentType) headers.set("content-type", contentType);
 
-  // Convert NextAuth session → Nest Bearer JWT so Nest guards work
   try {
-    const session = await auth();
-    const user = session?.user as any;
-    if (user?.id && user?.email) {
-      const accessToken = await signAccessToken({
-        sub: String(user.id),
-        email: String(user.email),
-        name: String(user.name || user.email),
-        role: String(user.role || "student"),
-        status: String(user.status || "active"),
-      });
-      headers.set("authorization", `Bearer ${accessToken}`);
-    }
+    const accessToken = await getExpressAccessToken();
+    if (accessToken) headers.set("authorization", `Bearer ${accessToken}`);
   } catch {
     // public routes still work without a session
   }

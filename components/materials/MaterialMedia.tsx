@@ -503,7 +503,9 @@ function PdfGalleryModal({
   const [page, setPage] = useState(initialPage);
   const [zoom, setZoom] = useState(1);
   const [fullSrc, setFullSrc] = useState(thumbs[initialPage] || "");
+  const [isMobile, setIsMobile] = useState(false);
   const stripRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
 
   const adjustZoom = useCallback((delta: number) => {
     setZoom((current) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, +(current + delta).toFixed(2))));
@@ -516,6 +518,14 @@ function PdfGalleryModal({
     },
     [total]
   );
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const apply = () => setIsMobile(media.matches);
+    apply();
+    media.addEventListener("change", apply);
+    return () => media.removeEventListener("change", apply);
+  }, []);
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -554,6 +564,98 @@ function PdfGalleryModal({
     const current = stripRef.current?.querySelector(`[data-page="${page}"]`);
     current?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }, [page]);
+
+  const thumbsStrip = (
+    <div ref={stripRef} className={`flex gap-2 overflow-x-auto ${isMobile ? "px-3 py-2 bg-[#F2F2F2]" : "px-4 py-3"}`}>
+      {Array.from({ length: total }, (_, index) => {
+        const num = index + 1;
+        const src = thumbs[num];
+        const active = num === page;
+        return (
+          <button
+            key={num}
+            type="button"
+            data-page={num}
+            onClick={() => goTo(num)}
+            className={`relative shrink-0 overflow-hidden ${
+              isMobile
+                ? `w-[52px] h-[74px] rounded-[3px] border-2 ${active ? "border-[#1A73E8]" : "border-[#D8D8D8]"}`
+                : `w-16 aspect-[3/4] rounded-md border-2 ${active ? "border-violet-400" : "border-transparent opacity-70 hover:opacity-100"}`
+            }`}
+          >
+            {src ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={src} alt={`Page ${num}`} className="w-full h-full object-contain bg-white" />
+            ) : (
+              <div className={`w-full h-full ${isMobile ? "bg-white" : "bg-white/20"}`} />
+            )}
+            {isMobile ? (
+              <span
+                className={`absolute right-0.5 bottom-0.5 min-w-4 h-4 px-0.5 rounded-[3px] text-[10px] leading-4 text-center font-semibold text-white ${
+                  active ? "bg-[#1A73E8]" : "bg-[#5F5F5F]"
+                }`}
+              >
+                {num}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div className="gm-overlay fixed inset-0 z-[100] flex flex-col bg-[#E9E9E9]">
+        <div className="relative flex-1 min-h-0">
+          <div className="absolute top-3 left-3 z-10 rounded-full bg-black/70 px-3 py-1 text-[13px] font-semibold text-white">
+            {page} / {total}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div
+            className="flex h-full items-center justify-center px-3 pt-14 pb-2"
+            onTouchStart={(event) => {
+              touchStartX.current = event.changedTouches[0]?.clientX ?? null;
+            }}
+            onTouchEnd={(event) => {
+              const start = touchStartX.current;
+              const end = event.changedTouches[0]?.clientX;
+              touchStartX.current = null;
+              if (start == null || end == null) return;
+              const delta = end - start;
+              if (delta > 48) goTo(page - 1);
+              if (delta < -48) goTo(page + 1);
+            }}
+          >
+            {fullSrc ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={fullSrc}
+                alt={`Page ${page}`}
+                className="max-h-full max-w-full bg-white object-contain shadow-md"
+              />
+            ) : (
+              <div className="aspect-[3/4] w-[70vw] animate-pulse rounded-md bg-white" />
+            )}
+          </div>
+        </div>
+        <div className="h-[3px] bg-black/10">
+          <div
+            className="h-full bg-[#1A73E8] transition-[width]"
+            style={{ width: `${total ? (page / total) * 100 : 0}%` }}
+          />
+        </div>
+        {thumbsStrip}
+      </div>
+    );
+  }
 
   return (
     <div className="gm-overlay fixed inset-0 z-[100] flex flex-col bg-black/80">
@@ -633,33 +735,7 @@ function PdfGalleryModal({
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
-      <div className="px-4 py-3">
-        <div ref={stripRef} className="flex gap-2 overflow-x-auto pb-1">
-          {Array.from({ length: total }, (_, index) => {
-            const num = index + 1;
-            const src = thumbs[num];
-            const active = num === page;
-            return (
-              <button
-                key={num}
-                type="button"
-                data-page={num}
-                onClick={() => goTo(num)}
-                className={`w-16 shrink-0 aspect-[3/4] rounded-md overflow-hidden border-2 ${
-                  active ? "border-violet-400" : "border-transparent opacity-70 hover:opacity-100"
-                }`}
-              >
-                {src ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={src} alt={`Page ${num}`} className="w-full h-full object-contain bg-white" />
-                ) : (
-                  <div className="w-full h-full bg-white/20" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      {thumbsStrip}
     </div>
   );
 }

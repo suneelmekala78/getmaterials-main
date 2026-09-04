@@ -6,18 +6,14 @@ import {
   CONTACT_EMAIL,
   CONTACT_OFFICE,
 } from "@/lib/shared";
+import { listingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = listingMetadata({
   title: "Contact Us — Get in Touch with GetMaterials",
   description:
     "Get in touch with the GetMaterials team. Have questions, suggestions, or want to partner with us? We respond within 24 hours.",
-  alternates: { canonical: "https://getmaterials.in/contact" },
-  openGraph: {
-    title: "Contact GetMaterials",
-    description: "Questions, suggestions, or partnerships? Drop us a message.",
-    url: "https://getmaterials.in/contact",
-  },
-};
+  path: "/contact",
+});
 
 export default function ContactPage() {
   return (

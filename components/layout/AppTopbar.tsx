@@ -5,6 +5,7 @@ import { Search, Menu, Home, HelpCircle, ClipboardCheck, Upload } from "lucide-r
 import Link from "next/link";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { ProfileDrawer, type ProfileUser } from "@/components/layout/ProfileDrawer";
+import { UserAvatar } from "@/components/layout/UserAvatar";
 
 interface AppTopbarProps {
   user: ProfileUser;
@@ -71,10 +72,10 @@ export function AppTopbar({ user, onMenuClick }: AppTopbarProps) {
             <button
               type="button"
               onClick={() => setProfileOpen(true)}
-              className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold text-sm"
+              className="rounded-full"
               aria-label="Open profile"
             >
-              {user.name?.charAt(0)?.toUpperCase() || "U"}
+              <UserAvatar name={user.name} image={user.image} role={user.role} size={32} />
             </button>
             <Link
               href={uploadHref}

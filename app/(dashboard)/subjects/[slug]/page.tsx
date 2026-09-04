@@ -3,6 +3,7 @@ import { connectDB, Subject, Chapter, Material } from "@/lib/database";
 import { FileText, Video, Link2, Image, ClipboardCheck, Download, Eye, Star } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -24,7 +25,7 @@ const typeColors: Record<string, string> = {
   assignment: "text-amber-500 bg-amber-50",
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://getmaterials.com";
+const BASE_URL = SITE_URL;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -41,13 +42,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${subject.name} - Study Materials`,
       description,
       url: `${BASE_URL}/subjects/${slug}`,
-      siteName: "GetMaterials",
+      siteName: SITE_NAME,
       type: "website",
+      images: [DEFAULT_OG_IMAGE],
     },
     twitter: {
-      card: "summary",
+      card: "summary_large_image",
       title: `${subject.name} - Study Materials`,
       description,
+      images: [DEFAULT_OG_IMAGE.url],
     },
     alternates: {
       canonical: `${BASE_URL}/subjects/${slug}`,

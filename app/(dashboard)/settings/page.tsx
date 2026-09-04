@@ -3,12 +3,22 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
-import { User, Lock, Bell, LogOut, Save, GraduationCap, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { User, Lock, Bell, LogOut, Save, GraduationCap, Clock, CheckCircle2, XCircle, Camera, ImageIcon } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { OtpCodeInput } from "@/components/auth/OtpCodeInput";
+import { uploadBrowserFile } from "@/lib/upload-file";
+import {
+  DEFAULT_IMAGE_POS,
+  defaultAvatarSrc,
+  defaultBannerSrc,
+  FittedPhoto,
+  type ImagePos,
+} from "@/components/profile/FittedPhoto";
+import { ImageAdjustModal } from "@/components/profile/ImageAdjustModal";
 import toast from "react-hot-toast";
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const user = session?.user as any;
   
   const [name, setName] = useState(user?.name || "");
@@ -19,6 +29,19 @@ export default function SettingsPage() {
   const [phoneCode, setPhoneCode] = useState("");
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneLoading, setPhoneLoading] = useState(false);
+  const [avatar, setAvatar] = useState(user?.image || "");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [banner, setBanner] = useState("");
+  const [bannerUploading, setBannerUploading] = useState(false);
+  const [avatarPos, setAvatarPos] = useState<ImagePos>(DEFAULT_IMAGE_POS);
+  const [bannerPos, setBannerPos] = useState<ImagePos>(DEFAULT_IMAGE_POS);
+  const [adjusting, setAdjusting] = useState<"avatar" | "banner" | null>(null);
+  const [bio, setBio] = useState("");
+  const [email, setEmail] = useState(user?.email || "");
+  const [savedEmail, setSavedEmail] = useState(user?.email || "");
+  const [emailCode, setEmailCode] = useState("");
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
 
   // Change password state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -50,6 +73,15 @@ export default function SettingsPage() {
         setPhone(value);
         setSavedPhone(value);
         if (data.user?.name) setName(data.user.name);
+        if (data.user?.avatar) setAvatar(data.user.avatar);
+        if (data.user?.banner) setBanner(data.user.banner);
+        if (data.user?.avatarPos) setAvatarPos(data.user.avatarPos);
+        if (data.user?.bannerPos) setBannerPos(data.user.bannerPos);
+        if (data.user?.bio != null) setBio(data.user.bio);
+        if (data.user?.email) {
+          setEmail(data.user.email);
+          setSavedEmail(data.user.email);
+        }
       })
       .catch(() => {});
   }, []);
@@ -124,14 +156,27 @@ export default function SettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (email.trim().toLowerCase() !== savedEmail.toLowerCase()) {
+      toast.error("Verify the new email before saving, or change it back.");
+      return;
+    }
+    if (phone !== savedPhone) {
+      toast.error(
+        phone
+          ? "Verify the new mobile number before saving, or restore the verified number."
+          : "Use Remove number to drop your mobile number, or restore the verified number.",
+      );
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, avatar, banner, bio, avatarPos, bannerPos }),
       });
       if (res.ok) {
+        await update({ name, image: avatar || "" });
         toast.success("Profile updated successfully!");
       } else {
         const data = await res.json();
@@ -165,6 +210,108 @@ export default function SettingsPage() {
       toast.error(error.message || "Failed to send OTP");
     } finally {
       setPhoneLoading(false);
+    }
+  };
+
+  const uploadImage = async (file: File | undefined | null, kind: "avatar" | "banner") => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Choose a JPG, PNG, or WebP photo");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Photo must be under 5 MB");
+      return;
+    }
+    if (kind === "avatar") setAvatarUploading(true);
+    else setBannerUploading(true);
+    try {
+      const uploaded = await uploadBrowserFile(file, kind === "avatar" ? "avatars" : "banners");
+      if (kind === "avatar") {
+        setAvatar(uploaded.fileUrl);
+        setAvatarPos(DEFAULT_IMAGE_POS);
+        setAdjusting("avatar");
+      } else {
+        setBanner(uploaded.fileUrl);
+        setBannerPos(DEFAULT_IMAGE_POS);
+        setAdjusting("banner");
+      }
+      toast.success("Photo uploaded. Adjust the crop, then save changes.");
+    } catch (error: any) {
+      toast.error(error.message || "Could not upload photo");
+    } finally {
+      if (kind === "avatar") setAvatarUploading(false);
+      else setBannerUploading(false);
+    }
+  };
+
+  const removePhone = async () => {
+    setPhoneLoading(true);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clearPhone: true }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not remove number");
+      setPhone("");
+      setSavedPhone("");
+      setPhoneOtpSent(false);
+      setPhoneCode("");
+      toast.success("Mobile number removed");
+    } catch (error: any) {
+      toast.error(error.message || "Could not remove number");
+    } finally {
+      setPhoneLoading(false);
+    }
+  };
+
+  const sendEmailOtp = async () => {
+    const next = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next)) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+    setEmailLoading(true);
+    try {
+      const res = await fetch("/api/user/email/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send code");
+      setEmailOtpSent(true);
+      setEmailCode("");
+      toast.success("Code sent to the new email");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send code");
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
+  const confirmEmail = async () => {
+    if (emailCode.length !== 6) return;
+    setEmailLoading(true);
+    try {
+      const res = await fetch("/api/user/email/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), code: emailCode }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Invalid code");
+      setSavedEmail(email.trim().toLowerCase());
+      setEmailOtpSent(false);
+      setEmailCode("");
+      await update({ email: email.trim().toLowerCase() });
+      toast.success("Email updated");
+    } catch (error: any) {
+      toast.error(error.message || "Invalid or expired code");
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -204,16 +351,103 @@ export default function SettingsPage() {
           <h2 className="text-base font-semibold text-slate-900">Profile</h2>
         </div>
         <form onSubmit={handleSave} className="p-6 space-y-4">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white text-xl font-bold">
-              {user?.name?.charAt(0)?.toUpperCase() || "U"}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Banner</label>
+            <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+              <FittedPhoto
+                src={banner || defaultBannerSrc()}
+                pos={banner ? bannerPos : undefined}
+                className="h-28 w-full"
+                alt=""
+              />
+              <div className="absolute bottom-3 right-3 flex gap-2">
+                {banner ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setAdjusting("banner")}
+                      className="px-3 py-1.5 rounded-lg bg-white/95 text-xs font-semibold text-slate-700 shadow"
+                    >
+                      Adjust
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBanner("");
+                        setBannerPos(DEFAULT_IMAGE_POS);
+                      }}
+                      className="px-3 py-1.5 rounded-lg bg-white/95 text-xs font-semibold text-red-600 shadow"
+                    >
+                      Remove
+                    </button>
+                  </>
+                ) : null}
+                <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/95 text-xs font-semibold text-slate-700 shadow cursor-pointer">
+                  <ImageIcon className="w-3.5 h-3.5" />
+                  {bannerUploading ? "Uploading…" : banner ? "Change" : "Upload"}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    disabled={bannerUploading}
+                    onChange={(e) => uploadImage(e.target.files?.[0], "banner")}
+                  />
+                </label>
+              </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-4 mb-2">
+            <label className="relative w-16 h-16 shrink-0 cursor-pointer">
+              <FittedPhoto
+                src={avatar || defaultAvatarSrc(user?.role)}
+                pos={avatarPos}
+                className="w-16 h-16 rounded-2xl bg-white"
+                alt=""
+              />
+              <span className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-violet-600 text-white flex items-center justify-center shadow">
+                <Camera className="w-3.5 h-3.5" />
+              </span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                disabled={avatarUploading}
+                onChange={(e) => uploadImage(e.target.files?.[0], "avatar")}
+              />
+            </label>
             <div>
               <p className="font-semibold text-slate-900">{user?.name}</p>
-              <p className="text-sm text-slate-500">{user?.email}</p>
+              <p className="text-sm text-slate-500">{savedEmail}</p>
               <span className="inline-block mt-1 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide bg-violet-50 text-violet-600 rounded">
                 {user?.role || "student"}
               </span>
+              <div className="flex items-center gap-3 mt-1">
+                <p className="text-xs text-slate-400">
+                  {avatarUploading ? "Uploading photo…" : "Tap the photo to change it"}
+                </p>
+                {avatar ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setAdjusting("avatar")}
+                      className="text-xs font-semibold text-violet-600"
+                    >
+                      Adjust
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAvatar("");
+                        setAvatarPos(DEFAULT_IMAGE_POS);
+                      }}
+                      className="text-xs font-semibold text-red-600"
+                    >
+                      Remove
+                    </button>
+                  </>
+                ) : null}
+              </div>
             </div>
           </div>
 
@@ -228,14 +462,61 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
-            <input
-              type="email"
-              value={user?.email || ""}
-              disabled
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-slate-50 text-slate-500 cursor-not-allowed"
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Bio</label>
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value.slice(0, 500))}
+              rows={3}
+              placeholder="A short intro for your public profile"
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all resize-none"
             />
-            <p className="text-xs text-slate-400 mt-1">Email cannot be changed.</p>
+            <p className="text-xs text-slate-400 mt-1">{bio.length}/500</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">Email</label>
+            <div className="flex rounded-xl border border-slate-200 overflow-hidden focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/20">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailOtpSent(false);
+                  setEmailCode("");
+                }}
+                className="flex-1 min-w-0 px-4 py-2.5 text-sm focus:outline-none"
+              />
+              {email.trim().toLowerCase() === savedEmail.toLowerCase() ? (
+                <span className="inline-flex items-center px-3 text-xs font-semibold text-emerald-600">
+                  Verified
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={sendEmailOtp}
+                  disabled={emailLoading}
+                  className="px-4 text-xs font-semibold text-violet-600 hover:bg-violet-50 disabled:text-slate-300"
+                >
+                  {emailLoading ? "Sending..." : emailOtpSent ? "Resend" : "Verify"}
+                </button>
+              )}
+            </div>
+            {emailOtpSent && email.trim().toLowerCase() !== savedEmail.toLowerCase() && (
+              <div className="mt-3 space-y-2">
+                <OtpCodeInput value={emailCode} onChange={setEmailCode} disabled={emailLoading} />
+                <button
+                  type="button"
+                  onClick={confirmEmail}
+                  disabled={emailLoading || emailCode.length !== 6}
+                  className="w-full px-4 py-2.5 bg-violet-600 text-white rounded-xl text-sm font-medium disabled:opacity-50"
+                >
+                  Confirm new email
+                </button>
+              </div>
+            )}
+            <p className="text-xs text-slate-400 mt-1">
+              Changing email sends a 6-digit code to the new address.
+            </p>
           </div>
 
           <div>
@@ -294,9 +575,21 @@ export default function SettingsPage() {
                 </button>
               </div>
             )}
-            <p className="text-xs text-slate-400 mt-1">
-              Adding or changing your number requires OTP verification.
-            </p>
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <p className="text-xs text-slate-400">
+                Adding or changing your number requires OTP verification before you save.
+              </p>
+              {savedPhone ? (
+                <button
+                  type="button"
+                  onClick={removePhone}
+                  disabled={phoneLoading}
+                  className="text-xs font-semibold text-red-600 hover:text-red-700 disabled:opacity-50 shrink-0"
+                >
+                  Remove number
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <button
@@ -665,6 +958,21 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {adjusting ? (
+        <ImageAdjustModal
+          src={adjusting === "avatar" ? avatar || defaultAvatarSrc(user?.role) : banner}
+          title={adjusting === "avatar" ? "Adjust profile photo" : "Adjust banner"}
+          aspect={adjusting === "banner" ? "banner" : "square"}
+          initial={adjusting === "avatar" ? avatarPos : bannerPos}
+          onCancel={() => setAdjusting(null)}
+          onSave={(pos) => {
+            if (adjusting === "avatar") setAvatarPos(pos);
+            else setBannerPos(pos);
+            setAdjusting(null);
+          }}
+        />
+      ) : null}
 
       <ConfirmDialog
         open={showLogout}

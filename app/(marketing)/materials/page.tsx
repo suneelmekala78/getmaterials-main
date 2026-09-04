@@ -13,18 +13,21 @@ import type { Metadata } from "next";
 import MaterialsToolbar from "@/components/materials/MaterialsToolbar";
 import MaterialsFilterSidebar from "@/components/materials/MaterialsFilterSidebar";
 import MaterialCard from "@/components/materials/MaterialCard";
+import { listingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Browse Study Materials - GetMaterials",
+export const metadata: Metadata = listingMetadata({
+  title: "Browse Free Study Materials, Notes & PDFs",
   description:
-    "Browse free study materials, notes, question papers, videos, and resources uploaded by verified teachers. Download PDFs, watch video lectures, and more.",
-  openGraph: {
-    title: "Browse Study Materials - GetMaterials",
-    description:
-      "Browse free study materials, notes, question papers, videos, and resources uploaded by verified teachers.",
-    type: "website",
-  },
-};
+    "Browse free study materials, handwritten notes, question papers, and video lectures uploaded by teachers on GetMaterials.",
+  path: "/materials",
+  keywords: [
+    "free study materials",
+    "download notes PDF",
+    "question papers",
+    "video lectures",
+    "GetMaterials",
+  ],
+});
 
 const PAGE_SIZE = 18;
 

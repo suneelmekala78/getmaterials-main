@@ -6,18 +6,17 @@ import SubjectsFilterSidebar from "@/components/subjects/SubjectsFilterSidebar";
 import SubjectsToolbar from "@/components/subjects/SubjectsToolbar";
 import SubjectCard, { type SubjectCardData } from "@/components/subjects/SubjectCard";
 import { formatCount, subjectsHref, type SubjectQuery } from "@/components/subjects/query";
+import { listingMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Subjects - GetMaterials",
-  description: "Explore subjects and find the best study materials for your courses.",
-  openGraph: {
-    title: "Subjects - GetMaterials",
-    description: "Explore subjects and find the best study materials for your courses.",
-    type: "website",
-  },
-};
+export const metadata: Metadata = listingMetadata({
+  title: "Subjects — Free Notes, PDFs & Lectures",
+  description:
+    "Explore subjects on GetMaterials and download free notes, question papers, and video lectures curated by teachers.",
+  path: "/subjects",
+  keywords: ["free subject notes", "engineering subjects", "study materials by subject"],
+});
 
 const PAGE_SIZE = 12;
 

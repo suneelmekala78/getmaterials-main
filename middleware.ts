@@ -6,6 +6,7 @@ const protectedPaths = [
   "/upload",
   "/bookmarks",
   "/settings",
+  "/profile",
   "/teacher",
   "/polls",
   "/quizzes",
@@ -39,7 +40,8 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/college-assignments") ||
     pathname.startsWith("/api/contact") ||
     pathname.startsWith("/api/feedback") ||
-    pathname.startsWith("/api/college-directory")
+    pathname.startsWith("/api/college-directory") ||
+    pathname.startsWith("/api/profiles")
   ) {
     return NextResponse.next();
   }

@@ -16,8 +16,12 @@ export interface IUser extends Document {
   email: string;
   phone?: string;
   name: string;
+  slug?: string;
   password?: string;
   avatar?: string;
+  banner?: string;
+  avatarPos?: { x: number; y: number; zoom: number };
+  bannerPos?: { x: number; y: number; zoom: number };
   role: "student" | "teacher" | "college_admin" | "admin";
   status: "active" | "pending" | "suspended";
   college?: mongoose.Types.ObjectId;
@@ -56,8 +60,20 @@ const UserSchema = new Schema<IUser>(
       index: true,
     },
     name: { type: String, required: true, trim: true },
+    slug: { type: String, trim: true, lowercase: true, sparse: true, unique: true, index: true },
     password: { type: String, select: false },
     avatar: { type: String },
+    banner: { type: String },
+    avatarPos: {
+      x: { type: Number, default: 50 },
+      y: { type: Number, default: 50 },
+      zoom: { type: Number, default: 1 },
+    },
+    bannerPos: {
+      x: { type: Number, default: 50 },
+      y: { type: Number, default: 50 },
+      zoom: { type: Number, default: 1 },
+    },
     appleId: { type: String, sparse: true, unique: true, index: true },
     googleId: { type: String, sparse: true, unique: true, index: true },
     role: {

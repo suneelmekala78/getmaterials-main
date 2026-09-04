@@ -1,17 +1,13 @@
 import type { Metadata } from "next";
 import FeedbackForm from "@/components/marketing/FeedbackForm";
+import { listingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = listingMetadata({
   title: "Feedback — Help Us Improve GetMaterials",
   description:
     "Share your feedback about GetMaterials. Your suggestions help us improve the platform and serve students better. We read every message.",
-  alternates: { canonical: "https://getmaterials.in/feedback" },
-  openGraph: {
-    title: "Share Feedback | GetMaterials",
-    description: "Tell us what you love, what to improve, and what to build next.",
-    url: "https://getmaterials.in/feedback",
-  },
-};
+  path: "/feedback",
+});
 
 export default function FeedbackPage() {
   return (

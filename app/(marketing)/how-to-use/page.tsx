@@ -1,15 +1,41 @@
 import type { Metadata } from "next";
+import { listingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+const faqs = [
+  { q: "Do I need to sign up to view materials?", a: "No. You can browse and view public materials without an account. Sign in to take quizzes, bookmark, upload, and track downloads." },
+  { q: "Is GetMaterials free?", a: "Yes. GetMaterials is free for students and teachers." },
+  { q: "How do I find materials for my college?", a: "Open Colleges, find your campus, or filter Materials by college. College-only uploads are visible after you sign in." },
+  { q: "Can students upload materials?", a: "Yes. Students can upload from Upload. Those files go through review before they are published." },
+  { q: "Where do I add a thumbnail vs a PDF?", a: "On Upload, step 2 is the cover image (listing banner). Step 3 is study files and links — PDFs, videos, and URLs students will open." },
+  { q: "How do quizzes work?", a: "Students start a quiz from Quizzes. Teachers create, edit, and delete quizzes from Quizzes in the header, and can view student responses." },
+  { q: "What file formats are supported?", a: "PDFs, images, video files or YouTube links, documents, and web links. Max size is 100MB per study file. Cover images should be under 5MB." },
+  { q: "How do I become a teacher on GetMaterials?", a: "Create an account, go to Settings, and request a role change to Teacher. We review requests, usually within 24 hours." },
+];
+
+export const metadata: Metadata = listingMetadata({
   title: "How to Use GetMaterials",
   description:
     "Learn how to browse materials, take quizzes, upload files, and use GetMaterials on web and mobile.",
-  alternates: { canonical: "https://getmaterials.in/how-to-use" },
-};
+  path: "/how-to-use",
+});
 
 export default function HowToUsePage() {
   return (
     <main className="py-16 px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: faqs.map((faq) => ({
+              "@type": "Question",
+              name: faq.q,
+              acceptedAnswer: { "@type": "Answer", text: faq.a },
+            })),
+          }),
+        }}
+      />
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">
@@ -213,16 +239,7 @@ export default function HowToUsePage() {
             <h2 className="text-2xl font-bold text-slate-900">Frequently Asked Questions</h2>
           </div>
           <div className="space-y-4">
-            {[
-              { q: "Do I need to sign up to view materials?", a: "No. You can browse and view public materials without an account. Sign in to take quizzes, bookmark, upload, and track downloads." },
-              { q: "Is GetMaterials free?", a: "Yes. GetMaterials is free for students and teachers." },
-              { q: "How do I find materials for my college?", a: "Open Colleges, find your campus, or filter Materials by college. College-only uploads are visible after you sign in." },
-              { q: "Can students upload materials?", a: "Yes. Students can upload from Upload. Those files go through review before they are published." },
-              { q: "Where do I add a thumbnail vs a PDF?", a: "On Upload, step 2 is the cover image (listing banner). Step 3 is study files and links — PDFs, videos, and URLs students will open." },
-              { q: "How do quizzes work?", a: "Students start a quiz from Quizzes. Teachers create, edit, and delete quizzes from Quizzes in the header, and can view student responses." },
-              { q: "What file formats are supported?", a: "PDFs, images, video files or YouTube links, documents, and web links. Max size is 100MB per study file. Cover images should be under 5MB." },
-              { q: "How do I become a teacher on GetMaterials?", a: "Create an account, go to Settings, and request a role change to Teacher. We review requests, usually within 24 hours." },
-            ].map((faq, i) => (
+            {faqs.map((faq, i) => (
               <div key={i} className="bg-white border border-slate-200 rounded-xl p-5">
                 <h3 className="font-semibold text-slate-900 mb-2">{faq.q}</h3>
                 <p className="text-sm text-slate-600">{faq.a}</p>

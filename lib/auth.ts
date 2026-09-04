@@ -85,6 +85,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           name: user.name,
           image: user.avatar,
+          slug: (user as any).slug,
           role: user.role,
           status: user.status,
           accessToken,
@@ -115,14 +116,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.sub = user.id;
         token.id = (user as any).id;
         token.role = (user as any).role;
         token.status = (user as any).status;
         token.accessToken = (user as any).accessToken;
+        token.slug = (user as any).slug;
+        token.picture = (user as any).image || token.picture;
         token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
+      }
+      if (trigger === "update" && session) {
+        if (typeof session.name === "string") token.name = session.name;
+        if (typeof session.email === "string") token.email = session.email;
+        if (typeof session.image === "string") token.picture = session.image;
       }
 
       if (Date.now() < (token.accessTokenExpires as number)) {
@@ -132,12 +140,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.id) {
         try {
           await connectDB();
-          const dbUser = await User.findById(token.id).select("role status").lean();
+          const dbUser = await User.findById(token.id).select("role status avatar").lean();
           if (!dbUser || (dbUser as any).status === "suspended") {
             return { ...token, error: "UserRevoked" };
           }
           token.role = (dbUser as any).role;
           token.status = (dbUser as any).status;
+          token.picture = (dbUser as any).avatar || "";
         } catch {
           // DB unavailable — keep user logged in with last known state
         }
@@ -156,6 +165,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         user: {
           ...session.user,
           id: String(token.id || token.sub || ""),
+          slug: token.slug,
           role: token.role,
           status: token.status,
         },

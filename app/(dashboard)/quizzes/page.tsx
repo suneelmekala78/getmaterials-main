@@ -6,13 +6,17 @@ import QuizzesFilterSidebar from "@/components/quizzes/QuizzesFilterSidebar";
 import QuizzesToolbar from "@/components/quizzes/QuizzesToolbar";
 import QuizCard, { type QuizCardData } from "@/components/quizzes/QuizCard";
 import { formatCount, quizzesHref, type QuizzesQuery } from "@/components/quizzes/query";
+import { listingMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Quizzes - GetMaterials",
-  description: "Test your knowledge with chapter-wise quizzes created by teachers.",
-};
+export const metadata = listingMetadata({
+  title: "Free Chapter-wise Quizzes for Students",
+  description:
+    "Practice chapter-wise quizzes created by teachers on GetMaterials. Test notes, score instantly, and revise before exams.",
+  path: "/quizzes",
+  keywords: ["free quizzes", "chapter wise quiz", "exam practice", "GetMaterials quizzes"],
+});
 
 const PAGE_SIZE = 8;
 

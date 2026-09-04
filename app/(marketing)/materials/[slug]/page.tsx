@@ -32,6 +32,7 @@ import {
   type PreviewItem,
 } from "@/components/materials/MaterialMedia";
 import { isOfficeFile, isPdfFile, officeKindLabel } from "@/lib/file-kinds";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -45,7 +46,7 @@ const typeConfig: Record<string, { icon: any; label: string; color: string; grad
   assignment: { icon: ClipboardCheck, label: "Assignment", color: "text-amber-600 bg-amber-50", gradient: "from-amber-500 to-orange-600" },
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://getmaterials.com";
+const BASE_URL = SITE_URL;
 
 function formatFileSize(bytes?: number) {
   if (!bytes) return null;
@@ -95,7 +96,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const plainDescription = stripHtml(material.description)
     .slice(0, 160) || `${material.title} - Free study material on GetMaterials`;
 
-  const ogImage = material.thumbnailUrl || `${BASE_URL}/getmaterials.jpeg`;
+  const ogImage = material.thumbnailUrl || absoluteUrl(DEFAULT_OG_IMAGE.url);
 
   return {
     title: { absolute: `${material.title} - GetMaterials` },
@@ -105,7 +106,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: material.title,
       description: plainDescription,
       url: `${BASE_URL}/materials/${slug}`,
-      siteName: "GetMaterials",
+      siteName: SITE_NAME,
       images: [
         {
           url: ogImage,
@@ -141,7 +142,7 @@ export default async function MaterialViewPage({ params }: Props) {
     .populate("chapter", "title slug")
     .populate({
       path: "uploadedBy",
-      select: "name avatar role emailVerified college",
+      select: "name avatar slug role emailVerified college",
       populate: { path: "college", select: "name" },
     })
     .populate("college", "name")
@@ -167,6 +168,7 @@ export default async function MaterialViewPage({ params }: Props) {
 
   const published = { status: "published", isPublic: true };
   const uploaderId = material.uploadedBy?._id;
+  const uploaderSlug = material.uploadedBy?.slug || uploaderId;
 
   const [relatedMaterials, moreFromUploader, uploaderStats, bookmarkUser] = await Promise.all([
     Material.find({
@@ -318,11 +320,22 @@ export default async function MaterialViewPage({ params }: Props) {
             name: material.title,
             description: plainDescription,
             url: pageUrl,
-            image: material.thumbnailUrl || `${BASE_URL}/getmaterials.jpeg`,
+            image: material.thumbnailUrl || absoluteUrl(DEFAULT_OG_IMAGE.url),
+            inLanguage: "en",
+            isAccessibleForFree: true,
+            learningResourceType: type.label,
+            educationalLevel: material.program || undefined,
+            about: material.subject?.name
+              ? { "@type": "Thing", name: material.subject.name }
+              : undefined,
             author: { "@type": "Person", name: material.uploadedBy?.name || "Unknown" },
+            provider: {
+              "@type": "EducationalOrganization",
+              name: SITE_NAME,
+              url: SITE_URL,
+            },
             datePublished: material.createdAt,
             dateModified: material.updatedAt,
-            educationalLevel: material.program || undefined,
             ...(ratingAvg > 0 && {
               aggregateRating: {
                 "@type": "AggregateRating",
@@ -330,6 +343,35 @@ export default async function MaterialViewPage({ params }: Props) {
                 ratingCount: ratingCount,
               },
             }),
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+              { "@type": "ListItem", position: 2, name: "Materials", item: absoluteUrl("/materials") },
+              ...(material.subject?.slug
+                ? [
+                    {
+                      "@type": "ListItem",
+                      position: 3,
+                      name: material.subject.name,
+                      item: absoluteUrl(`/subjects/${material.subject.slug}`),
+                    },
+                  ]
+                : []),
+              {
+                "@type": "ListItem",
+                position: material.subject?.slug ? 4 : 3,
+                name: material.title,
+                item: pageUrl,
+              },
+            ],
           }),
         }}
       />
@@ -544,19 +586,16 @@ export default async function MaterialViewPage({ params }: Props) {
 
             <aside className="space-y-5 lg:sticky lg:top-24">
               <div className="bg-white rounded-2xl border border-slate-100 p-5">
-                <div className="flex items-center gap-3">
-                  {material.uploadedBy?.avatar ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={material.uploadedBy.avatar}
-                      alt=""
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-violet-100 text-violet-700 font-bold flex items-center justify-center">
-                      {material.uploadedBy?.name?.charAt(0)?.toUpperCase() || "U"}
-                    </div>
-                  )}
+                <Link
+                  href={uploaderSlug ? `/users/${uploaderSlug}` : "#"}
+                  className="flex items-center gap-3 rounded-xl hover:bg-slate-50 -m-1 p-1 transition-colors"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={material.uploadedBy?.avatar || (material.uploadedBy?.role === "teacher" ? "/images/default-teacher-pic.png" : "/images/default-profile-pic.png")}
+                    alt=""
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
                   <div className="min-w-0">
                     <p className="font-bold text-slate-900 flex items-center gap-1">
                       {material.uploadedBy?.name || "Unknown"}
@@ -564,7 +603,7 @@ export default async function MaterialViewPage({ params }: Props) {
                     </p>
                     <p className="text-xs text-slate-500 truncate">{material.uploadedBy?.college?.name || collegeName || "GetMaterials contributor"}</p>
                   </div>
-                </div>
+                </Link>
                 <div className="grid grid-cols-3 gap-2 mt-4 text-center">
                   <div>
                     <p className="text-sm font-extrabold text-slate-900">{uploader.count || 0}</p>

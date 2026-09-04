@@ -8,6 +8,7 @@ import { HiMenu, HiX } from "react-icons/hi";
 import { Upload } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { ProfileDrawer } from "@/components/layout/ProfileDrawer";
+import { UserAvatar } from "@/components/layout/UserAvatar";
 
 const links = [
   { href: "/", label: "Home" },
@@ -90,10 +91,10 @@ const MarketingNavbar = () => {
               <button
                 type="button"
                 onClick={() => setProfileOpen(true)}
-                className="w-9 h-9 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold text-sm"
+                className="rounded-full"
                 aria-label="Open profile"
               >
-                {user.name?.charAt(0)?.toUpperCase() || "U"}
+                <UserAvatar name={user.name} image={user.image} role={user.role} size={36} />
               </button>
               <Link
                 href={uploadHref}

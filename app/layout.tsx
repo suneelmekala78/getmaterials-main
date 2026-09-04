@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toaster } from "react-hot-toast";
 import { Suspense } from "react";
 import { ReferralTracker } from "@/components/providers/ReferralTracker";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700", "800"],
@@ -18,19 +19,20 @@ export const metadata: Metadata = {
     template: "%s | GetMaterials",
   },
   description: "Access free study materials, notes, question papers, videos, and resources uploaded by verified teachers. Download PDFs, watch video lectures, and excel in your exams.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://getmaterials.in"),
+  metadataBase: new URL(SITE_URL),
   icons: {
     icon: "/getmaterials.jpeg",
     apple: "/getmaterials.jpeg",
   },
   openGraph: {
-    siteName: "GetMaterials",
+    siteName: SITE_NAME,
     type: "website",
-    images: ["/getmaterials.jpeg"],
+    locale: "en_IN",
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
-    card: "summary",
-    images: ["/getmaterials.jpeg"],
+    card: "summary_large_image",
+    images: [DEFAULT_OG_IMAGE.url],
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || undefined,

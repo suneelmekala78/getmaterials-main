@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { UserAvatar } from "@/components/layout/UserAvatar";
 
 export type ProfileUser = {
   name?: string | null;
@@ -29,7 +30,7 @@ export type ProfileUser = {
 function drawerLinks(role?: string, status?: string) {
   const isTeacher = role === "teacher" && status !== "pending";
   return [
-    { href: "/settings", label: "My Profile", icon: User },
+    { href: "/profile", label: "My Profile", icon: User },
     {
       href: isTeacher ? "/teacher/dashboard" : "/dashboard",
       label: "Dashboard",
@@ -103,9 +104,7 @@ export function ProfileDrawer({
         <aside className="absolute right-0 top-0 h-dvh w-full max-w-sm bg-white shadow-2xl flex flex-col">
           <div className="flex items-start justify-between px-5 py-5 border-b border-slate-100">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-12 h-12 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold text-lg shrink-0">
-                {user.name?.charAt(0)?.toUpperCase() || "U"}
-              </div>
+              <UserAvatar name={user.name} image={user.image} role={user.role} size={48} />
               <div className="min-w-0">
                 <p className="font-bold text-slate-900 truncate">{user.name || "Account"}</p>
                 <p className="text-sm text-slate-500 truncate">{user.email}</p>

@@ -6,6 +6,7 @@ import { Search, Menu, X, LogOut, User, ChevronDown, BookOpen, FileText, LayoutD
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { UserAvatar } from "@/components/layout/UserAvatar";
 
 const navLinks = [
   { href: "/materials", label: "Materials", icon: FileText },
@@ -89,9 +90,7 @@ export function PublicNavbar() {
                       onClick={() => setShowProfile(!showProfile)}
                       className="flex items-center gap-2"
                     >
-                      <div className="w-8 h-8 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold text-sm">
-                        {user.name?.charAt(0)?.toUpperCase() || "U"}
-                      </div>
+                      <UserAvatar name={user.name} image={user.image} role={user.role} size={32} />
                       <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
                     </button>
 

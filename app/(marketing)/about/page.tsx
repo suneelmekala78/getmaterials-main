@@ -5,19 +5,15 @@ import {
   CONTACT_EMAIL,
   CONTACT_OFFICE,
 } from "@/lib/shared";
+import { listingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = listingMetadata({
   title: "About Us — Our Mission to Make Education Free",
   description:
     "Learn about GetMaterials — our mission to make quality education free and accessible to every student in India. Founded by Suneel Mekala, we provide free study materials, notes & resources.",
+  path: "/about",
   keywords: ["about GetMaterials", "free education India", "Suneel Mekala", "open education platform", "student community"],
-  alternates: { canonical: "https://getmaterials.in/about" },
-  openGraph: {
-    title: "About GetMaterials — Free Education for Everyone",
-    description: "Our mission is to make quality education free and accessible. Meet the founder and learn our story.",
-    url: "https://getmaterials.in/about",
-  },
-};
+});
 
 const values = [
   { icon: FaGraduationCap, title: "Education First", desc: "Everything we build is centered around helping students learn better, faster, and for free." },

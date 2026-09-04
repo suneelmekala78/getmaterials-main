@@ -16,11 +16,21 @@ import CollegesFilterSidebar from "@/components/colleges/CollegesFilterSidebar";
 import CollegesToolbar from "@/components/colleges/CollegesToolbar";
 import CollegeCard, { type CollegeCardData } from "@/components/colleges/CollegeCard";
 import { collegesHref, formatCount, timeAgo, type CollegesQuery } from "@/components/colleges/query";
+import { listingMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Colleges - GetMaterials",
-  description: "Explore study materials shared by students and colleges across India.",
-};
+export const metadata: Metadata = listingMetadata({
+  title: "Colleges in India — Free Campus Study Materials",
+  description:
+    "Browse colleges on GetMaterials and open free notes, PDFs, and lectures shared for each campus across India.",
+  path: "/colleges",
+  keywords: [
+    "college study materials",
+    "engineering college notes",
+    "campus notes India",
+    "B.Tech materials",
+    "GetMaterials colleges",
+  ],
+});
 
 const PAGE_SIZE = 9;
 

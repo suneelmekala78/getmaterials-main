@@ -26,6 +26,7 @@ import {
   type IQuiz,
   type IQuizAttempt,
 } from "./models/quiz";
+import { Review as ReviewModel, type IReview } from "./models/review";
 
 export { connectDB } from "./connection";
 export { materialCollegeFilter };
@@ -41,6 +42,7 @@ export const Material = MaterialModel as Model<IMaterial>;
 export const MaterialView = MaterialViewModel as Model<IMaterialView>;
 export const Quiz = QuizModel as Model<IQuiz>;
 export const QuizAttempt = QuizAttemptModel as Model<IQuizAttempt>;
+export const Review = ReviewModel as Model<IReview>;
 
 export type {
   IUser,
@@ -55,4 +57,5 @@ export type {
   IMaterialView,
   IQuiz,
   IQuizAttempt,
+  IReview,
 };

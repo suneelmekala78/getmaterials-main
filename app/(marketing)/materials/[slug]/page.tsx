@@ -33,6 +33,7 @@ import {
 } from "@/components/materials/MaterialMedia";
 import { isOfficeFile, isPdfFile, officeKindLabel } from "@/lib/file-kinds";
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/seo";
+import { ratedAverageExpr } from "@/lib/rating-aggregate";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -198,7 +199,7 @@ export default async function MaterialViewPage({ params }: Props) {
               _id: null,
               count: { $sum: 1 },
               downloads: { $sum: "$downloads" },
-              avgRating: { $avg: "$rating.average" },
+              avgRating: ratedAverageExpr,
             },
           },
         ])
@@ -211,7 +212,6 @@ export default async function MaterialViewPage({ params }: Props) {
   );
 
   const type = typeConfig[material.type] || typeConfig.pdf;
-  const Icon = type.icon;
   const attachments = material.attachments || [];
   const primaryAttachment = attachments[0];
   const primaryFileUrl = primaryAttachment?.fileUrl;
@@ -404,21 +404,12 @@ export default async function MaterialViewPage({ params }: Props) {
           <section className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-7 mb-6">
             <div className="flex flex-col lg:flex-row gap-6">
               <div className="shrink-0">
-                {material.thumbnailUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={material.thumbnailUrl}
-                    alt={material.title}
-                    className="w-full lg:w-44 h-32 object-cover rounded-2xl"
-                  />
-                ) : (
-                  <div
-                    className={`w-full lg:w-44 h-32 rounded-2xl bg-gradient-to-br ${type.gradient} flex flex-col items-center justify-center text-white px-4 text-center`}
-                  >
-                    <Icon className="w-8 h-8 mb-2 opacity-90" />
-                    <p className="text-xs font-semibold leading-snug line-clamp-2">{material.title}</p>
-                  </div>
-                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={material.thumbnailUrl || "/images/default-thumbnail.png"}
+                  alt={material.title}
+                  className="w-full lg:w-44 h-32 object-cover rounded-2xl"
+                />
               </div>
 
               <div className="flex-1 min-w-0">
@@ -580,7 +571,11 @@ export default async function MaterialViewPage({ params }: Props) {
               )}
 
               <section id="reviews" className="scroll-mt-28">
-                <MaterialReviews materialId={String(material._id)} currentUserId={currentUserId} />
+                <MaterialReviews
+                  materialId={String(material._id)}
+                  currentUserId={currentUserId}
+                  materialSlug={slug}
+                />
               </section>
             </div>
 
@@ -656,20 +651,18 @@ function MetaItem({ icon, label }: { icon: ReactNode; label: string }) {
 }
 
 function RelatedCard({ item }: { item: any }) {
-  const type = typeConfig[item.type] || typeConfig.pdf;
-  const Icon = type.icon;
   return (
     <Link
       href={`/materials/${item.slug}`}
       className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:border-violet-200 transition-colors"
     >
       <div className="aspect-[16/9] bg-slate-50 flex items-center justify-center">
-        {item.thumbnailUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.thumbnailUrl} alt="" className="w-full h-full object-cover" />
-        ) : (
-          <Icon className={`w-8 h-8 ${type.color.split(" ")[0]} opacity-40`} />
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={item.thumbnailUrl || "/images/default-thumbnail.png"}
+          alt=""
+          className="w-full h-full object-cover"
+        />
       </div>
       <div className="p-4">
         <p className="font-semibold text-slate-900 text-sm line-clamp-2">{item.title}</p>

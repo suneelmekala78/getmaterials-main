@@ -259,11 +259,11 @@ export function UploadForm({
   const collegeResults = availableColleges.filter((college) => {
     const q = collegeQuery.trim().toLowerCase();
     if (!q) return true;
-    return college.name.toLowerCase().includes(q) || college.code.toLowerCase().includes(q);
+    return college.name.toLowerCase().includes(q) || String(college.code || "").toLowerCase().includes(q);
   });
 
   const descLength = plainLength(formData.description);
-  const canCreateCatalog = userRole === "teacher" || userRole === "admin";
+  const canCreateCatalog = Boolean(userRole);
   const needsChapter = false;
 
   const clearFieldError = (field: string) => {
@@ -819,7 +819,7 @@ export function UploadForm({
                 >
                   <Check className="w-3.5 h-3.5" />
                   {college.name}
-                  <span className="text-violet-400">({college.code})</span>
+                  {college.code ? <span className="text-violet-400">({college.code})</span> : null}
                   <button
                     type="button"
                     onClick={() =>
@@ -887,7 +887,7 @@ export function UploadForm({
                   >
                     <span>
                       <span className="font-medium text-slate-800">{college.name}</span>
-                      <span className="text-slate-400"> ({college.code})</span>
+                      {college.code ? <span className="text-slate-400"> ({college.code})</span> : null}
                     </span>
                     {attached ? <Check className="w-4 h-4 text-violet-600 shrink-0" /> : null}
                   </button>
@@ -1185,7 +1185,8 @@ export function UploadForm({
               onClick={() => thumbnailInputRef.current?.click()}
               className="w-full rounded-2xl border-2 border-dashed border-slate-200 hover:border-violet-300 p-6 text-center"
             >
-              <ImageIcon className="w-8 h-8 text-violet-400 mx-auto mb-2" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/images/default-thumbnail.png" alt="" className="w-20 h-14 rounded-lg object-cover mx-auto mb-3" />
               <p className="text-sm font-semibold text-slate-800">Upload thumbnail / banner</p>
               <p className="text-xs text-slate-400 mt-1">JPG, PNG or WebP · max 5MB</p>
             </button>

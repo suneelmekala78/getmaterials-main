@@ -17,6 +17,9 @@ import CollegesToolbar from "@/components/colleges/CollegesToolbar";
 import CollegeCard, { type CollegeCardData } from "@/components/colleges/CollegeCard";
 import { collegesHref, formatCount, timeAgo, type CollegesQuery } from "@/components/colleges/query";
 import { listingMetadata } from "@/lib/seo";
+import { parseList, type QueryParam } from "@/lib/filter-list";
+import { HiddenListInputs } from "@/components/filters/HiddenListInputs";
+import { ratedAverageExpr } from "@/lib/rating-aggregate";
 
 export const metadata: Metadata = listingMetadata({
   title: "Colleges in India — Free Campus Study Materials",
@@ -37,9 +40,9 @@ const PAGE_SIZE = 9;
 interface Props {
   searchParams: Promise<{
     q?: string;
-    location?: string;
-    branch?: string;
-    program?: string;
+    location?: QueryParam;
+    branch?: QueryParam;
+    program?: QueryParam;
     sort?: string;
     view?: string;
     tab?: string;
@@ -86,7 +89,7 @@ export default async function CollegesPage({ searchParams }: Props) {
           _id: "$collegeIds",
           materials: { $sum: 1 },
           downloads: { $sum: "$downloads" },
-          avgRating: { $avg: "$rating.average" },
+          avgRating: ratedAverageExpr,
         },
       },
     ]),
@@ -158,17 +161,25 @@ export default async function CollegesPage({ searchParams }: Props) {
 
   let filtered = allColleges.filter((college: any) => {
     if (params.tab === "mine" && myCollegeId && String(college._id) !== myCollegeId) return false;
-    if (params.location && college.location !== params.location) return false;
-    if (params.program && !(college.programs || []).some((item: any) => item.key === params.program)) return false;
-    if (params.branch) {
-      const hasBranch = (college.branches || []).some(
-        (item: any) => String(item.name).toUpperCase() === params.branch?.toUpperCase()
+    const locations = parseList(params.location);
+    if (locations.length && !locations.includes(college.location)) return false;
+    const programs = parseList(params.program);
+    if (
+      programs.length &&
+      !(college.programs || []).some((item: any) => programs.includes(item.key))
+    ) {
+      return false;
+    }
+    const branches = parseList(params.branch);
+    if (branches.length) {
+      const hasBranch = (college.branches || []).some((item: any) =>
+        branches.some((branch) => String(item.name).toUpperCase() === branch.toUpperCase())
       );
       if (!hasBranch) return false;
     }
     if (params.q) {
       const q = params.q.toLowerCase();
-      const haystack = `${college.name} ${college.code} ${college.location || ""}`.toLowerCase();
+      const haystack = `${college.name} ${college.code || ""} ${college.slug || ""} ${college.location || ""}`.toLowerCase();
       if (!haystack.includes(q)) return false;
     }
     return true;
@@ -194,6 +205,7 @@ export default async function CollegesPage({ searchParams }: Props) {
     return {
       id: String(college._id),
       name: college.name,
+      slug: college.slug,
       code: college.code,
       logo: college.logo,
       banner: college.banner,
@@ -220,11 +232,8 @@ export default async function CollegesPage({ searchParams }: Props) {
   const view = params.view === "list" ? "list" : "grid";
   const platformAvg = avgRatingAgg[0]?.avg ? Number(avgRatingAgg[0].avg).toFixed(1) : "—";
 
-  const queryForPage = (nextPage: number) => {
-    const href = collegesHref(current, {});
-    if (nextPage <= 1) return href;
-    return href.includes("?") ? `${href}&page=${nextPage}` : `${href}?page=${nextPage}`;
-  };
+  const queryForPage = (nextPage: number) =>
+    collegesHref(current, { page: nextPage > 1 ? String(nextPage) : undefined });
 
   return (
     <main className="bg-[#fafafa] min-h-screen">
@@ -257,20 +266,9 @@ export default async function CollegesPage({ searchParams }: Props) {
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-violet-500"
                 />
               </label>
-              <select
-                name="branch"
-                defaultValue={params.branch || ""}
-                className="sm:w-48 px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm"
-              >
-                <option value="">All Branches</option>
-                {branches.map((branch) => (
-                  <option key={branch} value={branch}>
-                    {branch}
-                  </option>
-                ))}
-              </select>
-              {params.location && <input type="hidden" name="location" value={params.location} />}
-              {params.program && <input type="hidden" name="program" value={params.program} />}
+              <HiddenListInputs name="branch" value={params.branch} />
+              <HiddenListInputs name="location" value={params.location} />
+              <HiddenListInputs name="program" value={params.program} />
               {params.sort && <input type="hidden" name="sort" value={params.sort} />}
               {params.view && <input type="hidden" name="view" value={params.view} />}
               {params.tab && <input type="hidden" name="tab" value={params.tab} />}
@@ -396,7 +394,7 @@ export default async function CollegesPage({ searchParams }: Props) {
                 {recentColleges.map((college: any) => (
                   <Link
                     key={String(college._id)}
-                    href={`/colleges/${college.code}`}
+                    href={`/colleges/${encodeURIComponent(college.slug || college.code || college._id)}`}
                     className="flex items-center gap-3 hover:opacity-80"
                   >
                     <div className="w-9 h-9 rounded-lg bg-violet-50 overflow-hidden flex items-center justify-center shrink-0">

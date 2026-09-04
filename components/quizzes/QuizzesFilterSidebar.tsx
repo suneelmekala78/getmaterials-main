@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { quizzesHref, type QuizzesQuery } from "./query";
+import { listHas, parseList, toggleCsv } from "@/lib/filter-list";
 
 export default function QuizzesFilterSidebar({
   current,
@@ -17,14 +18,13 @@ export default function QuizzesFilterSidebar({
 
   const filtered = useMemo(() => {
     const q = subjectQuery.trim().toLowerCase();
-    const selected = subjects.find((item) => item.value === current.subject);
+    const selectedValues = parseList(current.subject);
+    const selected = subjects.filter((item) => selectedValues.includes(item.value));
     const matches = q
       ? subjects.filter((item) => item.label.toLowerCase().includes(q))
       : subjects;
-    const rest = matches.filter((item) => item.value !== current.subject);
-    return selected && (!q || selected.label.toLowerCase().includes(q))
-      ? [selected, ...rest]
-      : rest;
+    const rest = matches.filter((item) => !selectedValues.includes(item.value));
+    return selected.length ? [...selected, ...rest] : rest;
   }, [subjectQuery, subjects, current.subject]);
 
   useEffect(() => {
@@ -51,17 +51,15 @@ export default function QuizzesFilterSidebar({
         />
         <FilterLink
           href={quizzesHref(current, { subject: "" })}
-          active={!current.subject}
+          active={!parseList(current.subject).length}
           label="All Subjects"
           count={total}
         />
         {filtered.map((item) => (
           <FilterLink
             key={item.value}
-            href={quizzesHref(current, {
-              subject: current.subject === item.value ? "" : item.value,
-            })}
-            active={current.subject === item.value}
+            href={quizzesHref(current, { subject: toggleCsv(current.subject, item.value) })}
+            active={listHas(current.subject, item.value)}
             label={item.label}
             count={item.count}
           />

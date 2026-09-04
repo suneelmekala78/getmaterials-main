@@ -8,24 +8,22 @@ export const SUBJECT_CATEGORIES = [
   { value: "general", label: "General" },
 ] as const;
 
+import { buildSearchParams, type QueryParam } from "@/lib/filter-list";
+
 export type SubjectQuery = {
   q?: string;
-  category?: string;
+  category?: QueryParam;
   sort?: string;
   view?: string;
   page?: string;
 };
 
-const KEYS = ["q", "category", "sort", "view"] as const;
+const KEYS = ["q", "category", "sort", "view", "page"] as const;
 
 export function subjectsHref(current: SubjectQuery, patch: Partial<SubjectQuery> = {}) {
-  const next: SubjectQuery = { ...current, ...patch, page: undefined };
-  const query = new URLSearchParams();
-  KEYS.forEach((key) => {
-    const value = next[key];
-    if (value) query.set(key, value);
-  });
-  if (patch.page && Number(patch.page) > 1) query.set("page", String(patch.page));
+  const next: SubjectQuery = { ...current, ...patch };
+  if (!patch.page) next.page = undefined;
+  const query = buildSearchParams(next, KEYS);
   const qs = query.toString();
   return qs ? `/subjects?${qs}` : "/subjects";
 }

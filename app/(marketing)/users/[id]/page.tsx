@@ -3,12 +3,14 @@ import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { BadgeCheck, GraduationCap } from "lucide-react";
 import { auth } from "@/lib/auth";
-import { User } from "@/lib/database";
+import { Follow, User } from "@/lib/database";
 import {
   defaultAvatarSrc,
   defaultBannerSrc,
   FittedPhoto,
 } from "@/components/profile/FittedPhoto";
+import { FollowButton } from "@/components/profile/FollowButton";
+import { FollowStatButton } from "@/components/profile/FollowList";
 import { ProfileLibrary } from "@/components/profile/ProfileLibrary";
 import { loadPublicProfile } from "@/lib/public-profile";
 import { DEFAULT_OG_IMAGE, SITE_NAME, absoluteUrl } from "@/lib/seo";
@@ -66,7 +68,11 @@ export default async function UserProfilePage({ params }: Props) {
   const { id } = await params;
   const profile = await loadPublicProfile(id);
   if (!profile) notFound();
-  if (profile.requestedViaId && profile.canonicalSlug !== id) {
+  if (
+    (profile.requestedViaId || profile.requestedViaAlias) &&
+    profile.canonicalSlug &&
+    profile.canonicalSlug !== id
+  ) {
     redirect(`/users/${profile.canonicalSlug}`);
   }
 
@@ -83,6 +89,11 @@ export default async function UserProfilePage({ params }: Props) {
   const collegeName = user.college?.name;
   const avatarSrc = user.avatar || defaultAvatarSrc(user.role);
   const bannerSrc = user.banner || defaultBannerSrc();
+  const isFollowing = Boolean(
+    currentUserId &&
+      !isOwn &&
+      (await Follow.exists({ follower: currentUserId, following: user._id })),
+  );
 
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
@@ -131,7 +142,14 @@ export default async function UserProfilePage({ params }: Props) {
               >
                 Edit profile
               </Link>
-            ) : null}
+            ) : (
+              <FollowButton
+                userId={String(user._id)}
+                initialFollowing={isFollowing}
+                loggedIn={Boolean(currentUserId)}
+                callbackUrl={`/users/${user.slug || user._id}`}
+              />
+            )}
           </div>
 
           {user.bio ? (
@@ -151,7 +169,7 @@ export default async function UserProfilePage({ params }: Props) {
             </p>
           ) : null}
 
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
               { label: "Materials", value: formatCount(stats.count || 0) },
               { label: "Downloads", value: formatCount(stats.downloads || 0) },
@@ -169,6 +187,20 @@ export default async function UserProfilePage({ params }: Props) {
                 <p className="text-xs text-slate-500">{item.label}</p>
               </div>
             ))}
+            <FollowStatButton
+              userId={String(user._id)}
+              kind="followers"
+              count={stats.followersCount || 0}
+              label="Followers"
+              isOwner={Boolean(isOwn)}
+            />
+            <FollowStatButton
+              userId={String(user._id)}
+              kind="following"
+              count={stats.followingCount || 0}
+              label="Following"
+              isOwner={Boolean(isOwn)}
+            />
           </div>
         </div>
       </section>

@@ -7,6 +7,8 @@ import SubjectsToolbar from "@/components/subjects/SubjectsToolbar";
 import SubjectCard, { type SubjectCardData } from "@/components/subjects/SubjectCard";
 import { formatCount, subjectsHref, type SubjectQuery } from "@/components/subjects/query";
 import { listingMetadata } from "@/lib/seo";
+import { parseList, type QueryParam } from "@/lib/filter-list";
+import { ratedAverageExpr } from "@/lib/rating-aggregate";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +35,7 @@ const popularIcons: Record<string, typeof BookOpen> = {
 interface Props {
   searchParams: Promise<{
     q?: string;
-    category?: string;
+    category?: QueryParam;
     sort?: string;
     view?: string;
     page?: string;
@@ -52,7 +54,8 @@ export default async function SubjectsPage({ searchParams }: Props) {
   };
 
   const filter: Record<string, unknown> = { isActive: true };
-  if (params.category) filter.category = params.category;
+  const categories = parseList(params.category);
+  if (categories.length) filter.category = { $in: categories };
   if (params.q?.trim()) {
     filter.name = { $regex: params.q.trim(), $options: "i" };
   }
@@ -92,7 +95,7 @@ export default async function SubjectsPage({ searchParams }: Props) {
           _id: null,
           materials: { $sum: 1 },
           downloads: { $sum: "$downloads" },
-          ratingAvg: { $avg: "$rating.average" },
+          ratingAvg: ratedAverageExpr,
         },
       },
     ]),

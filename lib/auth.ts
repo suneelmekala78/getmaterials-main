@@ -131,6 +131,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (typeof session.name === "string") token.name = session.name;
         if (typeof session.email === "string") token.email = session.email;
         if (typeof session.image === "string") token.picture = session.image;
+        if (typeof (session as any).slug === "string") token.slug = (session as any).slug;
       }
 
       if (Date.now() < (token.accessTokenExpires as number)) {
@@ -140,13 +141,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token.id) {
         try {
           await connectDB();
-          const dbUser = await User.findById(token.id).select("role status avatar").lean();
+          const dbUser = await User.findById(token.id).select("role status avatar slug name").lean();
           if (!dbUser || (dbUser as any).status === "suspended") {
             return { ...token, error: "UserRevoked" };
           }
           token.role = (dbUser as any).role;
           token.status = (dbUser as any).status;
           token.picture = (dbUser as any).avatar || "";
+          if ((dbUser as any).slug) token.slug = (dbUser as any).slug;
+          if ((dbUser as any).name) token.name = (dbUser as any).name;
         } catch {
           // DB unavailable — keep user logged in with last known state
         }

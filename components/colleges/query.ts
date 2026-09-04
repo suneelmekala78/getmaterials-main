@@ -1,23 +1,22 @@
+import { buildSearchParams, type QueryParam } from "@/lib/filter-list";
+
 export type CollegesQuery = {
   q?: string;
-  location?: string;
-  branch?: string;
-  program?: string;
+  location?: QueryParam;
+  branch?: QueryParam;
+  program?: QueryParam;
   sort?: string;
   view?: string;
   tab?: string;
   page?: string;
 };
 
-const KEYS = ["q", "location", "branch", "program", "sort", "view", "tab"] as const;
+const KEYS = ["q", "location", "branch", "program", "sort", "view", "tab", "page"] as const;
 
 export function collegesHref(current: CollegesQuery, patch: Partial<CollegesQuery> = {}) {
-  const next: CollegesQuery = { ...current, ...patch, page: undefined };
-  const query = new URLSearchParams();
-  KEYS.forEach((key) => {
-    const value = next[key];
-    if (value) query.set(key, value);
-  });
+  const next: CollegesQuery = { ...current, ...patch };
+  if (!patch.page) next.page = undefined;
+  const query = buildSearchParams(next, KEYS);
   const qs = query.toString();
   return qs ? `/colleges?${qs}` : "/colleges";
 }

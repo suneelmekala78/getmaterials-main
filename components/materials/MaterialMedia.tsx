@@ -14,6 +14,15 @@ export type PreviewItem = {
   officeKind?: string;
 };
 
+function PreviewOfFile({ title }: { title: string }) {
+  return (
+    <h3 className="text-lg font-bold text-slate-900 mb-3 truncate" title={title}>
+      Preview of{" "}
+      <span className="font-semibold text-[var(--primary)] italic">{title}</span>
+    </h3>
+  );
+}
+
 const PDFJS_VERSION = "3.11.174";
 const pdfDocCache = new Map<string, Promise<any>>();
 let pdfjsLoader: Promise<any> | null = null;
@@ -145,6 +154,7 @@ function DocumentsPreview({
   if (items.length === 1 && current.kind === "office") {
     return (
       <OfficePreview
+        key={current.url}
         url={current.url}
         title={current.title}
         kind={current.officeKind || "Document"}
@@ -158,6 +168,7 @@ function DocumentsPreview({
     <section id="preview" className="scroll-mt-28 bg-white rounded-2xl border border-slate-200 p-6">
       <h2 className="text-lg font-bold text-slate-900 mb-1">Preview</h2>
       <p className="text-sm text-slate-500 mb-4">{items.length} files — tap a file to preview it</p>
+      <h3 className="text-lg font-bold text-slate-900 mb-3">Files</h3>
       <div className="flex items-center gap-3 overflow-x-auto pb-2">
         {items.map((item, index) => (
           <button
@@ -178,9 +189,10 @@ function DocumentsPreview({
       </div>
       <div className="mt-5">
         {current.kind === "pdf" ? (
-          <PdfPreview url={current.url} title={current.title} hideShell />
+          <PdfPreview key={current.url} url={current.url} title={current.title} hideShell />
         ) : (
           <OfficePreview
+            key={current.url}
             url={current.url}
             title={current.title}
             kind={current.officeKind || "Document"}
@@ -189,7 +201,9 @@ function DocumentsPreview({
         )}
       </div>
       {downloadFiles.length > 0 && materialId ? (
-        <ul className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+        <>
+        <h3 className="text-lg font-bold text-slate-900 mt-6 mb-2">Downloads</h3>
+        <ul className="divide-y divide-slate-100 border-t border-slate-100">
           {downloadFiles.map((file, index) => (
             <li key={`${file.url}-${index}`} className="py-3 flex items-center gap-3">
               <div className="min-w-0 flex-1">
@@ -210,6 +224,7 @@ function DocumentsPreview({
             </li>
           ))}
         </ul>
+        </>
       ) : null}
     </section>
   );
@@ -290,7 +305,11 @@ function OfficePreview({
 
   const body = (
     <>
-      {hideShell ? null : (
+      {hideShell ? (
+      <PreviewOfFile title={title} />
+      ) : (
+      <>
+      <h3 className="text-lg font-bold text-slate-900 mb-3">Files</h3>
       <div className="flex items-center gap-3 overflow-x-auto pb-2">
         <button
           type="button"
@@ -304,8 +323,18 @@ function OfficePreview({
           </div>
         </button>
       </div>
+      </>
       )}
-      <div className={`${hideShell ? "" : "mt-5 "}rounded-xl border border-slate-200 py-3 flex justify-center`}>
+      <div className={`${hideShell ? "" : "mt-5 "}rounded-xl border border-slate-200 overflow-hidden bg-white`}>
+        <iframe
+          key={url}
+          title={`${kind} preview`}
+          src={embed}
+          className="w-full h-[min(70vh,640px)] bg-white"
+          allow="fullscreen"
+        />
+      </div>
+      <div className="mt-3 rounded-xl border border-slate-200 py-3 flex justify-center">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -315,7 +344,9 @@ function OfficePreview({
         </button>
       </div>
       {!hideShell && files.length > 0 && materialId ? (
-        <ul className="mt-4 divide-y divide-slate-100 border-t border-slate-100">
+        <>
+        <h3 className="text-lg font-bold text-slate-900 mt-6 mb-2">Downloads</h3>
+        <ul className="divide-y divide-slate-100 border-t border-slate-100">
           {files.map((file) => (
             <li key={file.url} className="py-3 flex items-center gap-3">
               <div className="min-w-0 flex-1">
@@ -336,6 +367,7 @@ function OfficePreview({
             </li>
           ))}
         </ul>
+        </>
       ) : null}
       {modal}
     </>
@@ -403,6 +435,7 @@ function PdfPreview({ url, title, hideShell = false }: { url: string; title: str
         </div>
       ) : (
         <>
+          <PreviewOfFile title={title} />
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -763,6 +796,7 @@ function ImagePreview({ items }: { items: PreviewItem[] }) {
   return (
     <section id="preview" className="scroll-mt-28 bg-white rounded-2xl border border-slate-200 p-6">
       <h2 className="text-lg font-bold text-slate-900 mb-4">Preview</h2>
+      <h3 className="text-lg font-bold text-slate-900 mb-3">Images</h3>
       <div className="flex gap-3 overflow-x-auto pb-2">
         {items.map((item, index) => (
           <button

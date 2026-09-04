@@ -1,4 +1,4 @@
-import { connectDB, Material, Subject, College, User } from "@/lib/database";
+import { connectDB, Material, Subject, College, User, Chapter } from "@/lib/database";
 import { auth } from "@/lib/auth";
 import {
   BookOpen,
@@ -14,6 +14,11 @@ import MaterialsToolbar from "@/components/materials/MaterialsToolbar";
 import MaterialsFilterSidebar from "@/components/materials/MaterialsFilterSidebar";
 import MaterialCard from "@/components/materials/MaterialCard";
 import { listingMetadata } from "@/lib/seo";
+import { ratedAverageExpr } from "@/lib/rating-aggregate";
+import { parseList, type QueryParam } from "@/lib/filter-list";
+import { collegePathKey } from "@/lib/college-key";
+import { HiddenListInputs } from "@/components/filters/HiddenListInputs";
+import { materialsHref } from "@/components/materials/query";
 
 export const metadata: Metadata = listingMetadata({
   title: "Browse Free Study Materials, Notes & PDFs",
@@ -44,16 +49,18 @@ const categoryValues = [
 
 interface Props {
   searchParams: Promise<{
-    type?: string;
-    category?: string;
-    subject?: string;
+    type?: QueryParam;
+    category?: QueryParam;
+    subject?: QueryParam;
     q?: string;
     tag?: string;
     sort?: string;
     view?: string;
     page?: string;
-    semester?: string;
-    college?: string;
+    semester?: QueryParam;
+    college?: QueryParam;
+    chapter?: QueryParam;
+    program?: QueryParam;
   }>;
 }
 
@@ -70,29 +77,48 @@ export default async function MaterialsPage({ searchParams }: Props) {
   const userId = (session?.user as any)?.id as string | undefined;
 
   const filter: any = { status: "published", isPublic: true };
-  if (params.type && typeValues.includes(params.type as any)) filter.type = params.type;
-  if (params.category && categoryValues.includes(params.category as any)) {
-    filter.materialCategory = params.category;
-  }
+  const types = parseList(params.type).filter((item) => typeValues.includes(item as any));
+  const categories = parseList(params.category).filter((item) => categoryValues.includes(item as any));
+  const semesters = parseList(params.semester)
+    .map((item) => Number(item))
+    .filter((item) => item >= 1 && item <= 10);
+  const programs = parseList(params.program);
+  if (types.length) filter.type = { $in: types };
+  if (categories.length) filter.materialCategory = { $in: categories };
+  if (semesters.length) filter.semester = { $in: semesters };
+  if (programs.length) filter.program = { $in: programs };
   if (params.tag) filter.tags = params.tag.toLowerCase().trim();
   if (params.q) filter.title = { $regex: params.q, $options: "i" };
-  if (params.semester) {
-    const semester = Number(params.semester);
-    if (semester >= 1 && semester <= 10) filter.semester = semester;
-  }
 
-  const collegeDoc = params.college
-    ? await College.findOne({ code: params.college.toUpperCase() }).select("_id").lean()
-    : null;
-  if (collegeDoc) {
-    const collegeId = (collegeDoc as any)._id;
-    filter.$or = [{ college: collegeId }, { colleges: collegeId }];
-  }
+  const subjectSlugs = parseList(params.subject);
+  const collegeKeys = parseList(params.college).map((item) => item.toLowerCase());
+  const chapterSlugs = parseList(params.chapter);
 
-  const subjectDoc = params.subject
-    ? await Subject.findOne({ slug: params.subject }).select("_id").lean()
-    : null;
-  if (subjectDoc) filter.subject = (subjectDoc as any)._id;
+  const [subjectDocs, collegeDocs, chapterDocs] = await Promise.all([
+    subjectSlugs.length
+      ? Subject.find({ slug: { $in: subjectSlugs } }).select("_id").lean()
+      : Promise.resolve([]),
+    collegeKeys.length
+      ? College.find({
+          $or: [
+            { slug: { $in: collegeKeys } },
+            { code: { $in: collegeKeys.map((item) => item.toUpperCase()) } },
+          ],
+        })
+          .select("_id")
+          .lean()
+      : Promise.resolve([]),
+    chapterSlugs.length
+      ? Chapter.find({ slug: { $in: chapterSlugs } }).select("_id").lean()
+      : Promise.resolve([]),
+  ]);
+
+  if (subjectDocs.length) filter.subject = { $in: subjectDocs.map((item: any) => item._id) };
+  if (chapterDocs.length) filter.chapter = { $in: chapterDocs.map((item: any) => item._id) };
+  if (collegeDocs.length) {
+    const collegeIds = collegeDocs.map((item: any) => item._id);
+    filter.$or = [{ college: { $in: collegeIds } }, { colleges: { $in: collegeIds } }];
+  }
 
   const sortKey = params.sort || "latest";
   const sort: Record<string, 1 | -1> =
@@ -118,6 +144,8 @@ export default async function MaterialsPage({ searchParams }: Props) {
     aggregates,
     bookmarkUser,
     subjects,
+    chapterOptions,
+    collegeOptions,
   ] = await Promise.all([
     Material.countDocuments(filter),
     Material.find(filter)
@@ -137,12 +165,18 @@ export default async function MaterialsPage({ searchParams }: Props) {
         $group: {
           _id: null,
           downloads: { $sum: "$downloads" },
-          avgRating: { $avg: "$rating.average" },
+          avgRating: ratedAverageExpr,
         },
       },
     ]),
     userId ? User.findById(userId).select("bookmarks").lean() : null,
     Subject.find({ isActive: true }).select("name slug").sort({ name: 1 }).lean(),
+    Chapter.find(subjectDocs.length ? { subject: { $in: subjectDocs.map((item: any) => item._id) } } : {})
+      .select("title slug")
+      .sort({ title: 1 })
+      .limit(400)
+      .lean(),
+    College.find({ status: "active" }).select("name slug code").sort({ name: 1 }).lean(),
   ]);
 
   const totals = aggregates[0] || { downloads: 0, avgRating: 0 };
@@ -152,16 +186,8 @@ export default async function MaterialsPage({ searchParams }: Props) {
   const view = params.view === "list" ? "list" : "grid";
   const totalPages = Math.max(1, Math.ceil(totalMatching / PAGE_SIZE));
 
-  const queryForPage = (nextPage: number) => {
-    const query = new URLSearchParams();
-    (["q", "type", "category", "subject", "tag", "sort", "view", "semester", "college"] as const).forEach((key) => {
-      const value = params[key];
-      if (value) query.set(key, value);
-    });
-    if (nextPage > 1) query.set("page", String(nextPage));
-    const qs = query.toString();
-    return qs ? `/materials?${qs}` : "/materials";
-  };
+  const queryForPage = (nextPage: number) =>
+    materialsHref(params, { page: nextPage > 1 ? String(nextPage) : undefined });
 
   return (
     <main className="bg-[#fafafa] min-h-screen">
@@ -230,10 +256,20 @@ export default async function MaterialsPage({ searchParams }: Props) {
               view: params.view,
               semester: params.semester,
               college: params.college,
+              chapter: params.chapter,
+              program: params.program,
             }}
             subjects={subjects.map((subject: any) => ({
               value: subject.slug,
               label: subject.name,
+            }))}
+            chapters={chapterOptions.map((chapter: any) => ({
+              value: chapter.slug,
+              label: chapter.title,
+            }))}
+            colleges={collegeOptions.map((college: any) => ({
+              value: collegePathKey(college),
+              label: college.code ? `${college.name} (${college.code})` : college.name,
             }))}
           />
 
@@ -246,14 +282,16 @@ export default async function MaterialsPage({ searchParams }: Props) {
                 placeholder="Search materials, subjects, notes..."
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
               />
-              {params.type && <input type="hidden" name="type" value={params.type} />}
-              {params.category && <input type="hidden" name="category" value={params.category} />}
-              {params.subject && <input type="hidden" name="subject" value={params.subject} />}
+              <HiddenListInputs name="type" value={params.type} />
+              <HiddenListInputs name="category" value={params.category} />
+              <HiddenListInputs name="subject" value={params.subject} />
               {params.tag && <input type="hidden" name="tag" value={params.tag} />}
               {params.sort && <input type="hidden" name="sort" value={params.sort} />}
               {params.view && <input type="hidden" name="view" value={params.view} />}
-              {params.semester && <input type="hidden" name="semester" value={params.semester} />}
-              {params.college && <input type="hidden" name="college" value={params.college} />}
+              <HiddenListInputs name="semester" value={params.semester} />
+              <HiddenListInputs name="college" value={params.college} />
+              <HiddenListInputs name="chapter" value={params.chapter} />
+              <HiddenListInputs name="program" value={params.program} />
             </form>
 
             <MaterialsToolbar
@@ -267,6 +305,8 @@ export default async function MaterialsPage({ searchParams }: Props) {
                 view: params.view,
                 semester: params.semester,
                 college: params.college,
+                chapter: params.chapter,
+                program: params.program,
               }}
             />
 

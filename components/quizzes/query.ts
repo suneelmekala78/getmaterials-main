@@ -1,22 +1,20 @@
+import { buildSearchParams, type QueryParam } from "@/lib/filter-list";
+
 export type QuizzesQuery = {
   q?: string;
-  subject?: string;
+  subject?: QueryParam;
   tab?: string;
   sort?: string;
   view?: string;
   page?: string;
 };
 
-const KEYS = ["q", "subject", "tab", "sort", "view"] as const;
+const KEYS = ["q", "subject", "tab", "sort", "view", "page"] as const;
 
 export function quizzesHref(current: QuizzesQuery, patch: Partial<QuizzesQuery> = {}) {
-  const next: QuizzesQuery = { ...current, ...patch, page: undefined };
-  const query = new URLSearchParams();
-  KEYS.forEach((key) => {
-    const value = next[key];
-    if (value) query.set(key, value);
-  });
-  if (patch.page && Number(patch.page) > 1) query.set("page", String(patch.page));
+  const next: QuizzesQuery = { ...current, ...patch };
+  if (!patch.page) next.page = undefined;
+  const query = buildSearchParams(next, KEYS);
   const qs = query.toString();
   return qs ? `/quizzes?${qs}` : "/quizzes";
 }

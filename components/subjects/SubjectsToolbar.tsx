@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Grid3X3, List, Search } from "lucide-react";
+import { HiddenListInputs } from "@/components/filters/HiddenListInputs";
 import { subjectsHref, type SubjectQuery } from "./query";
 
 const sorts = [
@@ -20,7 +21,7 @@ export default function SubjectsToolbar({ current }: { current: SubjectQuery }) 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3">
       <form action="/subjects" className="relative flex-1">
-        {current.category && <input type="hidden" name="category" value={current.category} />}
+        <HiddenListInputs name="category" value={current.category} />
         {current.sort && <input type="hidden" name="sort" value={current.sort} />}
         {current.view && <input type="hidden" name="view" value={current.view} />}
         <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

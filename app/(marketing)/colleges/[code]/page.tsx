@@ -1,4 +1,5 @@
-import { connectDB, College, Material, User, materialCollegeFilter } from "@/lib/database";
+import { connectDB, Material, User, materialCollegeFilter } from "@/lib/database";
+import { collegeHref, collegePathKey, ensureCollegeSlug, findCollegeByKey } from "@/lib/college-key";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -13,9 +14,10 @@ import {
   Users,
 } from "lucide-react";
 import MaterialCard from "@/components/materials/MaterialCard";
+import { TeacherCard } from "@/components/teachers/TeacherCard";
 import { formatCount } from "@/components/colleges/query";
-import { defaultAvatarSrc } from "@/components/profile/FittedPhoto";
 import { listingMetadata } from "@/lib/seo";
+import { ratedAverageExpr } from "@/lib/rating-aggregate";
 
 export const dynamic = "force-dynamic";
 
@@ -25,11 +27,11 @@ interface Props {
 
 async function loadCollege(code: string) {
   await connectDB();
-  const college = await College.findOne({
-    code: decodeURIComponent(code).toUpperCase(),
-    status: "active",
-  }).lean();
-  if (!college) return null;
+  const collegeDoc = await findCollegeByKey(code, { status: "active" });
+  if (!collegeDoc) return null;
+  const slug = await ensureCollegeSlug(collegeDoc as any);
+  const college = (await collegeDoc.toObject?.()) || (collegeDoc as any);
+  college.slug = slug;
 
   const published = {
     status: "published",
@@ -45,7 +47,7 @@ async function loadCollege(code: string) {
           _id: null,
           materials: { $sum: 1 },
           downloads: { $sum: "$downloads" },
-          avgRating: { $avg: "$rating.average" },
+          avgRating: ratedAverageExpr,
         },
       },
     ]),
@@ -57,7 +59,7 @@ async function loadCollege(code: string) {
       .limit(8)
       .lean(),
     User.find({ role: "teacher", status: "active", college: (college as any)._id })
-      .select("name slug avatar bio qualifications")
+      .select("name slug avatar banner bannerPos bio qualifications")
       .sort({ name: 1 })
       .limit(12)
       .lean(),
@@ -83,8 +85,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       college.description ||
       `Browse ${stats.materials || 0} free notes and lectures shared for ${college.name}.`,
-    path: `/colleges/${college.code}`,
-    keywords: [college.name, college.code, "college notes", "campus materials"],
+    path: collegeHref(college),
+    keywords: [college.name, college.code, college.slug, "college notes", "campus materials"].filter(Boolean) as string[],
   });
 }
 
@@ -94,7 +96,7 @@ export default async function CollegeDetailsPage({ params }: Props) {
   if (!data) notFound();
 
   const { college, stats, materials, teachers, studentCount } = data;
-  const materialsHref = `/materials?college=${encodeURIComponent(college.code)}`;
+  const materialsHref = `/materials?college=${encodeURIComponent(collegePathKey(college))}`;
   const programs = college.programs || [];
   const branches = college.branches || [];
 
@@ -130,13 +132,13 @@ export default async function CollegeDetailsPage({ params }: Props) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={college.logo} alt={`${college.name} logo`} className="max-w-[88%] max-h-[88%] object-contain" />
               ) : (
-                <span className="text-lg font-extrabold text-violet-700">{college.code.slice(0, 3)}</span>
+                <span className="text-lg font-extrabold text-violet-700">{(college.code || college.name).slice(0, 3).toUpperCase()}</span>
               )}
             </div>
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{college.name}</h1>
               <p className="text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className="font-semibold text-violet-700">{college.code}</span>
+                {college.code ? <span className="font-semibold text-violet-700">{college.code}</span> : null}
                 {college.location && (
                   <span className="inline-flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5" />
@@ -242,7 +244,7 @@ export default async function CollegeDetailsPage({ params }: Props) {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-extrabold text-slate-900">Teachers</h2>
             <Link
-              href={`/teachers?college=${encodeURIComponent(college.code)}`}
+              href={`/teachers?college=${encodeURIComponent(collegePathKey(college))}`}
               className="text-sm font-semibold text-[var(--primary)] hover:underline"
             >
               View all
@@ -255,24 +257,10 @@ export default async function CollegeDetailsPage({ params }: Props) {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {teachers.map((teacher: any) => (
-                <Link
+                <TeacherCard
                   key={String(teacher._id)}
-                  href={`/users/${teacher.slug || teacher._id}`}
-                  className="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-3 hover:border-violet-200 hover:shadow-sm transition-all"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={teacher.avatar || defaultAvatarSrc("teacher")}
-                    alt=""
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                  <div className="min-w-0">
-                    <p className="font-semibold text-slate-900 truncate">{teacher.name}</p>
-                    <p className="text-xs text-slate-500 truncate">
-                      {teacher.qualifications || teacher.bio || "Teacher"}
-                    </p>
-                  </div>
-                </Link>
+                  teacher={{ ...teacher, college: { name: college.name } }}
+                />
               ))}
             </div>
           )}

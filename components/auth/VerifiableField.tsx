@@ -2,6 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { OtpCodeInput } from "./OtpCodeInput";
+import {
+  disposableEmailMessage,
+  fakePhoneMessage,
+  isDisposableEmail,
+  isFakeIndianMobile,
+} from "@/lib/contact-guard";
 
 export type VerifyChannel = "email" | "phone";
 
@@ -64,6 +70,14 @@ export function VerifiableField({
   const sendCode = async () => {
     setError("");
     setInfo("");
+    if (channel === "email" && isDisposableEmail(value)) {
+      setError(disposableEmailMessage());
+      return;
+    }
+    if (channel === "phone" && isFakeIndianMobile(value)) {
+      setError(fakePhoneMessage());
+      return;
+    }
     setSending(true);
     try {
       const res = await fetch("/api/auth/verify/send", {

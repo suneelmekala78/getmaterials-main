@@ -50,8 +50,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .select("slug updatedAt")
         .limit(2000)
         .lean(),
-      College.find({ status: "active", code: { $exists: true, $nin: [null, ""] } })
-        .select("code updatedAt")
+      College.find({ status: "active" })
+        .select("slug code updatedAt")
         .lean(),
     ]);
 
@@ -75,14 +75,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             0.8,
           ),
         ),
-      ...colleges.map((college: any) =>
-        entry(
-          `/colleges/${encodeURIComponent(college.code)}`,
-          college.updatedAt || now,
-          "weekly",
-          0.6,
+      ...colleges
+        .filter((college: any) => college.slug || college.code)
+        .map((college: any) =>
+          entry(
+            `/colleges/${encodeURIComponent(college.slug || college.code)}`,
+            college.updatedAt || now,
+            "weekly",
+            0.6,
+          ),
         ),
-      ),
       ...users.map((user: any) =>
         entry(`/users/${user.slug}`, user.updatedAt || now, "weekly", 0.5),
       ),

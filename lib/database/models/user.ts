@@ -17,6 +17,7 @@ export interface IUser extends Document {
   phone?: string;
   name: string;
   slug?: string;
+  previousSlugs?: string[];
   password?: string;
   avatar?: string;
   banner?: string;
@@ -61,6 +62,7 @@ const UserSchema = new Schema<IUser>(
     },
     name: { type: String, required: true, trim: true },
     slug: { type: String, trim: true, lowercase: true, sparse: true, unique: true, index: true },
+    previousSlugs: [{ type: String, trim: true, lowercase: true }],
     password: { type: String, select: false },
     avatar: { type: String },
     banner: { type: String },
@@ -121,6 +123,7 @@ const UserSchema = new Schema<IUser>(
 
 UserSchema.index({ role: 1, status: 1 });
 UserSchema.index({ college: 1 });
+UserSchema.index({ previousSlugs: 1 });
 
 export const User =
   mongoose.models.User || mongoose.model<IUser>("User", UserSchema);

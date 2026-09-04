@@ -18,7 +18,15 @@ interface ReviewStats {
   distribution: number[];
 }
 
-export function MaterialReviews({ materialId, currentUserId }: { materialId: string; currentUserId?: string }) {
+export function MaterialReviews({
+  materialId,
+  currentUserId,
+  materialSlug,
+}: {
+  materialId: string;
+  currentUserId?: string;
+  materialSlug?: string;
+}) {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [stats, setStats] = useState<ReviewStats>({ average: 0, total: 0, distribution: [0, 0, 0, 0, 0] });
   const [loading, setLoading] = useState(true);
@@ -194,7 +202,7 @@ export function MaterialReviews({ materialId, currentUserId }: { materialId: str
         <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 text-center">
           <p className="text-sm text-slate-600 mb-3">Want to share your thoughts on this material?</p>
           <a
-            href={`/login?callbackUrl=${encodeURIComponent(`/materials`)}`}
+            href={`/login?callbackUrl=${encodeURIComponent(materialSlug ? `/materials/${materialSlug}` : "/materials")}`}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-colors"
           >
             Login to Write a Review
@@ -256,18 +264,12 @@ export function MaterialReviews({ materialId, currentUserId }: { materialId: str
           reviews.map((review) => (
             <div key={review._id} className="px-6 py-4">
               <div className="flex items-start gap-3">
-                {review.user?.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={review.user.avatar}
-                    alt={review.user.name}
-                    className="w-9 h-9 rounded-full object-cover shrink-0"
-                  />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    {review.user?.name?.charAt(0)?.toUpperCase() || "?"}
-                  </div>
-                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={review.user?.avatar || (review.user?.role === "teacher" ? "/images/default-teacher-pic.png" : "/images/default-profile-pic.png")}
+                  alt={review.user?.name || "User"}
+                  className="w-9 h-9 rounded-full object-cover shrink-0"
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-slate-900">{review.user?.name || "Anonymous"}</span>

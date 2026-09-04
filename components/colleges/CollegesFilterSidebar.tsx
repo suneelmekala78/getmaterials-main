@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { collegesHref, type CollegesQuery } from "./query";
+import { listHas, parseList, toggleCsv } from "@/lib/filter-list";
 
 export default function CollegesFilterSidebar({
   current,
@@ -35,38 +36,38 @@ export default function CollegesFilterSidebar({
       <FilterGroup title="Location">
         <FilterLink
           href={collegesHref(current, { location: "" })}
-          active={!current.location}
+          active={!parseList(current.location).length}
           label="All locations"
         />
         {locations.map((location) => (
           <FilterLink
             key={location}
-            href={collegesHref(current, { location: current.location === location ? "" : location })}
-            active={current.location === location}
+            href={collegesHref(current, { location: toggleCsv(current.location, location) })}
+            active={listHas(current.location, location)}
             label={location}
           />
         ))}
       </FilterGroup>
 
       <FilterGroup title="Program">
-        <FilterLink href={collegesHref(current, { program: "" })} active={!current.program} label="All programs" />
+        <FilterLink href={collegesHref(current, { program: "" })} active={!parseList(current.program).length} label="All programs" />
         {programs.map((item) => (
           <FilterLink
             key={item.value}
-            href={collegesHref(current, { program: current.program === item.value ? "" : item.value })}
-            active={current.program === item.value}
+            href={collegesHref(current, { program: toggleCsv(current.program, item.value) })}
+            active={listHas(current.program, item.value)}
             label={item.label}
           />
         ))}
       </FilterGroup>
 
       <FilterGroup title="Branch">
-        <FilterLink href={collegesHref(current, { branch: "" })} active={!current.branch} label="All branches" />
+        <FilterLink href={collegesHref(current, { branch: "" })} active={!parseList(current.branch).length} label="All branches" />
         {branches.map((branch) => (
           <FilterLink
             key={branch}
-            href={collegesHref(current, { branch: current.branch === branch ? "" : branch })}
-            active={current.branch === branch}
+            href={collegesHref(current, { branch: toggleCsv(current.branch, branch) })}
+            active={listHas(current.branch, branch)}
             label={branch}
           />
         ))}

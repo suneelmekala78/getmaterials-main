@@ -1,5 +1,6 @@
-import { connectDB, Material, Quiz, Review, User } from "@/lib/database";
+import { connectDB, Follow, Material, Quiz, Review, User } from "@/lib/database";
 import { uniqueUserSlug } from "@/lib/user-slug";
+import { ratedAverageExpr } from "@/lib/rating-aggregate";
 
 const PROFILE_SELECT =
   "name slug avatar banner avatarPos bannerPos role status bio qualifications college emailVerified";
@@ -13,10 +14,20 @@ export async function loadPublicProfile(slugOrId: string) {
   const key = String(slugOrId || "").trim();
   if (!key) return null;
 
-  let user: any = await User.findOne({ slug: key.toLowerCase() })
+  const normalized = key.toLowerCase();
+  let user: any = await User.findOne({ slug: normalized })
     .select(PROFILE_SELECT)
     .populate("college", "name")
     .lean();
+
+  let requestedViaAlias = false;
+  if (!user) {
+    user = await User.findOne({ previousSlugs: normalized })
+      .select(PROFILE_SELECT)
+      .populate("college", "name")
+      .lean();
+    requestedViaAlias = Boolean(user);
+  }
 
   const requestedViaId = !user && looksLikeObjectId(key);
   if (!user && requestedViaId) {
@@ -30,7 +41,7 @@ export async function loadPublicProfile(slugOrId: string) {
   if (!user.slug) {
     const slug = await uniqueUserSlug(async (candidate) => {
       const taken = await User.findOne({
-        slug: candidate,
+        $or: [{ slug: candidate }, { previousSlugs: candidate }],
         _id: { $ne: user._id },
       })
         .select("_id")
@@ -57,7 +68,7 @@ export async function loadPublicProfile(slugOrId: string) {
           count: { $sum: 1 },
           downloads: { $sum: "$downloads" },
           views: { $sum: "$views" },
-          avgRating: { $avg: "$rating.average" },
+          avgRating: ratedAverageExpr,
         },
       },
     ]),
@@ -79,14 +90,24 @@ export async function loadPublicProfile(slugOrId: string) {
         .lean()
     : [];
 
+  const [followersCount, followingCount] = await Promise.all([
+    Follow.countDocuments({ following: user._id }),
+    Follow.countDocuments({ follower: user._id }),
+  ]);
+
   return {
     user,
     materials,
     quizzes,
     reviews,
-    stats: stats[0] || { count: 0, downloads: 0, views: 0, avgRating: 0 },
+    stats: {
+      ...(stats[0] || { count: 0, downloads: 0, views: 0, avgRating: 0 }),
+      followersCount,
+      followingCount,
+    },
     canonicalSlug: user.slug as string,
     requestedViaId,
+    requestedViaAlias,
   };
 }
 
@@ -97,7 +118,7 @@ export async function resolveUserSlug(userId: string) {
   if (user.slug) return user.slug as string;
   const slug = await uniqueUserSlug(async (candidate) => {
     const taken = await User.findOne({
-      slug: candidate,
+      $or: [{ slug: candidate }, { previousSlugs: candidate }],
       _id: { $ne: user._id },
     })
       .select("_id")

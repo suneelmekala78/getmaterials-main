@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Grid3X3, List, ChevronDown } from "lucide-react";
+import { listHas, parseList } from "@/lib/filter-list";
 import { materialsHref, type MaterialsQuery } from "./query";
 
 const tabs = [
@@ -24,14 +25,16 @@ const sorts = [
 ];
 
 function activeTab(current: MaterialsQuery) {
-  if (current.category === "notes" && !current.type) return "notes";
-  if (current.type === "video" && !current.category) return "videos";
-  if (current.type === "pdf" && !current.category) return "pdfs";
-  if (current.category === "question_paper") return "papers";
-  if (current.category === "assignment") return "assignments";
-  if (current.category === "syllabus") return "syllabus";
-  if (current.type === "link") return "links";
-  if (!current.type && !current.category) return "all";
+  const types = parseList(current.type);
+  const categories = parseList(current.category);
+  if (listHas(current.category, "notes") && types.length === 0 && categories.length === 1) return "notes";
+  if (listHas(current.type, "video") && categories.length === 0 && types.length === 1) return "videos";
+  if (listHas(current.type, "pdf") && categories.length === 0 && types.length === 1) return "pdfs";
+  if (listHas(current.category, "question_paper") && categories.length === 1) return "papers";
+  if (listHas(current.category, "assignment") && categories.length === 1) return "assignments";
+  if (listHas(current.category, "syllabus") && categories.length === 1) return "syllabus";
+  if (listHas(current.type, "link") && types.length === 1) return "links";
+  if (!types.length && !categories.length) return "all";
   return "";
 }
 
@@ -59,6 +62,8 @@ export default function MaterialsToolbar({
               view: current.view,
               semester: current.semester,
               college: current.college,
+              chapter: current.chapter,
+              program: current.program,
               ...tab.params,
             };
             return (

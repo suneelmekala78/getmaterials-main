@@ -1,28 +1,42 @@
+import { buildSearchParams, type QueryParam } from "@/lib/filter-list";
+
 export type MaterialsQuery = {
-  type?: string;
-  category?: string;
-  subject?: string;
+  type?: QueryParam;
+  category?: QueryParam;
+  subject?: QueryParam;
   q?: string;
   tag?: string;
   sort?: string;
   view?: string;
   page?: string;
-  semester?: string;
-  college?: string;
+  semester?: QueryParam;
+  college?: QueryParam;
+  chapter?: QueryParam;
+  program?: QueryParam;
 };
 
-const KEYS = ["q", "type", "category", "subject", "tag", "sort", "view", "semester", "college"] as const;
+const KEYS = [
+  "q",
+  "type",
+  "category",
+  "subject",
+  "tag",
+  "sort",
+  "view",
+  "page",
+  "semester",
+  "college",
+  "chapter",
+  "program",
+] as const;
 
 export function materialsHref(
   current: MaterialsQuery,
   patch: Partial<MaterialsQuery> = {}
 ) {
-  const next: MaterialsQuery = { ...current, ...patch, page: undefined };
-  const query = new URLSearchParams();
-  KEYS.forEach((key) => {
-    const value = next[key];
-    if (value) query.set(key, value);
-  });
+  const next: MaterialsQuery = { ...current, ...patch };
+  if (!patch.page) next.page = undefined;
+  const query = buildSearchParams(next, KEYS);
   const qs = query.toString();
   return qs ? `/materials?${qs}` : "/materials";
 }

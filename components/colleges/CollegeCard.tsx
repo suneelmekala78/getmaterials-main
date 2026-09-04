@@ -13,7 +13,8 @@ const covers = [
 export type CollegeCardData = {
   id: string;
   name: string;
-  code: string;
+  slug?: string;
+  code?: string;
   logo?: string;
   banner?: string;
   location?: string;
@@ -42,7 +43,7 @@ function CollegeLogo({
         />
       ) : (
         <span className="text-sm font-extrabold text-violet-700">
-          {college.code.slice(0, 3)}
+          {(college.code || college.name).slice(0, 3).toUpperCase()}
         </span>
       )}
     </div>
@@ -61,7 +62,7 @@ export default function CollegeCard({
   view: "grid" | "list";
 }) {
   const cover = covers[college.name.length % covers.length];
-  const exploreHref = `/colleges/${encodeURIComponent(college.code)}`;
+  const exploreHref = `/colleges/${encodeURIComponent(college.slug || college.code || college.id)}`;
 
   if (view === "list") {
     return (
@@ -76,8 +77,7 @@ export default function CollegeCard({
         <div className="min-w-0 flex-1">
           <h3 className="font-bold text-slate-900 truncate">{college.name}</h3>
           <p className="text-xs text-slate-500 truncate">
-            {college.code}
-            {college.location ? ` • ${college.location}` : ""}
+            {[college.code, college.location].filter(Boolean).join(" • ") || "College"}
           </p>
           <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
             {college.avgRating > 0 && (
@@ -118,8 +118,7 @@ export default function CollegeCard({
       <div className="pt-11 px-4 pb-4 flex-1 flex flex-col">
         <h3 className="font-bold text-slate-900 leading-snug line-clamp-2">{college.name}</h3>
         <p className="text-xs text-slate-500 mt-1 truncate">
-          {college.code}
-          {college.location ? ` • ${college.location}` : ""}
+          {[college.code, college.location].filter(Boolean).join(" • ") || "College"}
         </p>
         <div className="flex items-center gap-3 mt-2 text-xs text-slate-600">
           {college.avgRating > 0 && (

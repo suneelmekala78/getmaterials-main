@@ -1,9 +1,11 @@
 import { connectDB, College, Material, User } from "@/lib/database";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { GraduationCap, Search, Star } from "lucide-react";
-import { defaultAvatarSrc } from "@/components/profile/FittedPhoto";
+import { GraduationCap, Search } from "lucide-react";
+import { TeacherCard } from "@/components/teachers/TeacherCard";
+import { findCollegeByKey } from "@/lib/college-key";
 import { listingMetadata } from "@/lib/seo";
+import { ratedAverageExpr } from "@/lib/rating-aggregate";
 
 export const dynamic = "force-dynamic";
 
@@ -34,24 +36,19 @@ export default async function TeachersPage({ searchParams }: Props) {
     ];
   }
   if (collegeKey) {
-    const college = await College.findOne({
-      code: collegeKey.toUpperCase(),
-      status: "active",
-    })
-      .select("_id")
-      .lean();
+    const college = await findCollegeByKey(collegeKey, { status: "active" });
     if (college) filter.college = (college as any)._id;
     else filter._id = null;
   }
 
   const [teachers, colleges] = await Promise.all([
     User.find(filter)
-      .select("name slug avatar bio qualifications college")
-      .populate("college", "name code")
+      .select("name slug avatar banner bannerPos bio qualifications college")
+      .populate("college", "name code slug")
       .sort({ name: 1 })
       .limit(200)
       .lean(),
-    College.find({ status: "active" }).select("name code").sort({ name: 1 }).lean(),
+    College.find({ status: "active" }).select("name code slug").sort({ name: 1 }).lean(),
   ]);
 
   const ids = teachers.map((teacher: any) => teacher._id);
@@ -68,7 +65,7 @@ export default async function TeachersPage({ searchParams }: Props) {
           $group: {
             _id: "$uploadedBy",
             materials: { $sum: 1 },
-            avgRating: { $avg: "$rating.average" },
+            avgRating: ratedAverageExpr,
           },
         },
       ])
@@ -112,7 +109,7 @@ export default async function TeachersPage({ searchParams }: Props) {
           >
             <option value="">All colleges</option>
             {colleges.map((college: any) => (
-              <option key={String(college._id)} value={college.code}>
+              <option key={String(college._id)} value={college.slug || college.code}>
                 {college.name}
               </option>
             ))}
@@ -134,40 +131,14 @@ export default async function TeachersPage({ searchParams }: Props) {
             {teachers.map((teacher: any) => {
               const stats = countMap.get(String(teacher._id));
               return (
-                <Link
+                <TeacherCard
                   key={String(teacher._id)}
-                  href={`/users/${teacher.slug || teacher._id}`}
-                  className="bg-white rounded-2xl border border-slate-100 p-5 hover:border-violet-200 hover:shadow-sm transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={teacher.avatar || defaultAvatarSrc("teacher")}
-                      alt=""
-                      className="w-14 h-14 rounded-full object-cover"
-                    />
-                    <div className="min-w-0">
-                      <p className="font-bold text-slate-900 truncate">{teacher.name}</p>
-                      <p className="text-xs text-slate-500 truncate">
-                        {teacher.college?.name || "GetMaterials"}
-                      </p>
-                    </div>
-                  </div>
-                  {(teacher.qualifications || teacher.bio) && (
-                    <p className="text-sm text-slate-600 mt-3 line-clamp-2">
-                      {teacher.qualifications || teacher.bio}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-3 mt-4 text-xs text-slate-500">
-                    <span>{stats?.materials || 0} materials</span>
-                    {stats?.avgRating > 0 && (
-                      <span className="inline-flex items-center gap-1">
-                        <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                        {Number(stats.avgRating).toFixed(1)}
-                      </span>
-                    )}
-                  </div>
-                </Link>
+                  teacher={{
+                    ...teacher,
+                    materials: stats?.materials || 0,
+                    avgRating: stats?.avgRating || 0,
+                  }}
+                />
               );
             })}
           </div>

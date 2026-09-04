@@ -22,7 +22,8 @@ export interface ICollegeBatch {
 
 export interface ICollege extends Document {
   name: string;
-  code: string;
+  slug?: string;
+  code?: string;
   logo?: string;
   banner?: string;
   location?: string;
@@ -68,7 +69,8 @@ const CollegeBatchSchema = new Schema<ICollegeBatch>(
 const CollegeSchema = new Schema<ICollege>(
   {
     name: { type: String, required: true, trim: true },
-    code: { type: String, required: true, unique: true, uppercase: true, trim: true },
+    slug: { type: String, trim: true, lowercase: true, sparse: true, unique: true, index: true },
+    code: { type: String, unique: true, sparse: true, uppercase: true, trim: true },
     logo: { type: String },
     banner: { type: String },
     location: { type: String },

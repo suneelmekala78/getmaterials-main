@@ -52,3 +52,11 @@ export function defaultBannerSrc() {
 export function resolveAvatarSrc(image?: string | null, role?: string) {
   return image || defaultAvatarSrc(role);
 }
+
+export function defaultThumbnailSrc() {
+  return "/images/default-thumbnail.png";
+}
+
+export function resolveThumbnailSrc(image?: string | null) {
+  return image || defaultThumbnailSrc();
+}

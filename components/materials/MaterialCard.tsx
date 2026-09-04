@@ -11,6 +11,7 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import BookmarkToggle from "./BookmarkToggle";
+import { resolveThumbnailSrc } from "@/components/profile/FittedPhoto";
 
 const typeConfig: Record<string, { icon: any; label: string; color: string }> = {
   pdf: { icon: FileText, label: "PDF", color: "text-red-600 bg-red-50" },
@@ -54,14 +55,12 @@ export default function MaterialCard({
 
   const preview = (
     <div className={`relative bg-slate-50 overflow-hidden ${view === "list" ? "w-40 h-28 shrink-0 rounded-xl" : "aspect-[16/10]"}`}>
-      {material.thumbnailUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={material.thumbnailUrl} alt="" className="w-full h-full object-cover" />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center">
-          <Icon className={`w-8 h-8 ${type.color.split(" ")[0]} opacity-40`} />
-        </div>
-      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={resolveThumbnailSrc(material.thumbnailUrl)}
+        alt=""
+        className="w-full h-full object-cover"
+      />
       {material.type === "video" && (
         <span className="absolute inset-0 flex items-center justify-center">
           <span className="w-10 h-10 rounded-full bg-black/55 text-white flex items-center justify-center">

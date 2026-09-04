@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { subjectsHref, SUBJECT_CATEGORIES, type SubjectQuery } from "./query";
+import { listHas, parseList, toggleCsv } from "@/lib/filter-list";
 
 export default function SubjectsFilterSidebar({
   current,
@@ -15,17 +16,15 @@ export default function SubjectsFilterSidebar({
     <FilterGroup title="Field of Study">
       <FilterLink
         href={subjectsHref(current, { category: "" })}
-        active={!current.category}
+        active={!parseList(current.category).length}
         label="All Fields"
         count={total}
       />
       {SUBJECT_CATEGORIES.map((item) => (
         <FilterLink
           key={item.value}
-          href={subjectsHref(current, {
-            category: current.category === item.value ? "" : item.value,
-          })}
-          active={current.category === item.value}
+            href={subjectsHref(current, { category: toggleCsv(current.category, item.value) })}
+            active={listHas(current.category, item.value)}
           label={item.label}
           count={categoryCounts[item.value] || 0}
         />

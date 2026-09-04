@@ -6,6 +6,7 @@ import QuizzesFilterSidebar from "@/components/quizzes/QuizzesFilterSidebar";
 import QuizzesToolbar from "@/components/quizzes/QuizzesToolbar";
 import QuizCard, { type QuizCardData } from "@/components/quizzes/QuizCard";
 import { formatCount, quizzesHref, type QuizzesQuery } from "@/components/quizzes/query";
+import { parseList, type QueryParam } from "@/lib/filter-list";
 import { listingMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ const PAGE_SIZE = 8;
 interface Props {
   searchParams: Promise<{
     q?: string;
-    subject?: string;
+    subject?: QueryParam;
     tab?: string;
     sort?: string;
     view?: string;
@@ -47,13 +48,14 @@ export default async function QuizzesPage({ searchParams }: Props) {
     view: params.view,
   };
 
-  const subjectDoc = params.subject
-    ? await Subject.findOne({ slug: params.subject }).select("_id").lean()
-    : null;
+  const subjectSlugs = parseList(params.subject);
+  const selectedSubjects = subjectSlugs.length
+    ? await Subject.find({ slug: { $in: subjectSlugs } }).select("_id").lean()
+    : [];
 
   const filter: Record<string, unknown> = { isActive: true };
-  if (params.subject) {
-    filter.subject = subjectDoc ? (subjectDoc as any)._id : { $in: [] };
+  if (subjectSlugs.length) {
+    filter.subject = { $in: selectedSubjects.map((item: any) => item._id) };
   }
   if (params.q?.trim()) {
     filter.$or = [

@@ -175,11 +175,15 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, avatar, banner, bio, avatarPos, bannerPos }),
       });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        await update({ name, image: avatar || "" });
+        await update({
+          name: data.user?.name || name,
+          image: data.user?.avatar || avatar || "",
+          slug: data.user?.slug,
+        });
         toast.success("Profile updated successfully!");
       } else {
-        const data = await res.json();
         toast.error(data.error || "Failed to update profile");
       }
     } catch {

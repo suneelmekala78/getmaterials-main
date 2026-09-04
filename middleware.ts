@@ -8,7 +8,6 @@ const protectedPaths = [
   "/settings",
   "/profile",
   "/teacher",
-  "/polls",
   "/quizzes",
   "/requests",
   "/my-materials",
@@ -18,7 +17,6 @@ const protectedPaths = [
 const protectedApiPaths = [
   "/api/bookmarks",
   "/api/upload",
-  "/api/polls",
   "/api/quizzes",
   "/api/requests",
   "/api/role-change-requests",
@@ -41,7 +39,8 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/contact") ||
     pathname.startsWith("/api/feedback") ||
     pathname.startsWith("/api/college-directory") ||
-    pathname.startsWith("/api/profiles")
+    pathname.startsWith("/api/profiles") ||
+    pathname.startsWith("/api/polls")
   ) {
     return NextResponse.next();
   }
@@ -63,15 +62,14 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  const matchesPath = (path: string) =>
+    pathname === path || pathname.startsWith(`${path}/`);
+
   // Check protected page routes
-  const isProtectedPage = protectedPaths.some((path) =>
-    pathname.startsWith(path)
-  );
+  const isProtectedPage = protectedPaths.some(matchesPath);
 
   // Check protected API routes
-  const isProtectedApi = protectedApiPaths.some((path) =>
-    pathname.startsWith(path)
-  );
+  const isProtectedApi = protectedApiPaths.some(matchesPath);
 
   if (isProtectedPage && !sessionCookie) {
     const loginUrl = new URL("/login", req.url);

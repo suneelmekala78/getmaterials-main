@@ -102,10 +102,14 @@ export default async function TeacherMaterialsPage() {
                         </div>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <TeacherMaterialActions material={{
-                          _id: material._id.toString(),
-                          title: material.title,
-                        }} />
+                        <TeacherMaterialActions
+                          material={{
+                            _id: material._id.toString(),
+                            title: material.title,
+                            status: material.status,
+                          }}
+                          role={(session.user as any).role}
+                        />
                       </td>
                     </tr>
                   );

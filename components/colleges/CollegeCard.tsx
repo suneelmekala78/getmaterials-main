@@ -61,7 +61,7 @@ export default function CollegeCard({
   view: "grid" | "list";
 }) {
   const cover = covers[college.name.length % covers.length];
-  const exploreHref = `/materials?college=${encodeURIComponent(college.code)}`;
+  const exploreHref = `/colleges/${encodeURIComponent(college.code)}`;
 
   if (view === "list") {
     return (
@@ -131,7 +131,7 @@ export default function CollegeCard({
           <span>{materialsLabel(college.materials)}</span>
         </div>
         <span className="mt-4 inline-flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold group-hover:opacity-90 transition-opacity">
-          Explore materials
+          View college
           <ArrowRight className="w-4 h-4" />
         </span>
       </div>

@@ -16,8 +16,8 @@ const links = [
   { href: "/subjects", label: "Subjects" },
   { href: "/colleges", label: "Colleges" },
   { href: "/quizzes", label: "Quizzes" },
-  { href: "/feedback", label: "Feedback" },
-  { href: "/how-to-use", label: "How to Use" },
+  { href: "/polls", label: "Polls" },
+  { href: "/teachers", label: "Teachers" },
 ];
 
 const MarketingNavbar = () => {
@@ -65,7 +65,7 @@ const MarketingNavbar = () => {
             <li
               key={link.label}
               className={
-                link.href === "/feedback" || link.href === "/how-to-use"
+                link.href === "/polls" || link.href === "/teachers"
                   ? "hidden xl:block"
                   : undefined
               }

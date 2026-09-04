@@ -41,6 +41,8 @@ export default function Footer() {
               <li><Link href="/materials" className="text-sm text-gray-500 hover:text-[var(--primary)]">Browse Materials</Link></li>
               <li><Link href="/colleges" className="text-sm text-gray-500 hover:text-[var(--primary)]">Colleges</Link></li>
               <li><Link href="/quizzes" className="text-sm text-gray-500 hover:text-[var(--primary)]">Quizzes</Link></li>
+              <li><Link href="/teachers" className="text-sm text-gray-500 hover:text-[var(--primary)]">Teachers</Link></li>
+              <li><Link href="/polls" className="text-sm text-gray-500 hover:text-[var(--primary)]">Polls</Link></li>
               <li><Link href="/about" className="text-sm text-gray-500 hover:text-[var(--primary)]">About Us</Link></li>
               <li><Link href="/feedback" className="text-sm text-gray-500 hover:text-[var(--primary)]">Feedback</Link></li>
               <li><Link href="/how-to-use" className="text-sm text-gray-500 hover:text-[var(--primary)]">How to Use</Link></li>

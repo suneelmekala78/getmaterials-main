@@ -394,7 +394,11 @@ export default async function CollegesPage({ searchParams }: Props) {
               <h3 className="font-bold text-slate-900 text-sm mb-4">Recently Joined Colleges</h3>
               <div className="space-y-3">
                 {recentColleges.map((college: any) => (
-                  <div key={String(college._id)} className="flex items-center gap-3">
+                  <Link
+                    key={String(college._id)}
+                    href={`/colleges/${college.code}`}
+                    className="flex items-center gap-3 hover:opacity-80"
+                  >
                     <div className="w-9 h-9 rounded-lg bg-violet-50 overflow-hidden flex items-center justify-center shrink-0">
                       {college.logo ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -408,7 +412,7 @@ export default async function CollegesPage({ searchParams }: Props) {
                       <p className="text-[11px] text-slate-400 truncate">{college.location || college.code}</p>
                     </div>
                     <span className="text-[10px] text-slate-400 shrink-0">{timeAgo(college.createdAt)}</span>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>

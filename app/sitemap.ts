@@ -23,6 +23,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry("/materials", now, "daily", 0.9),
     entry("/subjects", now, "daily", 0.8),
     entry("/colleges", now, "weekly", 0.8),
+    entry("/teachers", now, "weekly", 0.7),
+    entry("/polls", now, "weekly", 0.5),
     entry("/quizzes", now, "weekly", 0.6),
     entry("/about", now, "monthly", 0.7),
     entry("/how-to-use", now, "monthly", 0.7),
@@ -75,7 +77,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         ),
       ...colleges.map((college: any) =>
         entry(
-          `/materials?college=${encodeURIComponent(college.code)}`,
+          `/colleges/${encodeURIComponent(college.code)}`,
           college.updatedAt || now,
           "weekly",
           0.6,

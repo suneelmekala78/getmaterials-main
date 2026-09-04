@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { BarChart3, CheckCircle2, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -14,6 +16,8 @@ interface Poll {
 }
 
 export default function PollsPage() {
+  const { status } = useSession();
+  const loggedIn = status === "authenticated";
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(true);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -31,6 +35,10 @@ export default function PollsPage() {
   const handleSubmit = async (pollId: string) => {
     const answer = answers[pollId];
     if (!answer) return;
+    if (!loggedIn) {
+      window.location.href = `/login?callbackUrl=${encodeURIComponent("/polls")}`;
+      return;
+    }
     setSubmitting(pollId);
     try {
       const res = await fetch("/api/polls", {
@@ -40,6 +48,8 @@ export default function PollsPage() {
       });
       if (res.ok) {
         setSubmitted((prev) => ({ ...prev, [pollId]: true }));
+      } else if (res.status === 401) {
+        window.location.href = `/login?callbackUrl=${encodeURIComponent("/polls")}`;
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to submit poll response");
@@ -62,7 +72,7 @@ export default function PollsPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Polls & Feedback</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Polls</h1>
         <p className="text-slate-500 mt-1 text-sm">
           Share your thoughts and help us improve GetMaterials.
         </p>
@@ -177,13 +187,22 @@ export default function PollsPage() {
                       />
                     )}
 
-                    <button
-                      onClick={() => handleSubmit(poll._id)}
-                      disabled={!answer || submitting === poll._id}
-                      className="px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {submitting === poll._id ? "Submitting..." : "Submit"}
-                    </button>
+                    {loggedIn ? (
+                      <button
+                        onClick={() => handleSubmit(poll._id)}
+                        disabled={!answer || submitting === poll._id}
+                        className="px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        {submitting === poll._id ? "Submitting..." : "Submit"}
+                      </button>
+                    ) : (
+                      <Link
+                        href={`/login?callbackUrl=${encodeURIComponent("/polls")}`}
+                        className="inline-flex px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700"
+                      >
+                        Login to vote
+                      </Link>
+                    )}
                   </>
                 )}
               </div>

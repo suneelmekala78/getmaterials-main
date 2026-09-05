@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
-import { User, Lock, Bell, LogOut, Save, GraduationCap, Clock, CheckCircle2, XCircle, Camera, ImageIcon } from "lucide-react";
+import { User, Lock, Bell, LogOut, Save, GraduationCap, Clock, CheckCircle2, XCircle, Camera, ImageIcon, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { OtpCodeInput } from "@/components/auth/OtpCodeInput";
 import { uploadBrowserFile } from "@/lib/upload-file";
@@ -16,6 +16,11 @@ import {
 } from "@/components/profile/FittedPhoto";
 import { ImageAdjustModal } from "@/components/profile/ImageAdjustModal";
 import toast from "react-hot-toast";
+import {
+  ACCOUNT_DELETION_DATA_NOTICE,
+  ACCOUNT_DELETION_REASONS,
+  type DeletionReasonId,
+} from "@/lib/deletion-reasons";
 
 export default function SettingsPage() {
   const { data: session, update } = useSession();
@@ -24,6 +29,10 @@ export default function SettingsPage() {
   const [name, setName] = useState(user?.name || "");
   const [saving, setSaving] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deletionReasonId, setDeletionReasonId] = useState<DeletionReasonId | "">("");
+  const [deletionReasonOther, setDeletionReasonOther] = useState("");
   const [phone, setPhone] = useState("");
   const [savedPhone, setSavedPhone] = useState("");
   const [phoneCode, setPhoneCode] = useState("");
@@ -160,14 +169,15 @@ export default function SettingsPage() {
       toast.error("Verify the new email before saving, or change it back.");
       return;
     }
-    if (phone !== savedPhone) {
-      toast.error(
-        phone
-          ? "Verify the new mobile number before saving, or restore the verified number."
-          : "Use Remove number to drop your mobile number, or restore the verified number.",
-      );
-      return;
-    }
+    // Phone number field is hidden until SMS verification is available.
+    // if (phone !== savedPhone) {
+    //   toast.error(
+    //     phone
+    //       ? "Verify the new mobile number before saving, or restore the verified number."
+    //       : "Use Remove number to drop your mobile number, or restore the verified number.",
+    //   );
+    //   return;
+    // }
     setSaving(true);
     try {
       const res = await fetch("/api/user/profile", {
@@ -523,6 +533,7 @@ export default function SettingsPage() {
             </p>
           </div>
 
+          {/* Phone number — hidden until SMS/Twilio verification is available.
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               Mobile Number
@@ -595,6 +606,7 @@ export default function SettingsPage() {
               ) : null}
             </div>
           </div>
+          */}
 
           <button
             type="submit"
@@ -960,6 +972,140 @@ export default function SettingsPage() {
               Sign Out
             </button>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-red-100 overflow-hidden">
+        <div className="px-6 py-4 border-b border-red-100 flex items-center gap-3">
+          <Trash2 className="w-5 h-5 text-red-400" />
+          <h2 className="text-base font-semibold text-slate-900">Delete account</h2>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <p className="text-sm font-medium text-slate-900">Permanently delete your account</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Deletion is scheduled for 7 days later. Sign in again during that period to cancel.
+            </p>
+          </div>
+          {showDeleteAccount ? (
+            <div className="space-y-4 p-4 rounded-xl border border-red-100 bg-red-50/40">
+              <div>
+                <p className="text-sm font-semibold text-slate-900 mb-2">What will be deleted</p>
+                <ul className="space-y-1.5">
+                  {ACCOUNT_DELETION_DATA_NOTICE.map((line) => (
+                    <li key={line} className="text-xs text-slate-600 flex gap-2">
+                      <span className="text-red-500 shrink-0">•</span>
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-800 mb-2">
+                  Why are you deleting your account?
+                </label>
+                <div className="space-y-2">
+                  {ACCOUNT_DELETION_REASONS.map((option) => (
+                    <label
+                      key={option.id}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-colors ${
+                        deletionReasonId === option.id
+                          ? "border-red-300 bg-white"
+                          : "border-slate-200 bg-white/70 hover:border-slate-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="deletion-reason"
+                        checked={deletionReasonId === option.id}
+                        onChange={() => setDeletionReasonId(option.id)}
+                        className="accent-red-600"
+                      />
+                      <span className="text-sm text-slate-800">{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {deletionReasonId === "other" ? (
+                <div>
+                  <textarea
+                    value={deletionReasonOther}
+                    onChange={(e) => setDeletionReasonOther(e.target.value)}
+                    rows={3}
+                    maxLength={1000}
+                    placeholder="Please tell us more…"
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-red-400 focus:ring-2 focus:ring-red-500/20 resize-none bg-white"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">
+                    {deletionReasonOther.trim().length}/1000 · min 5 characters
+                  </p>
+                </div>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={
+                    deletingAccount ||
+                    !deletionReasonId ||
+                    (deletionReasonId === "other" && deletionReasonOther.trim().length < 5)
+                  }
+                  onClick={async () => {
+                    if (deletingAccount || !deletionReasonId) return;
+                    const reason =
+                      deletionReasonId === "other"
+                        ? deletionReasonOther.trim()
+                        : ACCOUNT_DELETION_REASONS.find((r) => r.id === deletionReasonId)?.label ||
+                          "";
+                    if (reason.trim().length < 5) {
+                      toast.error("Please choose or enter a reason");
+                      return;
+                    }
+                    setDeletingAccount(true);
+                    try {
+                      const res = await fetch("/api/user/delete-account", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ reason }),
+                      });
+                      const data = await res.json().catch(() => ({}));
+                      if (!res.ok) throw new Error(data.error || "Could not schedule deletion");
+                      toast.success(
+                        "Account scheduled for deletion in 7 days. Sign in again before then to cancel.",
+                      );
+                      await signOut({ callbackUrl: "/login" });
+                    } catch (error: any) {
+                      toast.error(error.message || "Could not schedule deletion");
+                      setDeletingAccount(false);
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-xl hover:bg-red-700 disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {deletingAccount ? "Scheduling…" : "Confirm deletion"}
+                </button>
+                <button
+                  type="button"
+                  disabled={deletingAccount}
+                  onClick={() => {
+                    setShowDeleteAccount(false);
+                    setDeletionReasonId("");
+                    setDeletionReasonOther("");
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowDeleteAccount(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors shrink-0"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete account
+            </button>
+          )}
         </div>
       </div>
 

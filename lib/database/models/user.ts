@@ -39,6 +39,8 @@ export interface IUser extends Document {
   phoneVerified?: Date;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  deletionRequestedAt?: Date;
+  deletionReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -117,6 +119,8 @@ const UserSchema = new Schema<IUser>(
     phoneVerified: { type: Date },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    deletionRequestedAt: { type: Date },
+    deletionReason: { type: String, maxlength: 1000 },
   },
   { timestamps: true }
 );

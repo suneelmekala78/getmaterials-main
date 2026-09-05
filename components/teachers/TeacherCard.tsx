@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { BadgeCheck, Star } from "lucide-react";
 import {
   defaultAvatarSrc,
   defaultBannerSrc,
@@ -46,7 +46,10 @@ export function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
         />
       </div>
       <div className="pt-10 px-4 pb-4">
-        <p className="font-bold text-slate-900 truncate">{teacher.name}</p>
+        <p className="font-bold text-slate-900 truncate inline-flex items-center gap-1.5">
+          <span className="truncate">{teacher.name}</span>
+          <BadgeCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+        </p>
         <p className="text-xs text-slate-500 truncate">{teacher.college?.name || "GetMaterials"}</p>
         {(teacher.qualifications || teacher.bio) && (
           <p className="text-sm text-slate-600 mt-2 line-clamp-2">

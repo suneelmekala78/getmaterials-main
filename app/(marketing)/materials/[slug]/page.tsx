@@ -402,151 +402,151 @@ export default async function MaterialViewPage({ params }: Props) {
           </p>
 
           <section className="bg-white rounded-2xl border border-slate-100 p-5 sm:p-7 mb-6">
-            <div className="flex flex-col lg:flex-row gap-6">
-              <div className="shrink-0">
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col sm:flex-row gap-5 sm:items-start">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={material.thumbnailUrl || "/images/default-thumbnail.png"}
                   alt={material.title}
-                  className="w-full lg:w-44 h-32 object-cover rounded-2xl"
+                  className="w-full sm:w-56 aspect-video object-cover rounded-2xl shrink-0 bg-violet-50"
                 />
-              </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    {material.subject?.name && (
-                      <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-50 text-violet-700 mb-2">
-                        {material.subject.name}
-                      </span>
-                    )}
-                    <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
-                      {material.title}
-                      <span className="ml-2 align-middle inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase bg-emerald-50 text-emerald-700">
-                        Free
-                      </span>
-                    </h1>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="flex items-center justify-end gap-1">
-                      <span className="text-lg font-extrabold text-slate-900">
-                        {ratingAvg > 0 ? ratingAvg.toFixed(1) : "—"}
-                      </span>
-                      <span className="flex">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-4 h-4 ${
-                              star <= Math.round(ratingAvg)
-                                ? "text-amber-400 fill-amber-400"
-                                : "text-slate-200"
-                            }`}
-                          />
-                        ))}
-                      </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      {material.subject?.name && (
+                        <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-semibold bg-violet-50 text-violet-700 mb-2">
+                          {material.subject.name}
+                        </span>
+                      )}
+                      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
+                        {material.title}
+                        <span className="ml-2 align-middle inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold uppercase bg-emerald-50 text-emerald-700">
+                          Free
+                        </span>
+                      </h1>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">({ratingCount} ratings)</p>
-                    <div className="flex items-center justify-end gap-3 mt-2">
-                      <BookmarkToggle
-                        materialId={String(material._id)}
-                        initialBookmarked={bookmarked}
-                        loggedIn={Boolean(currentUserId)}
-                        label="Save for later"
-                        callbackUrl={`/materials/${slug}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[var(--primary)]"
+                    <div className="text-right shrink-0">
+                      <div className="flex items-center justify-end gap-1">
+                        <span className="text-lg font-extrabold text-slate-900">
+                          {ratingAvg > 0 ? ratingAvg.toFixed(1) : "—"}
+                        </span>
+                        <span className="flex">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-4 h-4 ${
+                                star <= Math.round(ratingAvg)
+                                  ? "text-amber-400 fill-amber-400"
+                                  : "text-slate-200"
+                              }`}
+                            />
+                          ))}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-400 mt-0.5">({ratingCount} ratings)</p>
+                      <div className="flex items-center justify-end gap-3 mt-2">
+                        <BookmarkToggle
+                          materialId={String(material._id)}
+                          initialBookmarked={bookmarked}
+                          loggedIn={Boolean(currentUserId)}
+                          label="Save for later"
+                          callbackUrl={`/materials/${slug}`}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[var(--primary)]"
+                        />
+                        <Link
+                          href={`/feedback`}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-600"
+                        >
+                          <Flag className="w-3.5 h-3.5" />
+                          Report
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 text-sm text-slate-600">
+                    <MetaItem
+                      icon={<FileText className="w-4 h-4 text-[var(--primary)]" />}
+                      label={`${fileKind}${fileSize ? ` (${fileSize})` : ""}`}
+                    />
+                    <MetaItem
+                      icon={<UserIcon className="w-4 h-4 text-[var(--primary)]" />}
+                      label={`${material.uploadedBy?.name || "Unknown"}${material.uploadedBy?.college?.name ? ` (${material.uploadedBy.college.name})` : ""}`}
+                    />
+                    {yearBranch && (
+                      <MetaItem
+                        icon={<GraduationCap className="w-4 h-4 text-[var(--primary)]" />}
+                        label={yearBranch}
                       />
-                      <Link
-                        href={`/feedback`}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-red-600"
+                    )}
+                    {collegeNames.length > 0 && (
+                      <MetaItem
+                        icon={<School className="w-4 h-4 text-[var(--primary)]" />}
+                        label={collegeNames.join(" · ")}
+                      />
+                    )}
+                    <MetaItem
+                      icon={<Calendar className="w-4 h-4 text-[var(--primary)]" />}
+                      label={`${uploadedDate} (Uploaded)`}
+                    />
+                    <MetaItem
+                      icon={<Download className="w-4 h-4 text-[var(--primary)]" />}
+                      label={`${formatCount(material.downloads || 0)} Downloads`}
+                    />
+                    <MetaItem
+                      icon={<Eye className="w-4 h-4 text-[var(--primary)]" />}
+                      label={`${formatCount(material.views || 0)} Views`}
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 mt-4">
+                    {downloadUrl && material.type !== "video" && material.type !== "link" && primaryFileUrl ? (
+                      <DownloadButton
+                        materialId={String(material._id)}
+                        fileUrl={primaryFileUrl}
+                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-[var(--primary)] text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-sm"
                       >
-                        <Flag className="w-3.5 h-3.5" />
-                        Report
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-5 text-sm text-slate-600">
-                  <MetaItem
-                    icon={<FileText className="w-4 h-4 text-[var(--primary)]" />}
-                    label={`${fileKind}${fileSize ? ` (${fileSize})` : ""}`}
-                  />
-                  <MetaItem
-                    icon={<UserIcon className="w-4 h-4 text-[var(--primary)]" />}
-                    label={`${material.uploadedBy?.name || "Unknown"}${material.uploadedBy?.college?.name ? ` (${material.uploadedBy.college.name})` : ""}`}
-                  />
-                  {yearBranch && (
-                    <MetaItem
-                      icon={<GraduationCap className="w-4 h-4 text-[var(--primary)]" />}
-                      label={yearBranch}
-                    />
-                  )}
-                  {collegeNames.length > 0 && (
-                    <MetaItem
-                      icon={<School className="w-4 h-4 text-[var(--primary)]" />}
-                      label={collegeNames.join(" · ")}
-                    />
-                  )}
-                  <MetaItem
-                    icon={<Calendar className="w-4 h-4 text-[var(--primary)]" />}
-                    label={`${uploadedDate} (Uploaded)`}
-                  />
-                  <MetaItem
-                    icon={<Download className="w-4 h-4 text-[var(--primary)]" />}
-                    label={`${formatCount(material.downloads || 0)} Downloads`}
-                  />
-                  <MetaItem
-                    icon={<Eye className="w-4 h-4 text-[var(--primary)]" />}
-                    label={`${formatCount(material.views || 0)} Views`}
-                  />
-                </div>
-
-                <div className="flex flex-wrap gap-3 mt-5">
-                  {downloadUrl && material.type !== "video" && material.type !== "link" && primaryFileUrl ? (
-                    <DownloadButton
+                        <Download className="w-4 h-4" /> Download
+                      </DownloadButton>
+                    ) : primaryExternalUrl ? (
+                      <a
+                        href={primaryExternalUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-[var(--primary)] text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-sm"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        {material.type === "video" ? "Watch" : "Open"}
+                      </a>
+                    ) : null}
+                    <BookmarkToggle
                       materialId={String(material._id)}
-                      fileUrl={primaryFileUrl}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-[var(--primary)] text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-sm"
-                    >
-                      <Download className="w-4 h-4" /> Download
-                    </DownloadButton>
-                  ) : primaryExternalUrl ? (
-                    <a
-                      href={primaryExternalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-6 py-2.5 bg-[var(--primary)] text-white font-bold rounded-xl hover:opacity-90 transition-opacity text-sm"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                      {material.type === "video" ? "Watch" : "Open"}
-                    </a>
-                  ) : null}
-                  <BookmarkToggle
-                    materialId={String(material._id)}
-                    initialBookmarked={bookmarked}
-                    loggedIn={Boolean(currentUserId)}
-                    label="Save"
-                    callbackUrl={`/materials/${slug}`}
-                    className={btnOutline}
-                  />
-                  <ShareButton
-                    title={material.title}
-                    description={plainDescription}
-                    url={pageUrl}
-                    className={btnOutline}
-                  />
-                </div>
-
-                {plainDescription ? (
-                  <div className="mt-6 pt-5 border-t border-slate-100">
-                    <h2 className="text-sm font-bold text-slate-900 mb-2">About this material</h2>
-                    <div
-                      className="material-description prose prose-sm max-w-none text-slate-600 break-words [&_*]:max-w-full [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-violet-600"
-                      dangerouslySetInnerHTML={{ __html: material.description }}
+                      initialBookmarked={bookmarked}
+                      loggedIn={Boolean(currentUserId)}
+                      label="Save"
+                      callbackUrl={`/materials/${slug}`}
+                      className={btnOutline}
+                    />
+                    <ShareButton
+                      title={material.title}
+                      description={plainDescription}
+                      url={pageUrl}
+                      className={btnOutline}
                     />
                   </div>
-                ) : null}
+                </div>
               </div>
+
+              {plainDescription ? (
+                <div className="pt-5 border-t border-slate-100">
+                  <h2 className="text-sm font-bold text-slate-900 mb-2">About this material</h2>
+                  <div
+                    className="material-description prose prose-sm max-w-none text-slate-600 break-words [&_*]:max-w-full [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-violet-600"
+                    dangerouslySetInnerHTML={{ __html: material.description }}
+                  />
+                </div>
+              ) : null}
             </div>
           </section>
 

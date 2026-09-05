@@ -119,7 +119,7 @@ export default async function UserProfilePage({ params }: Props) {
             <div className="min-w-0">
               <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2">
                 {user.name}
-                {user.emailVerified ? (
+                {user.emailVerified || user.role === "teacher" ? (
                   <BadgeCheck className="w-5 h-5 text-emerald-500 shrink-0" />
                 ) : null}
               </h1>

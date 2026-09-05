@@ -12,6 +12,13 @@ export function looksLikeObjectId(value: string) {
   return /^[a-f0-9]{24}$/i.test(value);
 }
 
+/** Teachers assigned in admin (assignedColleges) or with a primary college. */
+export function teachersAtCollegeFilter(collegeId: unknown) {
+  return {
+    $or: [{ college: collegeId }, { assignedColleges: collegeId }],
+  };
+}
+
 function baseCollegeSlug(name: string) {
   return (
     String(name || "")

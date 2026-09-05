@@ -1,5 +1,5 @@
 import { connectDB, Material, User, materialCollegeFilter } from "@/lib/database";
-import { collegeHref, collegePathKey, ensureCollegeSlug, findCollegeByKey } from "@/lib/college-key";
+import { collegeHref, collegePathKey, ensureCollegeSlug, findCollegeByKey, teachersAtCollegeFilter } from "@/lib/college-key";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -58,7 +58,7 @@ async function loadCollege(code: string) {
       .sort({ createdAt: -1 })
       .limit(8)
       .lean(),
-    User.find({ role: "teacher", status: "active", college: (college as any)._id })
+    User.find({ role: "teacher", status: "active", ...teachersAtCollegeFilter((college as any)._id) })
       .select("name slug avatar banner bannerPos bio qualifications")
       .sort({ name: 1 })
       .limit(12)

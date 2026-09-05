@@ -54,6 +54,10 @@ export function LoginForm() {
           const msg = "Please verify your account before logging in.";
           setError(msg);
           toast.error(msg);
+        } else if (result.error.includes("ACCOUNT_DELETED")) {
+          const msg = "This account has been permanently deleted.";
+          setError(msg);
+          toast.error(msg);
         } else {
           setError("Invalid email or password");
           toast.error("Invalid email or password");

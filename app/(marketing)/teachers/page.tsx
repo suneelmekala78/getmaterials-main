@@ -3,7 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { GraduationCap, Search } from "lucide-react";
 import { TeacherCard } from "@/components/teachers/TeacherCard";
-import { findCollegeByKey } from "@/lib/college-key";
+import { findCollegeByKey, teachersAtCollegeFilter } from "@/lib/college-key";
 import { listingMetadata } from "@/lib/seo";
 import { ratedAverageExpr } from "@/lib/rating-aggregate";
 
@@ -37,8 +37,15 @@ export default async function TeachersPage({ searchParams }: Props) {
   }
   if (collegeKey) {
     const college = await findCollegeByKey(collegeKey, { status: "active" });
-    if (college) filter.college = (college as any)._id;
-    else filter._id = null;
+    if (college) {
+      const collegeMatch = teachersAtCollegeFilter((college as any)._id);
+      if (filter.$or) {
+        filter.$and = [{ $or: filter.$or }, collegeMatch];
+        delete filter.$or;
+      } else {
+        Object.assign(filter, collegeMatch);
+      }
+    } else filter._id = null;
   }
 
   const [teachers, colleges] = await Promise.all([

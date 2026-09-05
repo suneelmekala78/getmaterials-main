@@ -58,6 +58,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         );
         if (!isValid) return null;
 
+        const deletionAt = (user as any).deletionRequestedAt as Date | undefined;
+        if (deletionAt) {
+          const due = new Date(deletionAt).getTime() + 7 * 24 * 60 * 60 * 1000;
+          if (Date.now() >= due) {
+            await User.findByIdAndDelete(user._id);
+            throw new Error("ACCOUNT_DELETED");
+          }
+          await User.updateOne(
+            { _id: user._id },
+            { $unset: { deletionRequestedAt: 1, deletionReason: 1 } },
+          );
+        }
+
         if (!user.emailVerified && !user.phoneVerified) {
           throw new Error("EMAIL_NOT_VERIFIED");
         }

@@ -978,13 +978,15 @@ export default function SettingsPage() {
       <div className="bg-white rounded-2xl border border-red-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-red-100 flex items-center gap-3">
           <Trash2 className="w-5 h-5 text-red-400" />
-          <h2 className="text-base font-semibold text-slate-900">Delete account</h2>
+          <h2 className="text-base font-semibold text-slate-900">Delete Account</h2>
         </div>
         <div className="p-6 space-y-4">
           <div>
             <p className="text-sm font-medium text-slate-900">Permanently delete your account</p>
             <p className="text-xs text-slate-500 mt-1">
-              Deletion is scheduled for 7 days later. Sign in again during that period to cancel.
+              Your account and associated data are scheduled for permanent deletion in 7 days. If you
+              sign in again within 7 days, the scheduled deletion will be canceled and your account
+              will remain active.
             </p>
           </div>
           {showDeleteAccount ? (
@@ -1069,8 +1071,16 @@ export default function SettingsPage() {
                       });
                       const data = await res.json().catch(() => ({}));
                       if (!res.ok) throw new Error(data.error || "Could not schedule deletion");
+                      const deletesAt = data.deletesAt
+                        ? new Date(data.deletesAt).toLocaleDateString("en-IN", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          })
+                        : "the scheduled date";
                       toast.success(
-                        "Account scheduled for deletion in 7 days. Sign in again before then to cancel.",
+                        `Account Deletion Scheduled. Your account is scheduled for permanent deletion on ${deletesAt}. Sign in before this date to cancel the deletion.`,
+                        { duration: 6000 },
                       );
                       await signOut({ callbackUrl: "/login" });
                     } catch (error: any) {
@@ -1103,7 +1113,7 @@ export default function SettingsPage() {
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors shrink-0"
             >
               <Trash2 className="w-4 h-4" />
-              Delete account
+              Delete Account
             </button>
           )}
         </div>

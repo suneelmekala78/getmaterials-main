@@ -21,6 +21,7 @@ import {
   ACCOUNT_DELETION_REASONS,
   type DeletionReasonId,
 } from "@/lib/deletion-reasons";
+import { ReferAFriendCard } from "@/components/settings/ReferAFriendCard";
 
 export default function SettingsPage() {
   const { data: session, update } = useSession();
@@ -618,6 +619,8 @@ export default function SettingsPage() {
           </button>
         </form>
       </div>
+
+      <ReferAFriendCard />
 
       {/* Change Password */}
       <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">

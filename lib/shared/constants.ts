@@ -2,7 +2,7 @@ export const APP_NAME = "GetMaterials";
 export const APP_DESCRIPTION =
   "Free educational platform where teachers share study materials and students learn without searching everywhere.";
 export const APP_URL = "https://getmaterials.in";
-export const APP_MAIN_URL = "https://app.getmaterials.in";
+export const APP_MAIN_URL = "https://getmaterials.in";
 export const APP_ADMIN_URL = "https://admin.getmaterials.in";
 
 export const CONTACT_EMAIL = "getmaterials.in@gmail.com";

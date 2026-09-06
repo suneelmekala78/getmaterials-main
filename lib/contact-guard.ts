@@ -361,6 +361,67 @@ const DISPOSABLE_DOMAINS = new Set([
   "tempmail.com",
   "throwaway.email",
   "fakeinbox.com",
+  // Common temp-mail.org / MailTicking / rotating disposable hosts
+  "emailnax.com",
+  "fexpost.com",
+  "fexbox.org",
+  "fextemp.com",
+  "mailto.plus",
+  "rover.info",
+  "tmpeml.info",
+  "tmpbox.net",
+  "teml.net",
+  "twzhhq.com",
+  "bareed.ws",
+  "emailtemp.org",
+  "tempmailaddress.com",
+  "mailticking.com",
+  "temporary-mail.net",
+  "temp-mail.io",
+  "tempail.com",
+  "moakt.cc",
+  "moakt.co",
+  "moakt.ws",
+  "disposablemail.com",
+  "mailtemp.net",
+  "tempr.email",
+  "discardmail.de",
+  "spamgourmet.net",
+  "gettempmail.com",
+  "tempmails.net",
+  "mailpoof.com",
+  "fakemail.net",
+  "trashmail.at",
+  "trashmail.io",
+  "trashmail.me",
+  "trashmail.ws",
+  // MailTicking / TemporaryMail domains (user-reported)
+  "mowan666.com",
+  "pdf-cutter.com",
+  "embassybase.com",
+  "mailsbay.com",
+  "mediaholy.com",
+  "mediaeast.uk",
+  "gongjua.com",
+  "besttempmail.com",
+  "swagpapa.com",
+  "rulersonline.com",
+  "inctart.com",
+  "justdefinition.com",
+  "deepyinc.com",
+  "deepmails.org",
+  "123mails.org",
+  "allfreemail.net",
+  "allwebemails.com",
+  "easymailer.live",
+  "horizonspost.com",
+  "inboxorigin.com",
+  "mailmagnet.co",
+  "mycreativeinbox.com",
+  "openmail.pro",
+  "solarnyx.com",
+  "temporarymail.com",
+  "temp-mail.org",
 ]);
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -383,11 +444,46 @@ const FAKE_LOCAL = new Set([
   "sample",
 ]);
 
+const DEFAULT_GMAIL_MAX_DOTS = 2;
+
 function domainIsDisposable(domain: string) {
   const parts = domain.split(".");
   for (let i = 0; i < parts.length - 1; i += 1) {
     if (DISPOSABLE_DOMAINS.has(parts.slice(i).join("."))) return true;
   }
+  return false;
+}
+
+/**
+ * Temp services mint dotted Gmail aliases like b.eh.ej.o.hon.26.4@gmail.com.
+ * More than 2 dots before @ on Gmail/Googlemail is blocked.
+ */
+function looksLikeDisposableMailboxLocal(local: string, domain: string) {
+  const localPart = local.split("+")[0] || local;
+  const dots = (localPart.match(/\./g) || []).length;
+  const segments = localPart.split(".").filter(Boolean);
+  const shortSegs = segments.filter((s) => s.length <= 2).length;
+
+  const isGoogle =
+    domain === "gmail.com" ||
+    domain === "googlemail.com" ||
+    domain.endsWith(".gmail.com");
+
+  if (isGoogle) {
+    if (dots > DEFAULT_GMAIL_MAX_DOTS) return true;
+    if (dots >= 2 && shortSegs >= 3) return true;
+  } else if (dots >= 5 && shortSegs >= 4) {
+    return true;
+  }
+
+  if (
+    localPart.length >= 18 &&
+    !/[aeiou]/i.test(localPart.replace(/[^a-z]/gi, "")) &&
+    /^[a-z0-9._+-]+$/i.test(localPart)
+  ) {
+    return true;
+  }
+
   return false;
 }
 
@@ -397,10 +493,28 @@ export function isDisposableEmail(email: string) {
   const [local, domain] = value.split("@");
   if (!local || !domain) return true;
   if (domainIsDisposable(domain)) return true;
-  if (FAKE_LOCAL.has(local.replace(/[0-9._+-]/g, "") || local)) {
-    if (domainIsDisposable(domain) || /test|fake|temp|trash|spam/.test(domain)) return true;
+  if (looksLikeDisposableMailboxLocal(local, domain)) return true;
+
+  const localClean = local.replace(/[0-9._+-]/g, "");
+  if (FAKE_LOCAL.has(localClean || local)) {
+    if (
+      domainIsDisposable(domain) ||
+      /test|fake|temp|trash|spam|junk|disposable/.test(domain)
+    ) {
+      return true;
+    }
   }
-  if (/^(test|fake|temp|asdf|qwerty)\d*$/.test(local) && !/gmail|yahoo|outlook|hotmail|icloud|proton/.test(domain)) {
+  if (
+    /^(test|fake|temp|asdf|qwerty|trash|spam)\d*$/.test(local) &&
+    !/gmail|yahoo|outlook|hotmail|icloud|proton|edu|ac\.in/.test(domain)
+  ) {
+    return true;
+  }
+  if (
+    /^(temp|tmp|trash|fake|spam|disposable|throwaway|mailinator)[a-z0-9-]*\./i.test(
+      domain,
+    )
+  ) {
     return true;
   }
   return false;

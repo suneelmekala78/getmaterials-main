@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Share2, Check, Link2 } from "lucide-react";
+import { Share2, Check } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { withReferredBy } from "@/components/providers/ReferralTracker";
 
 interface ShareButtonProps {
   title: string;
@@ -10,13 +12,52 @@ interface ShareButtonProps {
   className?: string;
 }
 
+function visitorKey() {
+  try {
+    let key = localStorage.getItem("gm_visitor_key");
+    if (!key) {
+      key =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `v-${Date.now()}`;
+      localStorage.setItem("gm_visitor_key", key);
+    }
+    return key;
+  } catch {
+    return `v-${Date.now()}`;
+  }
+}
+
 export function ShareButton({ title, description, url, className }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
+  const { data: session } = useSession();
+  const slug = (session?.user as { slug?: string } | undefined)?.slug;
+
+  const shareUrl = withReferredBy(url, slug);
+
+  const trackShare = () => {
+    if (!slug) return;
+    try {
+      const path = new URL(shareUrl).pathname;
+      fetch("/api/referral-tracking/track-share", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          referredBy: slug,
+          path,
+          visitorKey: visitorKey(),
+        }),
+      }).catch(() => {});
+    } catch {
+      // ignore
+    }
+  };
 
   const handleShare = async () => {
+    trackShare();
     if (navigator.share) {
       try {
-        await navigator.share({ title, text: description, url });
+        await navigator.share({ title, text: description, url: shareUrl });
       } catch (err: any) {
         if (err.name !== "AbortError") {
           await copyToClipboard();
@@ -29,13 +70,12 @@ export function ShareButton({ title, description, url, className }: ShareButtonP
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback for older browsers
       const textarea = document.createElement("textarea");
-      textarea.value = url;
+      textarea.value = shareUrl;
       document.body.appendChild(textarea);
       textarea.select();
       document.execCommand("copy");

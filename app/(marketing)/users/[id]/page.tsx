@@ -1,7 +1,16 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { BadgeCheck, GraduationCap } from "lucide-react";
+import {
+  BadgeCheck,
+  GraduationCap,
+  Github,
+  Globe,
+  Instagram,
+  Linkedin,
+  Youtube,
+} from "lucide-react";
+import { FaXTwitter } from "react-icons/fa6";
 import { auth } from "@/lib/auth";
 import { Follow, User } from "@/lib/database";
 import {
@@ -30,6 +39,24 @@ function roleLabel(role?: string) {
   if (role === "admin") return "Admin";
   if (role === "college_admin") return "College admin";
   return "Student";
+}
+
+function socialEntries(social?: Record<string, string | undefined> | null) {
+  if (!social) return [];
+  const map = [
+    { key: "linkedin", label: "LinkedIn", icon: Linkedin },
+    { key: "github", label: "GitHub", icon: Github },
+    { key: "twitter", label: "X", icon: FaXTwitter },
+    { key: "instagram", label: "Instagram", icon: Instagram },
+    { key: "youtube", label: "YouTube", icon: Youtube },
+    { key: "website", label: "Website", icon: Globe },
+  ] as const;
+  return map
+    .map((item) => ({
+      ...item,
+      href: String(social[item.key] || "").trim(),
+    }))
+    .filter((item) => item.href.startsWith("http"));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -168,6 +195,66 @@ export default async function UserProfilePage({ params }: Props) {
               Qualifications: {user.qualifications}
             </p>
           ) : null}
+
+          {(user.skills?.length || user.interests?.length) ? (
+            <div className="mt-5 space-y-3">
+              {user.skills?.length ? (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                    Skills
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {user.skills.map((skill: string) => (
+                      <span
+                        key={skill}
+                        className="px-2.5 py-1 rounded-lg bg-violet-50 text-violet-700 text-xs font-semibold"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {user.interests?.length ? (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+                    Interests
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {user.interests.map((interest: string) => (
+                      <span
+                        key={interest}
+                        className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold"
+                      >
+                        {interest}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {(() => {
+            const links = socialEntries(user.social);
+            if (!links.length) return null;
+            return (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {links.map((item) => (
+                  <a
+                    key={item.key}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:border-violet-300 hover:text-violet-700 transition"
+                  >
+                    <item.icon className="w-3.5 h-3.5" />
+                    {item.label}
+                  </a>
+                ))}
+              </div>
+            );
+          })()}
 
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[

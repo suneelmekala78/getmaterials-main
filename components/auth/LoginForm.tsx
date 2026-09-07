@@ -3,7 +3,11 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import toast from "react-hot-toast";
-import { reportLoginDevice } from "@/lib/device-id";
+import {
+  deviceNameFromUa,
+  getOrCreateDeviceId,
+  reportLoginDevice,
+} from "@/lib/device-id";
 // Phone login is disabled until SMS provider is ready.
 // import { PhoneInput, formatPhoneDisplay } from "./PhoneInput";
 
@@ -25,6 +29,7 @@ export function LoginForm() {
   const redirectAfterLogin = async () => {
     setSuccess("Login successful! Redirecting...");
     toast.success("Login successful!");
+    // Backup recognition if web-session did not get a deviceId.
     await reportLoginDevice();
     const sessionRes = await fetch("/api/auth/session");
     const sessionData = await sessionRes.json();
@@ -46,6 +51,8 @@ export function LoginForm() {
       const result = await signIn("credentials", {
         email,
         password,
+        deviceId: getOrCreateDeviceId(),
+        deviceName: deviceNameFromUa(),
         redirect: false,
       });
 

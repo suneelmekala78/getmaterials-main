@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import {
+  APP_COURSES_URL,
   CONTACT_EMAIL,
   CONTACT_OFFICE,
 } from "@/lib/shared";
@@ -39,6 +40,7 @@ export default function Footer() {
             <h4 className="font-bold text-sm uppercase tracking-wider text-gray-900 mb-4">Platform</h4>
             <ul className="space-y-2.5">
               <li><Link href="/materials" className="text-sm text-gray-500 hover:text-[var(--primary)]">Browse Materials</Link></li>
+              <li><a href={APP_COURSES_URL} className="text-sm text-gray-500 hover:text-[var(--primary)]">Courses</a></li>
               <li><Link href="/colleges" className="text-sm text-gray-500 hover:text-[var(--primary)]">Colleges</Link></li>
               <li><Link href="/quizzes" className="text-sm text-gray-500 hover:text-[var(--primary)]">Quizzes</Link></li>
               <li><Link href="/teachers" className="text-sm text-gray-500 hover:text-[var(--primary)]">Teachers</Link></li>

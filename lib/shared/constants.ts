@@ -4,6 +4,8 @@ export const APP_DESCRIPTION =
 export const APP_URL = "https://getmaterials.in";
 export const APP_MAIN_URL = "https://getmaterials.in";
 export const APP_ADMIN_URL = "https://admin.getmaterials.in";
+export const APP_COURSES_URL =
+  process.env.NEXT_PUBLIC_COURSES_URL || "https://courses.getmaterials.in";
 
 export const CONTACT_EMAIL = "getmaterials.in@gmail.com";
 export const CONTACT_OFFICE =

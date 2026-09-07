@@ -22,6 +22,25 @@ import {
   type DeletionReasonId,
 } from "@/lib/deletion-reasons";
 import { ReferAFriendCard } from "@/components/settings/ReferAFriendCard";
+import { TagChipInput } from "@/components/settings/TagChipInput";
+
+type SocialLinks = {
+  linkedin: string;
+  github: string;
+  twitter: string;
+  instagram: string;
+  youtube: string;
+  website: string;
+};
+
+const EMPTY_SOCIAL: SocialLinks = {
+  linkedin: "",
+  github: "",
+  twitter: "",
+  instagram: "",
+  youtube: "",
+  website: "",
+};
 
 export default function SettingsPage() {
   const { data: session, update } = useSession();
@@ -47,6 +66,9 @@ export default function SettingsPage() {
   const [bannerPos, setBannerPos] = useState<ImagePos>(DEFAULT_IMAGE_POS);
   const [adjusting, setAdjusting] = useState<"avatar" | "banner" | null>(null);
   const [bio, setBio] = useState("");
+  const [skills, setSkills] = useState<string[]>([]);
+  const [interests, setInterests] = useState<string[]>([]);
+  const [social, setSocial] = useState<SocialLinks>(EMPTY_SOCIAL);
   const [email, setEmail] = useState(user?.email || "");
   const [savedEmail, setSavedEmail] = useState(user?.email || "");
   const [emailCode, setEmailCode] = useState("");
@@ -88,6 +110,11 @@ export default function SettingsPage() {
         if (data.user?.avatarPos) setAvatarPos(data.user.avatarPos);
         if (data.user?.bannerPos) setBannerPos(data.user.bannerPos);
         if (data.user?.bio != null) setBio(data.user.bio);
+        if (Array.isArray(data.user?.skills)) setSkills(data.user.skills);
+        if (Array.isArray(data.user?.interests)) setInterests(data.user.interests);
+        if (data.user?.social && typeof data.user.social === "object") {
+          setSocial({ ...EMPTY_SOCIAL, ...data.user.social });
+        }
         if (data.user?.email) {
           setEmail(data.user.email);
           setSavedEmail(data.user.email);
@@ -184,7 +211,17 @@ export default function SettingsPage() {
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, avatar, banner, bio, avatarPos, bannerPos }),
+        body: JSON.stringify({
+          name,
+          avatar,
+          banner,
+          bio,
+          skills,
+          interests,
+          social,
+          avatarPos,
+          bannerPos,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
@@ -486,6 +523,54 @@ export default function SettingsPage() {
               className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all resize-none"
             />
             <p className="text-xs text-slate-400 mt-1">{bio.length}/500</p>
+          </div>
+
+          <TagChipInput
+            label="Skills"
+            hint="Add skills you have (max 20). Press Enter after each."
+            values={skills}
+            onChange={setSkills}
+            placeholder="e.g. Python, Circuit Design"
+          />
+
+          <TagChipInput
+            label="Interests / topics"
+            hint="Subjects, materials, or topics you care about."
+            values={interests}
+            onChange={setInterests}
+            placeholder="e.g. DSA, Thermodynamics, UPSC"
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              Social profiles
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(
+                [
+                  ["linkedin", "LinkedIn URL"],
+                  ["github", "GitHub URL"],
+                  ["twitter", "X / Twitter URL"],
+                  ["instagram", "Instagram URL"],
+                  ["youtube", "YouTube URL"],
+                  ["website", "Website / portfolio"],
+                ] as const
+              ).map(([key, placeholder]) => (
+                <input
+                  key={key}
+                  type="url"
+                  value={social[key]}
+                  onChange={(e) =>
+                    setSocial((prev) => ({ ...prev, [key]: e.target.value }))
+                  }
+                  placeholder={placeholder}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                />
+              ))}
+            </div>
+            <p className="text-xs text-slate-400 mt-1">
+              Use full https:// links. Leave blank to hide on your public profile.
+            </p>
           </div>
 
           <div>

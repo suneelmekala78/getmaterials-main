@@ -9,16 +9,29 @@ import { Upload } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { ProfileDrawer } from "@/components/layout/ProfileDrawer";
 import { UserAvatar } from "@/components/layout/UserAvatar";
+import { APP_COURSES_URL } from "@/lib/shared";
 
-const links = [
+type NavLink = {
+  href: string;
+  label: string;
+  external?: boolean;
+};
+
+const baseLinks: NavLink[] = [
   { href: "/", label: "Home" },
   { href: "/materials", label: "Materials" },
+  { href: APP_COURSES_URL, label: "Courses", external: true },
   { href: "/subjects", label: "Subjects" },
   { href: "/colleges", label: "Colleges" },
   { href: "/quizzes", label: "Quizzes" },
   { href: "/polls", label: "Polls" },
   { href: "/teachers", label: "Teachers" },
 ];
+
+const linkClass = (active: boolean) =>
+  active
+    ? "text-[var(--primary)] underline underline-offset-8 decoration-2"
+    : "hover:text-[var(--primary)] transition";
 
 const MarketingNavbar = () => {
   const [open, setOpen] = useState(false);
@@ -42,10 +55,25 @@ const MarketingNavbar = () => {
     setProfileOpen(false);
   }, [pathname]);
 
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
-  const navLinks = links.map((link) =>
+  const isActive = (href: string, external?: boolean) => {
+    if (external) return false;
+    return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  };
+
+  const navLinks = baseLinks.map((link) =>
     link.href === "/quizzes" ? { ...link, href: quizzesHref } : link
   );
+
+  const renderLink = (link: NavLink, className: string, onClick?: () => void) =>
+    link.external ? (
+      <a key={link.label} href={link.href} className={className} onClick={onClick}>
+        {link.label}
+      </a>
+    ) : (
+      <Link key={link.label} href={link.href} className={className} onClick={onClick}>
+        {link.label}
+      </Link>
+    );
 
   return (
     <nav
@@ -70,16 +98,7 @@ const MarketingNavbar = () => {
                   : undefined
               }
             >
-              <Link
-                href={link.href}
-                className={
-                  isActive(link.href)
-                    ? "text-[var(--primary)] underline underline-offset-8 decoration-2"
-                    : "hover:text-[var(--primary)] transition"
-                }
-              >
-                {link.label}
-              </Link>
+              {renderLink(link, linkClass(isActive(link.href, link.external)))}
             </li>
           ))}
         </ul>
@@ -121,16 +140,17 @@ const MarketingNavbar = () => {
 
       {open && (
         <div className="lg:hidden px-6 pb-6 flex flex-col gap-3 bg-white border-t border-gray-100 animate-in slide-in-from-top">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className={`py-2 font-semibold ${isActive(link.href) ? "text-[var(--primary)]" : "text-gray-600 hover:text-[var(--primary)]"}`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) =>
+            renderLink(
+              link,
+              `py-2 font-semibold ${
+                isActive(link.href, link.external)
+                  ? "text-[var(--primary)]"
+                  : "text-gray-600 hover:text-[var(--primary)]"
+              }`,
+              () => setOpen(false),
+            ),
+          )}
           <div className="flex gap-3 mt-2 pt-3 border-t border-gray-100">
             {user ? (
               <Link

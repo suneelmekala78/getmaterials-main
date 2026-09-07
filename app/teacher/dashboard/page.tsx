@@ -56,6 +56,21 @@ export default async function TeacherDashboardPage() {
         </Link>
       </div>
 
+      <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <p className="font-semibold text-slate-900">Video courses studio</p>
+          <p className="text-sm text-slate-600 mt-0.5">
+            Create free/paid courses, certificates, and Razorpay earnings on courses.getmaterials.in
+          </p>
+        </div>
+        <a
+          href={process.env.NEXT_PUBLIC_COURSES_URL || "https://courses.getmaterials.in/teacher/dashboard"}
+          className="inline-flex items-center justify-center rounded-xl bg-[var(--primary)] text-white px-4 py-2.5 text-sm font-semibold shrink-0"
+        >
+          Open courses studio
+        </a>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[

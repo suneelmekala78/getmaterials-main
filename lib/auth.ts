@@ -41,6 +41,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        deviceId: { label: "Device ID", type: "text" },
+        deviceName: { label: "Device name", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
@@ -83,6 +85,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
+              deviceId: credentials.deviceId || undefined,
+              deviceName: credentials.deviceName || undefined,
             }),
           });
           const tokenData = await tokenRes.json().catch(() => null);

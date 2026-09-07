@@ -3,7 +3,7 @@ import { uniqueUserSlug } from "@/lib/user-slug";
 import { ratedAverageExpr } from "@/lib/rating-aggregate";
 
 const PROFILE_SELECT =
-  "name slug avatar banner avatarPos bannerPos role status bio qualifications college emailVerified";
+  "name slug avatar banner avatarPos bannerPos role status bio qualifications skills interests social college emailVerified";
 
 export function looksLikeObjectId(value: string) {
   return /^[a-f0-9]{24}$/i.test(value);

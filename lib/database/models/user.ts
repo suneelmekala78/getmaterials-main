@@ -29,6 +29,16 @@ export interface IUser extends Document {
   assignedColleges: mongoose.Types.ObjectId[];
   bio?: string;
   qualifications?: string;
+  skills: string[];
+  interests: string[];
+  social?: {
+    linkedin?: string;
+    github?: string;
+    twitter?: string;
+    instagram?: string;
+    youtube?: string;
+    website?: string;
+  };
   appleId?: string;
   googleId?: string;
   bookmarks: mongoose.Types.ObjectId[];
@@ -94,6 +104,16 @@ const UserSchema = new Schema<IUser>(
     assignedColleges: [{ type: Schema.Types.ObjectId, ref: "College" }],
     bio: { type: String, maxlength: 500 },
     qualifications: { type: String, maxlength: 500 },
+    skills: { type: [String], default: [] },
+    interests: { type: [String], default: [] },
+    social: {
+      linkedin: { type: String, trim: true, maxlength: 300 },
+      github: { type: String, trim: true, maxlength: 300 },
+      twitter: { type: String, trim: true, maxlength: 300 },
+      instagram: { type: String, trim: true, maxlength: 300 },
+      youtube: { type: String, trim: true, maxlength: 300 },
+      website: { type: String, trim: true, maxlength: 300 },
+    },
     bookmarks: [{ type: Schema.Types.ObjectId, ref: "Material" }],
     downloadHistory: [
       {

@@ -227,7 +227,14 @@ export default async function MaterialViewPage({ params }: Props) {
   );
   const collegeName = collegeNames.join(", ") || material.uploadedBy?.college?.name;
   const yearLabel = yearFromSemester(material.semester);
-  const yearBranch = [yearLabel, material.branch].filter(Boolean).join(" · ");
+  const branchLabel = Array.isArray(material.branches) && material.branches.length
+    ? material.branches.join(" · ")
+    : String(material.branch || "")
+        .split(/[,|/]+/)
+        .map((b: string) => b.trim())
+        .filter(Boolean)
+        .join(" · ");
+  const yearBranch = [yearLabel, branchLabel].filter(Boolean).join(" · ");
   const uploadedDate = new Date(material.createdAt).toLocaleDateString("en-IN", {
     day: "numeric",
     month: "short",

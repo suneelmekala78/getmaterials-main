@@ -17,6 +17,7 @@ export interface IMaterial extends Document {
   materialCategory: "notes" | "question_paper" | "syllabus" | "assignment" | "lab_manual" | "reference" | "other";
   program: string;
   branch?: string;
+  branches: string[];
   semester?: number;
   chapter: mongoose.Types.ObjectId;
   subject: mongoose.Types.ObjectId;
@@ -62,6 +63,7 @@ const MaterialSchema = new Schema<IMaterial>(
       lowercase: true,
     },
     branch: { type: String, trim: true, uppercase: true },
+    branches: [{ type: String, trim: true, uppercase: true }],
     semester: { type: Number, min: 1, max: 10 },
     chapter: { type: Schema.Types.ObjectId, ref: "Chapter", required: true },
     subject: { type: Schema.Types.ObjectId, ref: "Subject", required: true },
@@ -109,6 +111,7 @@ MaterialSchema.index({ tags: 1 });
 MaterialSchema.index({ slug: 1 }, { unique: true });
 MaterialSchema.index({ college: 1, program: 1, branch: 1, semester: 1 });
 MaterialSchema.index({ colleges: 1 });
+MaterialSchema.index({ branches: 1 });
 MaterialSchema.index({ title: "text", description: "text", tags: "text" });
 
 MaterialSchema.pre("save", function () {
@@ -116,6 +119,17 @@ MaterialSchema.pre("save", function () {
   if (this.college) ids.add(String(this.college));
   this.colleges = Array.from(ids) as any;
   this.college = this.colleges[0] as any;
+
+  const fromArray = (this.branches || [])
+    .map((b) => String(b || "").trim().toUpperCase())
+    .filter(Boolean);
+  const fromLegacy = String(this.branch || "")
+    .split(/[,|/]+/)
+    .map((b) => b.trim().toUpperCase())
+    .filter(Boolean);
+  const merged = Array.from(new Set(fromArray.length ? fromArray : fromLegacy));
+  this.branches = merged as any;
+  this.branch = merged.length ? merged.join(",") : undefined;
 });
 
 export function materialCollegeFilter(collegeId: string | mongoose.Types.ObjectId) {

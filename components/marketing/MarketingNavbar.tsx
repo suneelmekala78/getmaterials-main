@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { HiMenu, HiX } from "react-icons/hi";
-import { Upload } from "lucide-react";
+import { ExternalLink, Upload } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { ProfileDrawer } from "@/components/layout/ProfileDrawer";
 import { UserAvatar } from "@/components/layout/UserAvatar";
@@ -17,10 +17,10 @@ type NavLink = {
   external?: boolean;
 };
 
+/** Site pages only — Courses is a separate product (courses.getmaterials.in). */
 const baseLinks: NavLink[] = [
   { href: "/", label: "Home" },
   { href: "/materials", label: "Materials" },
-  { href: APP_COURSES_URL, label: "Courses", external: true },
   { href: "/subjects", label: "Subjects" },
   { href: "/colleges", label: "Colleges" },
   { href: "/quizzes", label: "Quizzes" },
@@ -28,10 +28,19 @@ const baseLinks: NavLink[] = [
   { href: "/teachers", label: "Teachers" },
 ];
 
+const coursesLink: NavLink = {
+  href: APP_COURSES_URL,
+  label: "Courses",
+  external: true,
+};
+
 const linkClass = (active: boolean) =>
   active
     ? "text-[var(--primary)] underline underline-offset-8 decoration-2"
     : "hover:text-[var(--primary)] transition";
+
+const coursesLinkClass =
+  "inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[var(--primary)] hover:bg-violet-100 transition";
 
 const MarketingNavbar = () => {
   const [open, setOpen] = useState(false);
@@ -66,8 +75,16 @@ const MarketingNavbar = () => {
 
   const renderLink = (link: NavLink, className: string, onClick?: () => void) =>
     link.external ? (
-      <a key={link.label} href={link.href} className={className} onClick={onClick}>
-        {link.label}
+      <a
+        key={link.label}
+        href={link.href}
+        className={className}
+        onClick={onClick}
+        title="Opens Courses (courses.getmaterials.in)"
+        aria-label="Courses — opens courses.getmaterials.in"
+      >
+        <span>{link.label}</span>
+        <ExternalLink className="w-3.5 h-3.5 opacity-80" aria-hidden />
       </a>
     ) : (
       <Link key={link.label} href={link.href} className={className} onClick={onClick}>
@@ -101,6 +118,10 @@ const MarketingNavbar = () => {
               {renderLink(link, linkClass(isActive(link.href, link.external)))}
             </li>
           ))}
+          <li aria-hidden className="w-px h-5 bg-gray-200 shrink-0" />
+          <li className="shrink-0">
+            {renderLink(coursesLink, `${coursesLinkClass} text-[13px] font-bold`)}
+          </li>
         </ul>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -151,6 +172,17 @@ const MarketingNavbar = () => {
               () => setOpen(false),
             ),
           )}
+          <div className="mt-1 pt-3 border-t border-dashed border-violet-200">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-500 mb-2">
+              Separate app
+            </p>
+            {renderLink(
+              coursesLink,
+              `${coursesLinkClass} w-fit text-sm font-bold`,
+              () => setOpen(false),
+            )}
+            <p className="text-xs text-gray-400 mt-1.5">courses.getmaterials.in</p>
+          </div>
           <div className="flex gap-3 mt-2 pt-3 border-t border-gray-100">
             {user ? (
               <Link

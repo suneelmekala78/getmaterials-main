@@ -43,6 +43,21 @@ export const MATERIAL_TYPES = [
   { value: "assignment", label: "Assignment", icon: "📝" },
 ] as const;
 
+/** Common engineering branch codes for material tagging (multi-select). */
+export const DEFAULT_BRANCH_OPTIONS = [
+  "CSE",
+  "CSD",
+  "IT",
+  "AI",
+  "AIML",
+  "AIDS",
+  "ECE",
+  "EEE",
+  "ME",
+  "CE",
+  "Others",
+] as const;
+
 export const USER_ROLES = [
   { value: "student", label: "Student" },
   { value: "teacher", label: "Teacher" },

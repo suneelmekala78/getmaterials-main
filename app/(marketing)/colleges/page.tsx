@@ -94,7 +94,15 @@ export default async function CollegesPage({ searchParams }: Props) {
       },
     ]),
     Material.aggregate([
-      { $match: { ...published, branch: { $exists: true, $nin: [null, ""] } } },
+      {
+        $match: {
+          ...published,
+          $or: [
+            { branch: { $exists: true, $nin: [null, ""] } },
+            { branches: { $exists: true, $ne: [] } },
+          ],
+        },
+      },
       {
         $addFields: {
           collegeIds: {
@@ -103,10 +111,32 @@ export default async function CollegesPage({ searchParams }: Props) {
               { $ifNull: ["$colleges", []] },
             ],
           },
+          branchList: {
+            $cond: [
+              { $gt: [{ $size: { $ifNull: ["$branches", []] } }, 0] },
+              "$branches",
+              {
+                $filter: {
+                  input: { $split: [{ $ifNull: ["$branch", ""] }, ","] },
+                  as: "b",
+                  cond: { $gt: [{ $strLenCP: { $trim: { input: "$$b" } } }, 0] },
+                },
+              },
+            ],
+          },
         },
       },
       { $unwind: "$collegeIds" },
-      { $group: { _id: { college: "$collegeIds", branch: "$branch" }, count: { $sum: 1 } } },
+      { $unwind: "$branchList" },
+      {
+        $group: {
+          _id: {
+            college: "$collegeIds",
+            branch: { $toUpper: { $trim: { input: "$branchList" } } },
+          },
+          count: { $sum: 1 },
+        },
+      },
     ]),
     User.countDocuments({ college: { $exists: true, $ne: null } }),
     Material.countDocuments(published),

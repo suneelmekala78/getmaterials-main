@@ -595,11 +595,16 @@ function PdfGalleryModal({
 
   useEffect(() => {
     const current = stripRef.current?.querySelector(`[data-page="${page}"]`);
-    current?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    current?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
   }, [page]);
 
   const thumbsStrip = (
-    <div ref={stripRef} className={`flex gap-2 overflow-x-auto ${isMobile ? "px-3 py-2 bg-[#F2F2F2]" : "px-4 py-3"}`}>
+    <div
+      ref={stripRef}
+      className={`flex flex-col gap-2 overflow-y-auto shrink-0 ${
+        isMobile ? "w-[64px] px-1.5 py-2 bg-[#F2F2F2]" : "w-[88px] px-2 py-3 bg-black/40"
+      }`}
+    >
       {Array.from({ length: total }, (_, index) => {
         const num = index + 1;
         const src = thumbs[num];
@@ -610,10 +615,10 @@ function PdfGalleryModal({
             type="button"
             data-page={num}
             onClick={() => goTo(num)}
-            className={`relative shrink-0 overflow-hidden ${
+            className={`relative shrink-0 overflow-hidden mx-auto ${
               isMobile
                 ? `w-[52px] h-[74px] rounded-[3px] border-2 ${active ? "border-[#1A73E8]" : "border-[#D8D8D8]"}`
-                : `w-16 aspect-[3/4] rounded-md border-2 ${active ? "border-violet-400" : "border-transparent opacity-70 hover:opacity-100"}`
+                : `w-[68px] aspect-[3/4] rounded-md border-2 ${active ? "border-violet-400" : "border-transparent opacity-70 hover:opacity-100"}`
             }`}
           >
             {src ? (
@@ -622,15 +627,13 @@ function PdfGalleryModal({
             ) : (
               <div className={`w-full h-full ${isMobile ? "bg-white" : "bg-white/20"}`} />
             )}
-            {isMobile ? (
-              <span
-                className={`absolute right-0.5 bottom-0.5 min-w-4 h-4 px-0.5 rounded-[3px] text-[10px] leading-4 text-center font-semibold text-white ${
-                  active ? "bg-[#1A73E8]" : "bg-[#5F5F5F]"
-                }`}
-              >
-                {num}
-              </span>
-            ) : null}
+            <span
+              className={`absolute right-0.5 bottom-0.5 min-w-4 h-4 px-0.5 rounded-[3px] text-[10px] leading-4 text-center font-semibold text-white ${
+                active ? (isMobile ? "bg-[#1A73E8]" : "bg-violet-600") : "bg-[#5F5F5F]"
+              }`}
+            >
+              {num}
+            </span>
           </button>
         );
       })}
@@ -640,52 +643,54 @@ function PdfGalleryModal({
   if (isMobile) {
     return (
       <div className="gm-overlay fixed inset-0 z-[100] flex flex-col bg-[#E9E9E9]">
-        <div className="relative flex-1 min-h-0">
-          <div className="absolute top-3 left-3 z-10 rounded-full bg-black/70 px-3 py-1 text-[13px] font-semibold text-white">
-            {page} / {total}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          <div
-            className="flex h-full items-center justify-center px-3 pt-14 pb-2"
-            onTouchStart={(event) => {
-              touchStartX.current = event.changedTouches[0]?.clientX ?? null;
-            }}
-            onTouchEnd={(event) => {
-              const start = touchStartX.current;
-              const end = event.changedTouches[0]?.clientX;
-              touchStartX.current = null;
-              if (start == null || end == null) return;
-              const delta = end - start;
-              if (delta > 48) goTo(page - 1);
-              if (delta < -48) goTo(page + 1);
-            }}
-          >
-            {fullSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={fullSrc}
-                alt={`Page ${page}`}
-                className="max-h-full max-w-full bg-white object-contain shadow-md"
+        <div className="relative flex flex-1 min-h-0">
+          {thumbsStrip}
+          <div className="relative flex-1 min-w-0 min-h-0">
+            <div className="absolute top-3 left-3 z-10 rounded-full bg-black/70 px-3 py-1 text-[13px] font-semibold text-white">
+              {page} / {total}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute top-3 right-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div
+              className="flex h-full items-center justify-center px-3 pt-14 pb-2"
+              onTouchStart={(event) => {
+                touchStartX.current = event.changedTouches[0]?.clientX ?? null;
+              }}
+              onTouchEnd={(event) => {
+                const start = touchStartX.current;
+                const end = event.changedTouches[0]?.clientX;
+                touchStartX.current = null;
+                if (start == null || end == null) return;
+                const delta = end - start;
+                if (delta > 48) goTo(page - 1);
+                if (delta < -48) goTo(page + 1);
+              }}
+            >
+              {fullSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={fullSrc}
+                  alt={`Page ${page}`}
+                  className="max-h-full max-w-full bg-white object-contain shadow-md"
+                />
+              ) : (
+                <div className="aspect-[3/4] w-[70vw] animate-pulse rounded-md bg-white" />
+              )}
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-black/10">
+              <div
+                className="h-full bg-[#1A73E8] transition-[width]"
+                style={{ width: `${total ? (page / total) * 100 : 0}%` }}
               />
-            ) : (
-              <div className="aspect-[3/4] w-[70vw] animate-pulse rounded-md bg-white" />
-            )}
+            </div>
           </div>
         </div>
-        <div className="h-[3px] bg-black/10">
-          <div
-            className="h-full bg-[#1A73E8] transition-[width]"
-            style={{ width: `${total ? (page / total) * 100 : 0}%` }}
-          />
-        </div>
-        {thumbsStrip}
       </div>
     );
   }
@@ -721,54 +726,56 @@ function PdfGalleryModal({
           </button>
         </div>
       </div>
-      <div className="relative flex-1 min-h-0">
-        <button
-          type="button"
-          onClick={() => goTo(page - 1)}
-          disabled={page <= 1}
-          className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 text-slate-800 flex items-center justify-center disabled:opacity-30"
-          aria-label="Previous page"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <div
-          className="h-full overflow-auto px-14"
-          onWheel={(event) => {
-            if (!event.ctrlKey && !event.metaKey) return;
-            event.preventDefault();
-            adjustZoom(event.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP);
-          }}
-        >
-          <div className="min-h-full flex items-center justify-center py-4">
-            {fullSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={fullSrc}
-                alt={`Page ${page}`}
-                className="rounded-md bg-white shadow-2xl"
-                style={{
-                  maxHeight: `${Math.round(zoom * 78)}vh`,
-                  maxWidth: `${Math.round(zoom * 92)}%`,
-                  width: "auto",
-                  height: "auto",
-                }}
-              />
-            ) : (
-              <div className="w-[min(70vw,520px)] aspect-[3/4] bg-white/10 rounded-md animate-pulse" />
-            )}
+      <div className="relative flex flex-1 min-h-0">
+        {thumbsStrip}
+        <div className="relative flex-1 min-w-0 min-h-0">
+          <button
+            type="button"
+            onClick={() => goTo(page - 1)}
+            disabled={page <= 1}
+            className="absolute left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 text-slate-800 flex items-center justify-center disabled:opacity-30"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div
+            className="h-full overflow-auto px-14"
+            onWheel={(event) => {
+              if (!event.ctrlKey && !event.metaKey) return;
+              event.preventDefault();
+              adjustZoom(event.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP);
+            }}
+          >
+            <div className="min-h-full flex items-center justify-center py-4">
+              {fullSrc ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={fullSrc}
+                  alt={`Page ${page}`}
+                  className="rounded-md bg-white shadow-2xl"
+                  style={{
+                    maxHeight: `${Math.round(zoom * 88)}vh`,
+                    maxWidth: `${Math.round(zoom * 92)}%`,
+                    width: "auto",
+                    height: "auto",
+                  }}
+                />
+              ) : (
+                <div className="w-[min(70vw,520px)] aspect-[3/4] bg-white/10 rounded-md animate-pulse" />
+              )}
+            </div>
           </div>
+          <button
+            type="button"
+            onClick={() => goTo(page + 1)}
+            disabled={page >= total}
+            className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 text-slate-800 flex items-center justify-center disabled:opacity-30"
+            aria-label="Next page"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => goTo(page + 1)}
-          disabled={page >= total}
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/90 text-slate-800 flex items-center justify-center disabled:opacity-30"
-          aria-label="Next page"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
       </div>
-      {thumbsStrip}
     </div>
   );
 }
@@ -828,40 +835,42 @@ function ImagePreview({ items }: { items: PreviewItem[] }) {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="relative flex-1 flex items-center justify-center px-14">
-            <button
-              type="button"
-              onClick={() => setActive((value) => (value === null ? 0 : Math.max(0, value - 1)))}
-              className="absolute left-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center"
-              aria-label="Previous"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={current.url} alt={current.title} className="max-h-full max-w-full object-contain" />
-            <button
-              type="button"
-              onClick={() => setActive((value) => (value === null ? 0 : Math.min(items.length - 1, value + 1)))}
-              className="absolute right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center"
-              aria-label="Next"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="flex gap-2 overflow-x-auto px-4 py-3">
-            {items.map((item, index) => (
+          <div className="relative flex flex-1 min-h-0">
+            <div className="flex flex-col gap-2 overflow-y-auto shrink-0 w-[88px] px-2 py-3 bg-black/40">
+              {items.map((item, index) => (
+                <button
+                  key={item.url}
+                  type="button"
+                  onClick={() => setActive(index)}
+                  className={`w-[68px] mx-auto shrink-0 aspect-[3/4] rounded-md overflow-hidden border-2 ${
+                    index === active ? "border-violet-400" : "border-transparent opacity-70"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={item.thumbnail || item.url} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+            <div className="relative flex-1 flex items-center justify-center px-14 min-w-0">
               <button
-                key={item.url}
                 type="button"
-                onClick={() => setActive(index)}
-                className={`w-16 shrink-0 aspect-[3/4] rounded-md overflow-hidden border-2 ${
-                  index === active ? "border-violet-400" : "border-transparent opacity-70"
-                }`}
+                onClick={() => setActive((value) => (value === null ? 0 : Math.max(0, value - 1)))}
+                className="absolute left-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center"
+                aria-label="Previous"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.thumbnail || item.url} alt="" className="w-full h-full object-cover" />
+                <ChevronLeft className="w-5 h-5" />
               </button>
-            ))}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={current.url} alt={current.title} className="max-h-full max-w-full object-contain" />
+              <button
+                type="button"
+                onClick={() => setActive((value) => (value === null ? 0 : Math.min(items.length - 1, value + 1)))}
+                className="absolute right-3 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       )}

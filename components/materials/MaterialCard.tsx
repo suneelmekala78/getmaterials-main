@@ -8,10 +8,10 @@ import {
   Eye,
   Download,
   Star,
-  BadgeCheck,
 } from "lucide-react";
 import BookmarkToggle from "./BookmarkToggle";
 import { resolveThumbnailSrc } from "@/components/profile/FittedPhoto";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 
 const typeConfig: Record<string, { icon: any; label: string; color: string }> = {
   pdf: { icon: FileText, label: "PDF", color: "text-red-600 bg-red-50" },
@@ -104,9 +104,7 @@ export default function MaterialCard({
 
       <div className="mt-2 text-xs text-slate-500 flex items-center gap-1.5 min-w-0">
         <span className="truncate font-medium text-slate-700">{material.uploadedBy?.name || "Unknown"}</span>
-        {material.uploadedBy?.role === "teacher" && (
-          <BadgeCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-        )}
+        <VerifiedBadge role={material.uploadedBy?.role} className="w-3.5 h-3.5" />
         {collegeName && (
           <>
             <span className="text-slate-300">·</span>

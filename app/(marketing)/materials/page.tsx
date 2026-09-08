@@ -263,10 +263,14 @@ export default async function MaterialsPage({ searchParams }: Props) {
               value: subject.slug,
               label: subject.name,
             }))}
-            chapters={chapterOptions.map((chapter: any) => ({
-              value: chapter.slug,
-              label: chapter.title,
-            }))}
+            chapters={Array.from(
+              new Map(
+                chapterOptions.map((chapter: any) => [
+                  String(chapter.slug),
+                  { value: String(chapter.slug), label: String(chapter.title || chapter.slug) },
+                ]),
+              ).values(),
+            )}
             colleges={collegeOptions.map((college: any) => ({
               value: collegePathKey(college),
               label: college.code ? `${college.name} (${college.code})` : college.name,

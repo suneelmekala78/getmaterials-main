@@ -532,13 +532,15 @@ function PdfGalleryModal({
   const MIN_ZOOM = 0.75;
   const MAX_ZOOM = 2.5;
   const ZOOM_STEP = 0.25;
+  const DEFAULT_ZOOM = 1;
 
   const [page, setPage] = useState(initialPage);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [fullSrc, setFullSrc] = useState(thumbs[initialPage] || "");
   const [isMobile, setIsMobile] = useState(false);
   const stripRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
+  const loadedPageRef = useRef<number | null>(thumbs[initialPage] ? initialPage : null);
 
   const adjustZoom = useCallback((delta: number) => {
     setZoom((current) => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, +(current + delta).toFixed(2))));
@@ -579,13 +581,22 @@ function PdfGalleryModal({
 
   useEffect(() => {
     let cancelled = false;
-    setFullSrc(thumbs[page] || "");
+    const thumb = thumbs[page] || "";
+    // Keep current image while loading the same page at a new zoom — avoids size flicker.
+    // Only swap to the page thumb when navigating to a different page.
+    if (loadedPageRef.current !== page) {
+      if (thumb) setFullSrc(thumb);
+    }
+
     (async () => {
       try {
-        const src = await renderPdfPage(url, page, Math.min(3, 1.4 * zoom));
-        if (!cancelled) setFullSrc(src);
+        const src = await renderPdfPage(url, page, Math.min(3, 1.5 * zoom));
+        if (!cancelled) {
+          loadedPageRef.current = page;
+          setFullSrc(src);
+        }
       } catch {
-        /* keep thumb */
+        if (!cancelled && thumb) setFullSrc(thumb);
       }
     })();
     return () => {
@@ -598,12 +609,20 @@ function PdfGalleryModal({
     current?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
   }, [page]);
 
+  const pageFrameStyle = {
+    maxHeight: `${Math.round(zoom * 92)}vh`,
+    maxWidth: `min(${Math.round(zoom * 1200)}px, 98%)`,
+    width: "auto",
+    height: "auto",
+  } as const;
+
   const thumbsStrip = (
     <div
       ref={stripRef}
-      className={`flex flex-col gap-2 overflow-y-auto shrink-0 ${
-        isMobile ? "w-[64px] px-1.5 py-2 bg-[#F2F2F2]" : "w-[88px] px-2 py-3 bg-black/40"
+      className={`flex flex-col gap-2.5 overflow-y-auto overflow-x-hidden shrink-0 overscroll-contain ${
+        isMobile ? "w-[76px] px-1.5 py-2 bg-[#F2F2F2]" : "w-[118px] px-2.5 py-3 bg-black/40"
       }`}
+      style={{ scrollbarGutter: "stable" }}
     >
       {Array.from({ length: total }, (_, index) => {
         const num = index + 1;
@@ -615,10 +634,10 @@ function PdfGalleryModal({
             type="button"
             data-page={num}
             onClick={() => goTo(num)}
-            className={`relative shrink-0 overflow-hidden mx-auto ${
+            className={`relative box-border shrink-0 overflow-hidden mx-auto ${
               isMobile
-                ? `w-[52px] h-[74px] rounded-[3px] border-2 ${active ? "border-[#1A73E8]" : "border-[#D8D8D8]"}`
-                : `w-[68px] aspect-[3/4] rounded-md border-2 ${active ? "border-violet-400" : "border-transparent opacity-70 hover:opacity-100"}`
+                ? `w-[64px] h-[90px] rounded-[3px] border-2 ${active ? "border-[#1A73E8]" : "border-[#D8D8D8]"}`
+                : `w-[96px] aspect-[3/4] rounded-md border-2 ${active ? "border-violet-400" : "border-transparent opacity-70 hover:opacity-100"}`
             }`}
           >
             {src ? (
@@ -680,7 +699,7 @@ function PdfGalleryModal({
                   className="max-h-full max-w-full bg-white object-contain shadow-md"
                 />
               ) : (
-                <div className="aspect-[3/4] w-[70vw] animate-pulse rounded-md bg-white" />
+                <div className="h-[78vh] w-[min(92%,420px)] animate-pulse rounded-md bg-white" />
               )}
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-black/10">
@@ -739,29 +758,31 @@ function PdfGalleryModal({
             <ChevronLeft className="w-5 h-5" />
           </button>
           <div
-            className="h-full overflow-auto px-14"
+            className="h-full overflow-auto px-10"
             onWheel={(event) => {
               if (!event.ctrlKey && !event.metaKey) return;
               event.preventDefault();
               adjustZoom(event.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP);
             }}
           >
-            <div className="min-h-full flex items-center justify-center py-4">
+            <div className="min-h-full flex items-center justify-center py-3">
               {fullSrc ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={fullSrc}
                   alt={`Page ${page}`}
-                  className="rounded-md bg-white shadow-2xl"
-                  style={{
-                    maxHeight: `${Math.round(zoom * 88)}vh`,
-                    maxWidth: `${Math.round(zoom * 92)}%`,
-                    width: "auto",
-                    height: "auto",
-                  }}
+                  className="rounded-md bg-white shadow-2xl object-contain"
+                  style={pageFrameStyle}
                 />
               ) : (
-                <div className="w-[min(70vw,520px)] aspect-[3/4] bg-white/10 rounded-md animate-pulse" />
+                <div
+                  className="rounded-md bg-white/10 animate-pulse"
+                  style={{
+                    width: "min(1100px, 88%)",
+                    height: "min(92vh, 1400px)",
+                    maxWidth: "98%",
+                  }}
+                />
               )}
             </div>
           </div>
@@ -836,13 +857,13 @@ function ImagePreview({ items }: { items: PreviewItem[] }) {
             </button>
           </div>
           <div className="relative flex flex-1 min-h-0">
-            <div className="flex flex-col gap-2 overflow-y-auto shrink-0 w-[88px] px-2 py-3 bg-black/40">
+            <div className="flex flex-col gap-2.5 overflow-y-auto overflow-x-hidden shrink-0 w-[118px] px-2.5 py-3 bg-black/40 overscroll-contain">
               {items.map((item, index) => (
                 <button
                   key={item.url}
                   type="button"
                   onClick={() => setActive(index)}
-                  className={`w-[68px] mx-auto shrink-0 aspect-[3/4] rounded-md overflow-hidden border-2 ${
+                  className={`w-[96px] mx-auto box-border shrink-0 aspect-[3/4] rounded-md overflow-hidden border-2 ${
                     index === active ? "border-violet-400" : "border-transparent opacity-70"
                   }`}
                 >

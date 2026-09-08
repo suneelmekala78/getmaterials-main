@@ -148,9 +148,9 @@ export default function MaterialsFilterSidebar({
           className="w-full mb-2 px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-violet-400"
         />
         {filteredChapters.length ? (
-          filteredChapters.map((item) => (
+          filteredChapters.map((item, index) => (
             <FilterLink
-              key={item.value}
+              key={`${item.value}-${index}`}
               href={materialsHref(current, { chapter: toggleCsv(current.chapter, item.value) })}
               active={listHas(current.chapter, item.value)}
               label={item.label}

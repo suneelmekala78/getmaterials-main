@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { getReferralData, clearReferralData } from "@/components/providers/ReferralTracker";
 import { VerifiableField } from "./VerifiableField";
 
@@ -9,6 +10,7 @@ export function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailToken, setEmailToken] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,6 +24,10 @@ export function SignupForm() {
 
     if (!emailToken) {
       setError("Please verify your email address first");
+      return;
+    }
+    if (!acceptedTerms) {
+      setError("Please agree to the Terms & Conditions and Privacy Policy");
       return;
     }
 
@@ -117,9 +123,35 @@ export function SignupForm() {
         <p className="mt-1.5 text-xs text-slate-400">Min 8 characters, 1 uppercase, 1 number</p>
       </label>
 
+      <label className="flex items-start gap-2.5 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          checked={acceptedTerms}
+          onChange={(e) => setAcceptedTerms(e.target.checked)}
+          className="mt-1 h-4 w-4 rounded border-slate-300 text-[var(--primary)] focus:ring-[var(--primary)]"
+        />
+        <span className="text-sm text-slate-600 leading-snug">
+          I agree to the{" "}
+          <Link href="/terms" target="_blank" className="font-semibold text-[var(--primary)] hover:underline">
+            Terms &amp; Conditions
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" target="_blank" className="font-semibold text-[var(--primary)] hover:underline">
+            Privacy Policy
+          </Link>
+          .
+        </span>
+      </label>
+
       <button
         type="submit"
-        disabled={loading || !emailVerified || password.length < 8 || name.trim().length < 2}
+        disabled={
+          loading ||
+          !emailVerified ||
+          !acceptedTerms ||
+          password.length < 8 ||
+          name.trim().length < 2
+        }
         className="auth-btn mt-1"
       >
         {loading ? "Creating account..." : "Sign up"}

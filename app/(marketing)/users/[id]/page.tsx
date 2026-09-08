@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import {
-  BadgeCheck,
   GraduationCap,
   Github,
   Globe,
@@ -18,6 +17,7 @@ import {
   defaultBannerSrc,
   FittedPhoto,
 } from "@/components/profile/FittedPhoto";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { FollowStatButton } from "@/components/profile/FollowList";
 import { ProfileLibrary } from "@/components/profile/ProfileLibrary";
@@ -146,9 +146,11 @@ export default async function UserProfilePage({ params }: Props) {
             <div className="min-w-0">
               <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2">
                 {user.name}
-                {user.emailVerified || user.role === "teacher" ? (
-                  <BadgeCheck className="w-5 h-5 text-emerald-500 shrink-0" />
-                ) : null}
+                <VerifiedBadge
+                  role={user.role}
+                  verified={user.emailVerified}
+                  className="w-5 h-5"
+                />
               </h1>
               <p className="text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-semibold capitalize">

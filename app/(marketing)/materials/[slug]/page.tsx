@@ -17,7 +17,6 @@ import {
   User as UserIcon,
   GraduationCap,
   School,
-  BadgeCheck,
   Flag,
   ExternalLink,
 } from "lucide-react";
@@ -26,6 +25,7 @@ import { MaterialReviews } from "@/components/MaterialReviews";
 import DownloadButton from "@/components/DownloadButton";
 import { ShareButton } from "@/components/ShareButton";
 import BookmarkToggle from "@/components/materials/BookmarkToggle";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import {
   PreviewSection,
   VideoSection,
@@ -309,7 +309,6 @@ export default async function MaterialViewPage({ params }: Props) {
     }));
   const fileKind = officeFiles[0]?.kind || type.label;
   const uploader = uploaderStats[0] || { count: 0, downloads: 0, avgRating: 0 };
-  const verified = material.uploadedBy?.role === "teacher" || Boolean(material.uploadedBy?.emailVerified);
   const plainDescription = stripHtml(material.description);
   const downloadUrl = primaryFileUrl || primaryExternalUrl;
   const pageUrl = `${BASE_URL}/materials/${slug}`;
@@ -601,7 +600,11 @@ export default async function MaterialViewPage({ params }: Props) {
                   <div className="min-w-0">
                     <p className="font-bold text-slate-900 flex items-center gap-1">
                       {material.uploadedBy?.name || "Unknown"}
-                      {verified && <BadgeCheck className="w-4 h-4 text-emerald-500" />}
+                      <VerifiedBadge
+                        role={material.uploadedBy?.role}
+                        verified={material.uploadedBy?.emailVerified}
+                        className="w-4 h-4"
+                      />
                     </p>
                     <p className="text-xs text-slate-500 truncate">{material.uploadedBy?.college?.name || collegeName || "GetMaterials contributor"}</p>
                   </div>

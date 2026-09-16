@@ -186,3 +186,40 @@ button, a {
 .material-description ol {
   margin: 0 0 1rem;
 }
+
+@keyframes review-marquee-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes review-marquee-down {
+  from {
+    transform: translateY(-50%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.review-marquee-track {
+  will-change: transform;
+}
+
+.review-marquee-up {
+  animation: review-marquee-up 36s linear infinite;
+}
+
+.review-marquee-down {
+  animation: review-marquee-down 36s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-marquee-up,
+  .review-marquee-down {
+    animation: none;
+  }
+}

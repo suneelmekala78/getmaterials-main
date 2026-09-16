@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { Toaster } from "react-hot-toast";
 import { Suspense } from "react";
 import { ReferralTracker } from "@/components/providers/ReferralTracker";
+import { GoogleAnalytics } from "@/components/providers/GoogleAnalytics";
 import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
 
 const poppins = Poppins({
@@ -78,6 +79,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${poppins.variable} antialiased`}>
+        <GoogleAnalytics />
         <AuthProvider>
           {children}
           <Suspense fallback={null}>

@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Hero from "@/components/marketing/Hero";
-import HomeStats from "@/components/marketing/HomeStats";
+import PlatformShowcase from "@/components/marketing/PlatformShowcase";
 import MissionStory from "@/components/marketing/MissionStory";
 import CoreValues from "@/components/marketing/CoreValues";
-import Impact from "@/components/marketing/Impact";
-import BePartCTA from "@/components/marketing/BePartCTA";
 import Features from "@/components/marketing/Features";
 import Subjects from "@/components/marketing/Subjects";
 import HowItWorks from "@/components/marketing/HowItWorks";
@@ -77,17 +75,15 @@ export default async function HomePage() {
   return (
     <div className="bg-white">
       <MarketingNavbar />
-      <main>
+      <main className="relative">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <Hero />
-        <HomeStats />
+        <PlatformShowcase />
         <MissionStory />
         <CoreValues />
-        <Impact />
-        <BePartCTA />
         <Features />
         <Subjects />
         <HowItWorks />

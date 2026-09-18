@@ -32,11 +32,12 @@ const KEYS = [
 
 export function materialsHref(
   current: MaterialsQuery,
-  patch: Partial<MaterialsQuery> = {}
+  patch: Partial<MaterialsQuery> = {},
+  basePath = "/materials"
 ) {
   const next: MaterialsQuery = { ...current, ...patch };
   if (!patch.page) next.page = undefined;
   const query = buildSearchParams(next, KEYS);
   const qs = query.toString();
-  return qs ? `/materials?${qs}` : "/materials";
+  return qs ? `${basePath}?${qs}` : basePath;
 }

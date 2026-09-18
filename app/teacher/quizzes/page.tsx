@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface Quiz {
   _id: string;
+  slug?: string;
   title: string;
   subject?: { name: string };
   chapter?: { title: string };
@@ -144,7 +145,7 @@ export default function TeacherQuizzesPage() {
               </div>
               <div className="flex flex-wrap items-center gap-2 justify-end">
                 <Link
-                  href={`/quizzes/${quiz._id}`}
+                  href={`/quizzes/${quiz.slug || quiz._id}`}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                 >
                   <Eye className="w-3.5 h-3.5" />

@@ -40,8 +40,10 @@ function activeTab(current: MaterialsQuery) {
 
 export default function MaterialsToolbar({
   current,
+  basePath = "/materials",
 }: {
   current: MaterialsQuery;
+  basePath?: string;
 }) {
   const router = useRouter();
   const currentTab = activeTab(current);
@@ -69,7 +71,7 @@ export default function MaterialsToolbar({
             return (
               <Link
                 key={tab.key}
-                href={materialsHref({}, params)}
+                href={materialsHref({}, params, basePath)}
                 className={`shrink-0 px-3.5 py-2 rounded-full text-sm font-semibold transition-colors ${
                   active
                     ? "bg-[var(--primary)] text-white"
@@ -86,7 +88,9 @@ export default function MaterialsToolbar({
           <div className="relative">
             <select
               value={sort}
-              onChange={(event) => router.push(materialsHref(current, { sort: event.target.value }))}
+              onChange={(event) =>
+                router.push(materialsHref(current, { sort: event.target.value }, basePath))
+              }
               className="appearance-none pl-3 pr-8 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700"
             >
               {sorts.map((item) => (
@@ -99,14 +103,14 @@ export default function MaterialsToolbar({
           </div>
           <div className="flex rounded-xl border border-slate-200 overflow-hidden">
             <Link
-              href={materialsHref(current, { view: "grid" })}
+              href={materialsHref(current, { view: "grid" }, basePath)}
               className={`p-2 ${view === "grid" ? "bg-violet-50 text-[var(--primary)]" : "text-slate-400 hover:text-slate-700"}`}
               aria-label="Grid view"
             >
               <Grid3X3 className="w-4 h-4" />
             </Link>
             <Link
-              href={materialsHref(current, { view: "list" })}
+              href={materialsHref(current, { view: "list" }, basePath)}
               className={`p-2 ${view === "list" ? "bg-violet-50 text-[var(--primary)]" : "text-slate-400 hover:text-slate-700"}`}
               aria-label="List view"
             >

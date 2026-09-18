@@ -20,7 +20,7 @@ const steps = [
   {
     num: "02",
     title: "Explore Resources",
-    desc: "Browse high-quality study materials, courses and tools.",
+    desc: "Browse free notes, subjects, quizzes, polls, and college resources.",
     image: "/images/icons/books.png",
     card: "bg-[#ecfdf3]",
     numColor: "text-[#16a34a]",

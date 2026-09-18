@@ -9,26 +9,26 @@ const caveat = Caveat({
 
 const heroStats = [
   {
-    value: "1500+",
-    label: "Trusted Users",
-    image: "/images/icons/students.png",
-    card: "bg-[#f3e8ff]",
-  },
-  {
-    value: "10K+",
+    value: "Free",
     label: "Study Materials",
     image: "/images/icons/books.png",
     card: "bg-[#ecfdf3]",
   },
   {
-    value: "500+",
-    label: "Expert Teachers",
+    value: "Subjects",
+    label: "By syllabus",
+    image: "/images/icons/students.png",
+    card: "bg-[#f3e8ff]",
+  },
+  {
+    value: "Teachers",
+    label: "Verified uploads",
     image: "/images/icons/community.png",
     card: "bg-[#eff6ff]",
   },
   {
     value: "100%",
-    label: "Free to Learn",
+    label: "Free to browse",
     image: "/images/icons/star.png",
     card: "bg-[#fff7ed]",
   },
@@ -62,15 +62,15 @@ export default function Hero() {
           </h1>
 
           <p className="mt-4 max-w-lg text-[15px] leading-relaxed text-slate-600 sm:text-base">
-            Practical, industry-ready courses taught by expert instructors. Learn at your own pace
-            or live from anywhere in the world.
+            Free study materials, notes, quizzes, and polls from verified teachers — for students
+            and colleges across India. Browse anytime, download what you need.
           </p>
 
           <Link
             href="/materials"
             className="mt-6 inline-flex items-center gap-3 rounded-full bg-[linear-gradient(90deg,#b100ff_0%,#c026d3_100%)] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_12px_28px_rgba(177,0,255,0.28)] transition hover:-translate-y-0.5 sm:mt-7"
           >
-            Explore Courses
+            Browse Materials
             <span
               aria-hidden
               className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-sm"

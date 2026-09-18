@@ -22,7 +22,8 @@ export function PollWidget() {
       .then((r) => r.json())
       .then((data) => {
         if (data.polls?.length > 0) {
-          setPoll(data.polls[0]); // Show the latest unanswered poll
+          const unanswered = data.polls.find((p: Poll & { answered?: boolean }) => !p.answered);
+          setPoll(unanswered || data.polls[0]);
         }
       })
       .catch(() => {});

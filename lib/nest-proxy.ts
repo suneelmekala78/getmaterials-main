@@ -18,6 +18,20 @@ export async function proxyToNest(
   const contentType = req.headers.get("content-type");
   if (contentType) headers.set("content-type", contentType);
 
+  const ua = req.headers.get("user-agent");
+  if (ua) headers.set("user-agent", ua);
+  const forwarded =
+    req.headers.get("x-forwarded-for") ||
+    req.headers.get("x-real-ip") ||
+    undefined;
+  if (forwarded) headers.set("x-forwarded-for", forwarded);
+  headers.set(
+    "x-client-platform",
+    req.headers.get("x-client-platform") ||
+      req.headers.get("x-app-platform") ||
+      "website",
+  );
+
   try {
     const accessToken = await getExpressAccessToken();
     if (accessToken) {

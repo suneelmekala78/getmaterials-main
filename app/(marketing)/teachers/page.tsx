@@ -1,9 +1,9 @@
-import { connectDB, College, Material, User } from "@/lib/database";
+import { connectDB, College, Material, User, materialCollegeFilter } from "@/lib/database";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { GraduationCap, Search } from "lucide-react";
 import { TeacherCard } from "@/components/teachers/TeacherCard";
-import { findCollegeByKey, teachersAtCollegeFilter } from "@/lib/college-key";
+import { findCollegeByKey } from "@/lib/college-key";
 import { listingMetadata } from "@/lib/seo";
 import { ratedAverageExpr } from "@/lib/rating-aggregate";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = listingMetadata({
   title: "Teachers — Learn from Verified Educators",
   description:
-    "Discover teachers on GetMaterials and explore the notes, lectures, and quizzes they share with students.",
+    "Discover teachers and contributors on GetMaterials and explore the notes, lectures, and quizzes they share with students.",
   path: "/teachers",
   keywords: ["teachers", "educators", "college faculty", "GetMaterials teachers"],
 });
@@ -27,7 +27,36 @@ export default async function TeachersPage({ searchParams }: Props) {
 
   const q = params.q?.trim() || "";
   const collegeKey = params.college?.trim() || "";
-  const filter: Record<string, unknown> = { role: "teacher", status: "active" };
+
+  let collegeId: unknown = null;
+  if (collegeKey) {
+    const college = await findCollegeByKey(collegeKey, { status: "active" });
+    if (!college) {
+      collegeId = "none";
+    } else {
+      collegeId = (college as any)._id;
+    }
+  }
+
+  const materialMatch: Record<string, unknown> = {
+    status: "published",
+    isPublic: true,
+  };
+  if (collegeId && collegeId !== "none") {
+    Object.assign(materialMatch, materialCollegeFilter(collegeId as any));
+  } else if (collegeId === "none") {
+    materialMatch._id = null;
+  }
+
+  const uploaderIds =
+    collegeId === "none"
+      ? []
+      : await Material.distinct("uploadedBy", materialMatch);
+
+  const filter: Record<string, unknown> = {
+    _id: { $in: uploaderIds },
+    status: { $ne: "suspended" },
+  };
   if (q) {
     filter.$or = [
       { name: { $regex: q, $options: "i" } },
@@ -35,26 +64,16 @@ export default async function TeachersPage({ searchParams }: Props) {
       { bio: { $regex: q, $options: "i" } },
     ];
   }
-  if (collegeKey) {
-    const college = await findCollegeByKey(collegeKey, { status: "active" });
-    if (college) {
-      const collegeMatch = teachersAtCollegeFilter((college as any)._id);
-      if (filter.$or) {
-        filter.$and = [{ $or: filter.$or }, collegeMatch];
-        delete filter.$or;
-      } else {
-        Object.assign(filter, collegeMatch);
-      }
-    } else filter._id = null;
-  }
 
   const [teachers, colleges] = await Promise.all([
-    User.find(filter)
-      .select("name slug avatar banner bannerPos bio qualifications college")
-      .populate("college", "name code slug")
-      .sort({ name: 1 })
-      .limit(200)
-      .lean(),
+    uploaderIds.length
+      ? User.find(filter)
+          .select("name slug avatar banner bannerPos bio qualifications college role")
+          .populate("college", "name code slug")
+          .sort({ name: 1 })
+          .limit(200)
+          .lean()
+      : Promise.resolve([]),
     College.find({ status: "active" }).select("name code slug").sort({ name: 1 }).lean(),
   ]);
 
@@ -66,6 +85,7 @@ export default async function TeachersPage({ searchParams }: Props) {
             uploadedBy: { $in: ids },
             status: "published",
             isPublic: true,
+            ...(collegeId && collegeId !== "none" ? materialCollegeFilter(collegeId as any) : {}),
           },
         },
         {
@@ -96,7 +116,9 @@ export default async function TeachersPage({ searchParams }: Props) {
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900">Teachers</h1>
         </div>
-        <p className="text-slate-500 mb-6">Find educators and explore the materials they share.</p>
+        <p className="text-slate-500 mb-6">
+          People who share study materials on GetMaterials. Verified teachers show a checkmark.
+        </p>
 
         <form action="/teachers" className="flex flex-col sm:flex-row gap-3 mb-8">
           <label className="relative flex-1">
@@ -105,7 +127,7 @@ export default async function TeachersPage({ searchParams }: Props) {
               type="search"
               name="q"
               defaultValue={q}
-              placeholder="Search teachers..."
+              placeholder="Search by name or bio..."
               className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:outline-none focus:border-violet-500"
             />
           </label>
@@ -131,7 +153,7 @@ export default async function TeachersPage({ searchParams }: Props) {
 
         {teachers.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center text-slate-500">
-            No teachers match your search.
+            No contributors match your search.
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -142,6 +164,7 @@ export default async function TeachersPage({ searchParams }: Props) {
                   key={String(teacher._id)}
                   teacher={{
                     ...teacher,
+                    role: teacher.role,
                     materials: stats?.materials || 0,
                     avgRating: stats?.avgRating || 0,
                   }}

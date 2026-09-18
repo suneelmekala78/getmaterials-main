@@ -22,7 +22,7 @@ const features = [
   },
   {
     title: "Build Real Skills",
-    desc: "Go beyond theory with practice, projects and real-world examples.",
+    desc: "Go beyond theory with quizzes, notes, and practical examples from real classrooms.",
     image: "/images/icons/bulb.png",
     card: "bg-[#fff7ed]",
   },
@@ -141,7 +141,7 @@ export default function Features() {
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-8 lg:gap-10">
               <div className="text-center sm:text-left">
-                <p className="text-[1.75rem] font-bold leading-none text-[#111]">4.8/5</p>
+                <p className="text-[1.75rem] font-bold leading-none text-[#111]">Free</p>
                 <div className="mt-1.5 flex justify-center gap-0.5 sm:justify-start">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <span key={i} className="text-[15px] text-amber-400">
@@ -149,7 +149,7 @@ export default function Features() {
                     </span>
                   ))}
                 </div>
-                <p className="mt-1 text-[13px] text-slate-500">Trusted by 25K+ learners</p>
+                <p className="mt-1 text-[13px] text-slate-500">Notes, quizzes &amp; polls for students</p>
               </div>
 
               <Link

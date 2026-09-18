@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { getReferralData, clearReferralData } from "@/components/providers/ReferralTracker";
+import { trackSignUp } from "@/lib/analytics";
 import { VerifiableField } from "./VerifiableField";
 
 export function SignupForm() {
@@ -15,12 +16,16 @@ export function SignupForm() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  /** Ensures one GA4 sign_up per successful account creation (no re-render/retry dupes). */
+  const signUpTrackedRef = useRef(false);
 
   const emailVerified = Boolean(emailToken);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (loading) return;
 
     if (!emailToken) {
       setError("Please verify your email address first");
@@ -51,6 +56,12 @@ export function SignupForm() {
       if (!res.ok) {
         setError(data.error || "Signup failed");
         return;
+      }
+
+      // Account was created — fire GA4 sign_up once (email/password registration).
+      if (!signUpTrackedRef.current) {
+        signUpTrackedRef.current = true;
+        trackSignUp("email");
       }
 
       clearReferralData();

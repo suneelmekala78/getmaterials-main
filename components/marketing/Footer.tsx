@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Heart } from "lucide-react";
 import { FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import {
+  APP_ARENA_URL,
   APP_COURSES_URL,
   CONTACT_EMAIL,
   CONTACT_OFFICE,
@@ -9,16 +11,31 @@ import {
 
 const platformLinks = [
   { href: "/materials", label: "Browse Materials" },
-  { href: APP_COURSES_URL, label: "Courses", external: true },
+  { href: "/subjects", label: "Subjects" },
   { href: "/colleges", label: "Colleges" },
   { href: "/quizzes", label: "Quizzes" },
   { href: "/teachers", label: "Teachers" },
   { href: "/polls", label: "Polls" },
 ];
 
+const productLinks = [
+  {
+    href: APP_COURSES_URL,
+    label: "Courses",
+    external: true,
+    title: "Opens Courses (courses.getmaterials.in)",
+  },
+  {
+    href: APP_ARENA_URL,
+    label: "Arena",
+    external: true,
+    title: "Opens Arena (arena.getmaterials.in)",
+  },
+];
+
 const exploreLinks = [
-  { href: "/subjects", label: "Subjects" },
   { href: "/about", label: "About Us" },
+  { href: "/careers", label: "Careers" },
   { href: "/how-to-use", label: "How to Use" },
   { href: "/feedback", label: "Feedback" },
   { href: "/contact", label: "Contact Us" },
@@ -56,10 +73,12 @@ function FooterLink({
   href,
   label,
   external,
+  title,
 }: {
   href: string;
   label: string;
   external?: boolean;
+  title?: string;
 }) {
   const className =
     "text-[14px] text-slate-500 transition hover:text-[var(--primary)]";
@@ -71,7 +90,7 @@ function FooterLink({
         className={`${className} inline-flex items-center gap-1 font-medium text-[var(--primary)]`}
         target="_blank"
         rel="noopener noreferrer"
-        title="Opens Courses (courses.getmaterials.in)"
+        title={title}
       >
         {label}
         <span className="text-[10px] opacity-70" aria-hidden>
@@ -93,7 +112,7 @@ function FooterColumn({
   links,
 }: {
   title: string;
-  links: { href: string; label: string; external?: boolean }[];
+  links: { href: string; label: string; external?: boolean; title?: string }[];
 }) {
   return (
     <div>
@@ -133,8 +152,8 @@ export default function Footer() {
               Get<span className="text-black">Materials</span>
             </Link>
             <p className="mt-4 max-w-sm text-[14px] leading-relaxed text-slate-500 sm:text-[15px]">
-              Free, open education materials curated by verified teachers. Learn anything,
-              anytime, anywhere.
+              Free study materials, subjects, colleges, quizzes, and polls — shared by verified
+              teachers for students everywhere.
             </p>
 
             <div className="mt-5 flex gap-2.5">
@@ -154,7 +173,10 @@ export default function Footer() {
           </div>
 
           <FooterColumn title="Platform" links={platformLinks} />
-          <FooterColumn title="Explore" links={exploreLinks} />
+          <div className="space-y-8">
+            <FooterColumn title="Explore" links={exploreLinks} />
+            <FooterColumn title="More from us" links={productLinks} />
+          </div>
           <div>
             <h4 className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--primary)]">
               Legal & Contact
@@ -184,8 +206,13 @@ export default function Footer() {
           <p className="text-[13px] text-slate-400 sm:text-sm">
             © {new Date().getFullYear()} GetMaterials. All rights reserved.
           </p>
-          <p className="text-[13px] text-slate-400 sm:text-sm">
-            Made with love for students everywhere
+          <p className="inline-flex items-center gap-1.5 text-[13px] text-slate-400 sm:text-sm">
+            Made with
+            <Heart
+              className="h-3.5 w-3.5 fill-rose-500 text-rose-500"
+              aria-hidden
+            />
+            for students everywhere
           </p>
         </div>
       </div>

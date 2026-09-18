@@ -31,22 +31,22 @@ const teacherPoints = [
 
 const teacherStats = [
   {
-    value: "50K+",
-    label: "Students Reached",
+    value: "Reach",
+    label: "More students",
     icon: GraduationCap,
     iconBg: "bg-[#f3e8ff]",
     iconColor: "text-[#9333ea]",
   },
   {
-    value: "10K+",
-    label: "Resources Shared",
+    value: "Share",
+    label: "Notes & PDFs",
     icon: FileText,
     iconBg: "bg-[#ecfdf3]",
     iconColor: "text-[#16a34a]",
   },
   {
-    value: "5K+",
-    label: "Active Teachers",
+    value: "Free",
+    label: "For teachers too",
     icon: Users,
     iconBg: "bg-[#fff4e5]",
     iconColor: "text-[#ea580c]",

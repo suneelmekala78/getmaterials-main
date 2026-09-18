@@ -10,25 +10,25 @@ const caveat = Caveat({
 
 const leftFeatures = [
   {
-    title: "Wide Range of Courses",
-    desc: "Explore expert-led courses across various subjects, completely free.",
+    title: "Wide Range of Materials",
+    desc: "Notes, PDFs, question papers, and videos across subjects — free to browse and download.",
     image: "/images/icons/books.png",
     card: "bg-[#f3e8ff]",
     href: "/materials",
   },
   {
-    title: "Practice & Apply",
-    desc: "Work on projects, quizzes and real-world exercises to build practical skills.",
+    title: "Quizzes & Polls",
+    desc: "Practice with quizzes and join polls to test yourself and share opinions with peers.",
     image: "/images/icons/checklist.png",
     card: "bg-[#fff7ed]",
     href: "/quizzes",
   },
   {
-    title: "Track Your Progress",
-    desc: "See your improvement with clear progress tracking and milestones.",
+    title: "Subjects & Colleges",
+    desc: "Find materials by subject or college so you get resources that match your syllabus.",
     image: "/images/icons/progress.png",
     card: "bg-[#ecfdf3]",
-    href: "/signup",
+    href: "/subjects",
   },
 ];
 

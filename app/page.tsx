@@ -5,6 +5,7 @@ import MissionStory from "@/components/marketing/MissionStory";
 import CoreValues from "@/components/marketing/CoreValues";
 import Features from "@/components/marketing/Features";
 import Subjects from "@/components/marketing/Subjects";
+import HomePractice from "@/components/marketing/HomePractice";
 import HowItWorks from "@/components/marketing/HowItWorks";
 import ForTeachers from "@/components/marketing/ForTeachers";
 import Testimonials from "@/components/marketing/Testimonials";
@@ -15,14 +16,15 @@ import Footer from "@/components/marketing/Footer";
 export const metadata: Metadata = {
   title: "GetMaterials — Free Study Materials, Notes & Resources for Students",
   description:
-    "Access thousands of free study materials, handwritten notes, video lectures and assignments. Curated by verified teachers for students across India. No signup required to browse.",
+    "Access free study materials, handwritten notes, question papers, quizzes, and polls. Curated by verified teachers for students and colleges across India.",
   keywords: [
     "free study materials",
     "student notes",
     "handwritten notes",
     "college materials",
-    "online learning",
-    "free education",
+    "question papers",
+    "quizzes for students",
+    "polls for students",
     "study resources India",
     "GetMaterials",
     "engineering notes",
@@ -31,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "GetMaterials — Free Study Materials for Students",
     description:
-      "Thousands of free notes, guides, video lectures & assignments. Curated by teachers, built for students.",
+      "Free notes, PDFs, quizzes, and polls curated by teachers — built for students, not paid courses.",
     url: "https://getmaterials.in",
     siteName: "GetMaterials",
     type: "website",
@@ -49,7 +51,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "GetMaterials — Free Study Materials for Students",
     description:
-      "Access thousands of free study materials curated by verified teachers.",
+      "Access free study materials, quizzes, and polls curated by verified teachers.",
     images: ["/images/hero.png"],
   },
   alternates: {
@@ -63,7 +65,7 @@ const jsonLd = {
   name: "GetMaterials",
   url: "https://getmaterials.in",
   description:
-    "Free study materials, handwritten notes, video lectures and assignments curated by verified teachers for students across India.",
+    "Free study materials, notes, quizzes, and polls curated by verified teachers for students across India.",
   potentialAction: {
     "@type": "SearchAction",
     target: "https://getmaterials.in/materials?q={search_term_string}",
@@ -86,6 +88,7 @@ export default async function HomePage() {
         <CoreValues />
         <Features />
         <Subjects />
+        <HomePractice />
         <HowItWorks />
         <ForTeachers />
         <Testimonials />

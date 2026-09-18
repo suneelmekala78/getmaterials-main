@@ -51,6 +51,23 @@ export interface IUser extends Document {
   resetPasswordExpires?: Date;
   deletionRequestedAt?: Date;
   deletionReason?: string;
+  deletionCancellations: {
+    requestedAt: Date;
+    reason?: string;
+    cancelledAt: Date;
+    cancelledBy: "admin" | "user";
+    cancelReason?: string;
+    cancelledByAdmin?: mongoose.Types.ObjectId;
+  }[];
+  signupMeta?: {
+    platform: "website" | "android" | "ios" | "unknown";
+    userAgent?: string;
+    device?: string;
+    ip?: string;
+    country?: string;
+    city?: string;
+    region?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -141,6 +158,33 @@ const UserSchema = new Schema<IUser>(
     resetPasswordExpires: { type: Date },
     deletionRequestedAt: { type: Date },
     deletionReason: { type: String, maxlength: 1000 },
+    deletionCancellations: [
+      {
+        requestedAt: { type: Date, required: true },
+        reason: { type: String, maxlength: 1000 },
+        cancelledAt: { type: Date, required: true },
+        cancelledBy: {
+          type: String,
+          enum: ["admin", "user"],
+          required: true,
+        },
+        cancelReason: { type: String, maxlength: 1000 },
+        cancelledByAdmin: { type: Schema.Types.ObjectId, ref: "User" },
+      },
+    ],
+    signupMeta: {
+      platform: {
+        type: String,
+        enum: ["website", "android", "ios", "unknown"],
+        default: "unknown",
+      },
+      userAgent: { type: String },
+      device: { type: String },
+      ip: { type: String },
+      country: { type: String },
+      city: { type: String },
+      region: { type: String },
+    },
   },
   { timestamps: true }
 );

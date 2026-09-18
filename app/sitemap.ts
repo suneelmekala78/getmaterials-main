@@ -42,7 +42,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .sort({ updatedAt: -1 })
         .limit(5000)
         .lean(),
-      Subject.find({ isActive: true }).select("slug updatedAt").lean(),
+      Subject.find({ isActive: true, materialsCount: { $gt: 0 } })
+        .select("slug updatedAt")
+        .lean(),
       User.find({
         slug: { $exists: true, $nin: [null, ""] },
         status: { $ne: "suspended" },

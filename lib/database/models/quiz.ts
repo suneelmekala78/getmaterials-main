@@ -1,10 +1,15 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+export type QuizKind = "subject" | "general_knowledge" | "other";
+
 export interface IQuiz extends Document {
   title: string;
+  slug?: string;
   description?: string;
-  chapter: mongoose.Types.ObjectId;
-  subject: mongoose.Types.ObjectId;
+  kind: QuizKind;
+  chapter?: mongoose.Types.ObjectId | null;
+  subject?: mongoose.Types.ObjectId | null;
+  thumbnailUrl?: string;
   createdBy: mongoose.Types.ObjectId;
   questions: {
     question: string;
@@ -22,9 +27,16 @@ export interface IQuiz extends Document {
 const QuizSchema = new Schema<IQuiz>(
   {
     title: { type: String, required: true, trim: true },
+    slug: { type: String, trim: true, lowercase: true, sparse: true, unique: true, index: true },
     description: { type: String, maxlength: 500 },
-    chapter: { type: Schema.Types.ObjectId, ref: "Chapter", required: true },
-    subject: { type: Schema.Types.ObjectId, ref: "Subject", required: true },
+    kind: {
+      type: String,
+      enum: ["subject", "general_knowledge", "other"],
+      default: "subject",
+    },
+    chapter: { type: Schema.Types.ObjectId, ref: "Chapter", default: null },
+    subject: { type: Schema.Types.ObjectId, ref: "Subject", default: null },
+    thumbnailUrl: { type: String },
     createdBy: { type: Schema.Types.ObjectId, ref: "User" },
     questions: [
       {
@@ -43,12 +55,12 @@ const QuizSchema = new Schema<IQuiz>(
 );
 
 QuizSchema.index({ subject: 1, chapter: 1 });
+QuizSchema.index({ kind: 1, isActive: 1 });
 QuizSchema.index({ createdBy: 1 });
 
 export const Quiz =
   mongoose.models.Quiz || mongoose.model<IQuiz>("Quiz", QuizSchema);
 
-// ============ QUIZ ATTEMPT ============
 export interface IQuizAttempt extends Document {
   quiz: mongoose.Types.ObjectId;
   user: mongoose.Types.ObjectId;

@@ -1,8 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
+import ThumbnailPicker from "@/components/ui/ThumbnailPicker";
+
+type QuizKind = "subject" | "general_knowledge" | "other";
 
 interface Question {
   question: string;
@@ -18,13 +22,20 @@ const emptyQuestion = (): Question => ({
   explanation: "",
 });
 
+function RequiredMark() {
+  return <span className="text-red-500">*</span>;
+}
+
 export default function QuizForm({ quizId }: { quizId?: string }) {
   const router = useRouter();
   const isEdit = Boolean(quizId);
+  const submittingRef = useRef(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [kind, setKind] = useState<QuizKind>("subject");
   const [subjectId, setSubjectId] = useState("");
   const [chapterId, setChapterId] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [duration, setDuration] = useState(30);
   const [passingScore, setPassingScore] = useState(60);
   const [isActive, setIsActive] = useState(true);
@@ -53,8 +64,10 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
         }
         setTitle(quiz.title || "");
         setDescription(quiz.description || "");
+        setKind(quiz.kind || (quiz.subject ? "subject" : "other"));
         setSubjectId(quiz.subject?._id || quiz.subject || "");
         setChapterId(quiz.chapter?._id || quiz.chapter || "");
+        setThumbnailUrl(quiz.thumbnailUrl || "");
         setDuration(quiz.duration || 30);
         setPassingScore(quiz.passingScore ?? 60);
         setIsActive(quiz.isActive !== false);
@@ -72,14 +85,14 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
   }, [quizId]);
 
   useEffect(() => {
-    if (!subjectId) {
+    if (kind !== "subject" || !subjectId) {
       setChapters([]);
       return;
     }
     fetch(`/api/chapters?subject=${subjectId}`)
       .then((r) => r.json())
       .then((data) => setChapters(data.chapters || []));
-  }, [subjectId]);
+  }, [subjectId, kind]);
 
   const addQuestion = () => setQuestions((prev) => [...prev, emptyQuestion()]);
 
@@ -100,9 +113,19 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, confirmDuplicate = false) => {
     e.preventDefault();
+    if (loading || submittingRef.current) return;
     setError("");
+
+    if (!title.trim()) {
+      setError("Title is required");
+      return;
+    }
+    if (kind === "subject" && !subjectId) {
+      setError("Subject is required for subject quizzes");
+      return;
+    }
 
     for (let i = 0; i < questions.length; i++) {
       if (!questions[i].question.trim()) {
@@ -115,17 +138,21 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
       }
     }
 
+    submittingRef.current = true;
     setLoading(true);
     try {
       const payload = {
         title,
         description,
-        subject: subjectId,
-        chapter: chapterId,
+        kind,
+        subject: kind === "subject" ? subjectId : "",
+        chapter: kind === "subject" ? chapterId : "",
+        thumbnailUrl,
         questions,
         duration,
         passingScore,
         ...(isEdit ? { isActive } : {}),
+        ...(!isEdit && confirmDuplicate ? { confirmDuplicate: true } : {}),
       };
       const res = await fetch(isEdit ? `/api/teacher/quizzes/${quizId}` : "/api/teacher/quizzes", {
         method: isEdit ? "PATCH" : "POST",
@@ -134,14 +161,38 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error || `Failed to ${isEdit ? "update" : "create"} quiz`);
+        if (
+          !isEdit &&
+          res.status === 409 &&
+          data.code === "DUPLICATE_TITLE" &&
+          !confirmDuplicate
+        ) {
+          const ok = window.confirm(
+            data.error || "A quiz with this title already exists. Create another copy?"
+          );
+          if (ok) {
+            submittingRef.current = false;
+            setLoading(false);
+            await handleSubmit(e, true);
+            return;
+          }
+          setError(data.error || "Duplicate title");
+          toast.error(data.error || "Duplicate title");
+          return;
+        }
+        const msg = data.error || `Failed to ${isEdit ? "update" : "create"} quiz`;
+        setError(msg);
+        toast.error(msg);
       } else {
+        toast.success(isEdit ? "Quiz updated" : "Quiz created");
         router.push("/teacher/quizzes");
         router.refresh();
       }
     } catch {
       setError("Something went wrong");
+      toast.error("Something went wrong");
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };
@@ -163,7 +214,9 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">{isEdit ? "Edit Quiz" : "Create Quiz"}</h1>
           <p className="text-slate-500 text-sm">
-            {isEdit ? "Update questions, timing, and visibility" : "Create a new quiz for your students"}
+            {isEdit
+              ? "Update questions, timing, and visibility"
+              : "Create subject, GK, or other quizzes for students"}
           </p>
         </div>
       </div>
@@ -174,10 +227,17 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
         )}
 
         <div className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
-          <h2 className="font-semibold text-slate-900">Quiz Details</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-semibold text-slate-900">Quiz Details</h2>
+            <p className="text-xs text-slate-400">
+              <RequiredMark /> required
+            </p>
+          </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Title</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Title <RequiredMark />
+            </label>
             <input
               type="text"
               value={title}
@@ -199,64 +259,102 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
-              <select
-                value={subjectId}
-                onChange={(e) => {
-                  setSubjectId(e.target.value);
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Quiz type <RequiredMark />
+            </label>
+            <select
+              value={kind}
+              onChange={(e) => {
+                const next = e.target.value as QuizKind;
+                setKind(next);
+                if (next !== "subject") {
+                  setSubjectId("");
                   setChapterId("");
-                }}
-                required
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500"
-              >
-                <option value="">Select subject</option>
-                {subjects.map((s: any) => (
-                  <option key={s._id} value={s._id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Chapter</label>
-              <select
-                value={chapterId}
-                onChange={(e) => setChapterId(e.target.value)}
-                required
-                disabled={!subjectId}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 disabled:bg-slate-50"
-              >
-                <option value="">Select chapter</option>
-                {chapters.map((c: any) => (
-                  <option key={c._id} value={c._id}>
-                    {c.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+                }
+              }}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500"
+            >
+              <option value="subject">Subject / syllabus quiz</option>
+              <option value="general_knowledge">General knowledge</option>
+              <option value="other">Other</option>
+            </select>
+            <p className="mt-1 text-xs text-slate-400">
+              Use General knowledge or Other for quizzes that are not tied to a subject chapter.
+            </p>
           </div>
+
+          {kind === "subject" ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Subject <RequiredMark />
+                </label>
+                <select
+                  value={subjectId}
+                  onChange={(e) => {
+                    setSubjectId(e.target.value);
+                    setChapterId("");
+                  }}
+                  required
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500"
+                >
+                  <option value="">Select subject</option>
+                  {subjects.map((s: any) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Chapter <span className="font-normal text-slate-400">(optional)</span>
+                </label>
+                <select
+                  value={chapterId}
+                  onChange={(e) => setChapterId(e.target.value)}
+                  disabled={!subjectId}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 disabled:bg-slate-50"
+                >
+                  <option value="">No specific chapter</option>
+                  {chapters.map((c: any) => (
+                    <option key={c._id} value={c._id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          ) : null}
+
+          <ThumbnailPicker value={thumbnailUrl} onChange={setThumbnailUrl} />
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Duration (minutes)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Duration (minutes) <RequiredMark />
+              </label>
               <input
                 type="number"
                 value={duration}
                 onChange={(e) => setDuration(Number(e.target.value))}
                 min={1}
+                required
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Passing Score (%)</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">
+                Passing Score (%) <RequiredMark />
+              </label>
               <input
                 type="number"
                 value={passingScore}
                 onChange={(e) => setPassingScore(Number(e.target.value))}
                 min={0}
                 max={100}
+                required
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500"
               />
             </div>
@@ -277,7 +375,9 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900">Questions ({questions.length})</h2>
+            <h2 className="font-semibold text-slate-900">
+              Questions ({questions.length}) <RequiredMark />
+            </h2>
             <button
               type="button"
               onClick={addQuestion}
@@ -290,7 +390,9 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
           {questions.map((q, qIdx) => (
             <div key={qIdx} className="bg-white rounded-2xl border border-slate-100 p-6 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-slate-600">Question {qIdx + 1}</span>
+                <span className="text-sm font-semibold text-slate-600">
+                  Question {qIdx + 1} <RequiredMark />
+                </span>
                 {questions.length > 1 && (
                   <button
                     type="button"
@@ -307,6 +409,7 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
                 value={q.question}
                 onChange={(e) => updateQuestion(qIdx, "question", e.target.value)}
                 placeholder="Enter question..."
+                required
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500"
               />
 
@@ -318,6 +421,7 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
                       value={opt}
                       onChange={(e) => updateOption(qIdx, oIdx, e.target.value)}
                       placeholder={`Option ${String.fromCharCode(65 + oIdx)}`}
+                      required
                       className={`w-full pl-4 pr-10 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-violet-500 ${
                         q.correctAnswer === oIdx ? "border-green-400 bg-green-50" : "border-slate-200"
                       }`}
@@ -330,6 +434,7 @@ export default function QuizForm({ quizId }: { quizId?: string }) {
                           ? "border-green-500 bg-green-500"
                           : "border-slate-300 hover:border-green-400"
                       }`}
+                      title="Mark as correct answer"
                     >
                       {q.correctAnswer === oIdx && (
                         <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">

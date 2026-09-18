@@ -1,10 +1,22 @@
-import { connectDB, Material, User, materialCollegeFilter } from "@/lib/database";
-import { collegeHref, collegePathKey, ensureCollegeSlug, findCollegeByKey, teachersAtCollegeFilter } from "@/lib/college-key";
+import {
+  connectDB,
+  Material,
+  User,
+  Subject,
+  Chapter,
+  materialCollegeFilter,
+} from "@/lib/database";
+import {
+  collegeHref,
+  collegePathKey,
+  ensureCollegeSlug,
+  findCollegeByKey,
+  teachersAtCollegeFilter,
+} from "@/lib/college-key";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  ArrowRight,
   BookOpen,
   Building2,
   Download,
@@ -14,18 +26,47 @@ import {
   Users,
 } from "lucide-react";
 import MaterialCard from "@/components/materials/MaterialCard";
+import MaterialsFilterSidebar from "@/components/materials/MaterialsFilterSidebar";
+import MaterialsToolbar from "@/components/materials/MaterialsToolbar";
+import { materialsHref, type MaterialsQuery } from "@/components/materials/query";
 import { TeacherCard } from "@/components/teachers/TeacherCard";
 import { formatCount } from "@/components/colleges/query";
 import { listingMetadata } from "@/lib/seo";
 import { ratedAverageExpr } from "@/lib/rating-aggregate";
+import { parseList, type QueryParam } from "@/lib/filter-list";
+import { auth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+const PAGE_SIZE = 18;
+const typeValues = ["pdf", "video", "link", "image", "assignment"] as const;
+const categoryValues = [
+  "notes",
+  "question_paper",
+  "syllabus",
+  "assignment",
+  "lab_manual",
+  "reference",
+  "other",
+] as const;
+
 interface Props {
   params: Promise<{ code: string }>;
+  searchParams: Promise<{
+    type?: QueryParam;
+    category?: QueryParam;
+    subject?: QueryParam;
+    q?: string;
+    sort?: string;
+    view?: string;
+    page?: string;
+    semester?: QueryParam;
+    chapter?: QueryParam;
+    program?: QueryParam;
+  }>;
 }
 
-async function loadCollege(code: string) {
+async function loadCollegeMeta(code: string) {
   await connectDB();
   const collegeDoc = await findCollegeByKey(code, { status: "active" });
   if (!collegeDoc) return null;
@@ -39,7 +80,7 @@ async function loadCollege(code: string) {
     ...materialCollegeFilter((college as any)._id),
   };
 
-  const [stats, materials, teachers, studentCount] = await Promise.all([
+  const [stats, teachers, studentCount] = await Promise.all([
     Material.aggregate([
       { $match: published },
       {
@@ -51,15 +92,8 @@ async function loadCollege(code: string) {
         },
       },
     ]),
-    Material.find(published)
-      .populate("subject", "name slug")
-      .populate("uploadedBy", "name slug avatar role")
-      .populate("college", "name")
-      .sort({ createdAt: -1 })
-      .limit(8)
-      .lean(),
     User.find({ role: "teacher", status: "active", ...teachersAtCollegeFilter((college as any)._id) })
-      .select("name slug avatar banner bannerPos bio qualifications")
+      .select("name slug avatar banner bannerPos bio qualifications role")
       .sort({ name: 1 })
       .limit(12)
       .lean(),
@@ -69,7 +103,6 @@ async function loadCollege(code: string) {
   return {
     college,
     stats: stats[0] || { materials: 0, downloads: 0, avgRating: 0 },
-    materials,
     teachers,
     studentCount,
   };
@@ -77,7 +110,7 @@ async function loadCollege(code: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = await params;
-  const data = await loadCollege(code);
+  const data = await loadCollegeMeta(code);
   if (!data) return { title: "College - GetMaterials" };
   const { college, stats } = data;
   return listingMetadata({
@@ -86,18 +119,109 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       college.description ||
       `Browse ${stats.materials || 0} free notes and lectures shared for ${college.name}.`,
     path: collegeHref(college),
-    keywords: [college.name, college.code, college.slug, "college notes", "campus materials"].filter(Boolean) as string[],
+    keywords: [college.name, college.code, college.slug, "college notes", "campus materials"].filter(
+      Boolean
+    ) as string[],
   });
 }
 
-export default async function CollegeDetailsPage({ params }: Props) {
+export default async function CollegeDetailsPage({ params, searchParams }: Props) {
   const { code } = await params;
-  const data = await loadCollege(code);
+  const queryParams = await searchParams;
+  const data = await loadCollegeMeta(code);
   if (!data) notFound();
 
-  const { college, stats, materials, teachers, studentCount } = data;
-  const materialsHref = `/materials?college=${encodeURIComponent(collegePathKey(college))}`;
-  const programs = college.programs || [];
+  const { college, stats, teachers, studentCount } = data;
+  const session = await auth();
+  const userId = (session?.user as any)?.id as string | undefined;
+
+  const basePath = collegeHref(college);
+  const current: MaterialsQuery = {
+    type: queryParams.type,
+    category: queryParams.category,
+    subject: queryParams.subject,
+    q: queryParams.q,
+    sort: queryParams.sort,
+    view: queryParams.view,
+    page: queryParams.page,
+    semester: queryParams.semester,
+    chapter: queryParams.chapter,
+    program: queryParams.program,
+  };
+
+  const filter: any = {
+    status: "published",
+    isPublic: true,
+    ...materialCollegeFilter((college as any)._id),
+  };
+
+  const types = parseList(queryParams.type).filter((item) => typeValues.includes(item as any));
+  const categories = parseList(queryParams.category).filter((item) =>
+    categoryValues.includes(item as any)
+  );
+  const semesters = parseList(queryParams.semester)
+    .map((item) => Number(item))
+    .filter((item) => item >= 1 && item <= 10);
+  const programKeys = parseList(queryParams.program);
+  if (types.length) filter.type = { $in: types };
+  if (categories.length) filter.materialCategory = { $in: categories };
+  if (semesters.length) filter.semester = { $in: semesters };
+  if (programKeys.length) filter.program = { $in: programKeys };
+  if (queryParams.q) filter.title = { $regex: queryParams.q, $options: "i" };
+
+  const subjectSlugs = parseList(queryParams.subject);
+  const chapterSlugs = parseList(queryParams.chapter);
+
+  const [subjectDocs, chapterDocs] = await Promise.all([
+    subjectSlugs.length
+      ? Subject.find({ slug: { $in: subjectSlugs } }).select("_id").lean()
+      : Promise.resolve([]),
+    chapterSlugs.length
+      ? Chapter.find({ slug: { $in: chapterSlugs } }).select("_id").lean()
+      : Promise.resolve([]),
+  ]);
+
+  if (subjectDocs.length) filter.subject = { $in: subjectDocs.map((item: any) => item._id) };
+  if (chapterDocs.length) filter.chapter = { $in: chapterDocs.map((item: any) => item._id) };
+
+  const sortKey = queryParams.sort || "latest";
+  const sort: Record<string, 1 | -1> =
+    sortKey === "popular"
+      ? { views: -1, createdAt: -1 }
+      : sortKey === "downloads"
+        ? { downloads: -1, createdAt: -1 }
+        : sortKey === "rating"
+          ? { "rating.average": -1, createdAt: -1 }
+          : { createdAt: -1 };
+
+  const page = Math.max(1, Number(queryParams.page) || 1);
+  const skip = (page - 1) * PAGE_SIZE;
+  const view = queryParams.view === "list" ? "list" : "grid";
+
+  const [totalMatching, materials, subjects, chapterOptions, bookmarkUser] = await Promise.all([
+    Material.countDocuments(filter),
+    Material.find(filter)
+      .populate("subject", "name slug")
+      .populate("uploadedBy", "name role")
+      .populate("college", "name")
+      .sort(sort)
+      .skip(skip)
+      .limit(PAGE_SIZE)
+      .lean(),
+    Subject.find({ isActive: true }).select("name slug").sort({ name: 1 }).lean(),
+    Chapter.find(subjectDocs.length ? { subject: { $in: subjectDocs.map((item: any) => item._id) } } : {})
+      .select("title slug")
+      .sort({ title: 1 })
+      .limit(400)
+      .lean(),
+    userId ? User.findById(userId).select("bookmarks").lean() : null,
+  ]);
+
+  const bookmarkedIds = new Set(
+    ((bookmarkUser as any)?.bookmarks || []).map((id: any) => String(id))
+  );
+  const totalPages = Math.max(1, Math.ceil(totalMatching / PAGE_SIZE));
+  const collegePrograms = college.programs || [];
   const branches = college.branches || [];
 
   return (
@@ -130,9 +254,15 @@ export default async function CollegeDetailsPage({ params }: Props) {
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-slate-100 bg-white overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
               {college.logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={college.logo} alt={`${college.name} logo`} className="max-w-[88%] max-h-[88%] object-contain" />
+                <img
+                  src={college.logo}
+                  alt={`${college.name} logo`}
+                  className="max-w-[88%] max-h-[88%] object-contain"
+                />
               ) : (
-                <span className="text-lg font-extrabold text-violet-700">{(college.code || college.name).slice(0, 3).toUpperCase()}</span>
+                <span className="text-lg font-extrabold text-violet-700">
+                  {(college.code || college.name).slice(0, 3).toUpperCase()}
+                </span>
               )}
             </div>
             <div className="min-w-0 flex-1">
@@ -150,13 +280,6 @@ export default async function CollegeDetailsPage({ params }: Props) {
                 <p className="text-slate-600 mt-3 leading-relaxed">{college.description}</p>
               )}
             </div>
-            <Link
-              href={materialsHref}
-              className="inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-[var(--primary)] text-white text-sm font-semibold hover:opacity-90 shrink-0"
-            >
-              Browse materials
-              <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
@@ -166,7 +289,10 @@ export default async function CollegeDetailsPage({ params }: Props) {
               { icon: GraduationCap, value: formatCount(teachers.length), label: "Teachers" },
               { icon: Users, value: formatCount(studentCount), label: "Students" },
             ].map((item) => (
-              <div key={item.label} className="rounded-2xl border border-slate-100 px-4 py-3 flex items-center gap-3">
+              <div
+                key={item.label}
+                className="rounded-2xl border border-slate-100 px-4 py-3 flex items-center gap-3"
+              >
                 <div className="w-9 h-9 rounded-xl bg-violet-50 text-violet-700 flex items-center justify-center">
                   <item.icon className="w-4 h-4" />
                 </div>
@@ -179,13 +305,13 @@ export default async function CollegeDetailsPage({ params }: Props) {
           </div>
         </section>
 
-        {(programs.length > 0 || branches.length > 0) && (
+        {(collegePrograms.length > 0 || branches.length > 0) && (
           <section className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-8 mb-8">
-            {programs.length > 0 && (
+            {collegePrograms.length > 0 && (
               <div className="mb-5">
                 <h2 className="text-sm font-bold text-slate-900 mb-3">Programs</h2>
                 <div className="flex flex-wrap gap-2">
-                  {programs.map((program: any) => (
+                  {collegePrograms.map((program: any) => (
                     <span
                       key={program.key}
                       className="px-3 py-1.5 rounded-full bg-violet-50 text-violet-700 text-xs font-semibold"
@@ -215,29 +341,104 @@ export default async function CollegeDetailsPage({ params }: Props) {
         )}
 
         <section className="mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-extrabold text-slate-900">Latest materials</h2>
-            <Link href={materialsHref} className="text-sm font-semibold text-[var(--primary)] hover:underline">
-              View all
-            </Link>
+          <h2 className="text-xl font-extrabold text-slate-900 mb-4">Materials</h2>
+          <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 items-start">
+            <MaterialsFilterSidebar
+              current={current}
+              basePath={basePath}
+              hideColleges
+              subjects={subjects.map((subject: any) => ({
+                value: subject.slug,
+                label: subject.name,
+              }))}
+              chapters={Array.from(
+                new Map(
+                  chapterOptions.map((chapter: any) => [
+                    String(chapter.slug),
+                    { value: String(chapter.slug), label: String(chapter.title || chapter.slug) },
+                  ])
+                ).values()
+              )}
+              colleges={[]}
+            />
+
+            <div>
+              <MaterialsToolbar current={current} basePath={basePath} />
+              {materials.length === 0 ? (
+                <div className="mt-5 bg-white rounded-2xl border border-slate-100 p-12 text-center">
+                  <BookOpen className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                  <p className="text-slate-500">No materials match your filters.</p>
+                  <Link
+                    href={basePath}
+                    className="text-sm text-[var(--primary)] hover:underline mt-2 inline-block"
+                  >
+                    Clear filters
+                  </Link>
+                </div>
+              ) : (
+                <div
+                  className={
+                    view === "grid"
+                      ? "mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+                      : "mt-5 space-y-3"
+                  }
+                >
+                  {materials.map((material: any) => (
+                    <MaterialCard
+                      key={String(material._id)}
+                      material={material}
+                      view={view}
+                      bookmarked={bookmarkedIds.has(String(material._id))}
+                      loggedIn={Boolean(userId)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-1">
+                  {page > 1 && (
+                    <Link
+                      href={materialsHref(current, { page: String(page - 1) }, basePath)}
+                      className="w-8 h-8 rounded-full text-sm flex items-center justify-center hover:bg-white"
+                    >
+                      ‹
+                    </Link>
+                  )}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                    .map((n, index, arr) => {
+                      const prev = arr[index - 1];
+                      return (
+                        <span key={n} className="contents">
+                          {prev && n - prev > 1 ? (
+                            <span className="px-2 text-slate-400">…</span>
+                          ) : null}
+                          <Link
+                            href={materialsHref(current, { page: String(n) }, basePath)}
+                            className={`min-w-8 h-8 px-2 rounded-full text-sm font-semibold flex items-center justify-center ${
+                              n === page
+                                ? "bg-[var(--primary)] text-white"
+                                : "text-slate-600 hover:bg-white"
+                            }`}
+                          >
+                            {n}
+                          </Link>
+                        </span>
+                      );
+                    })}
+                  {page < totalPages && (
+                    <Link
+                      href={materialsHref(current, { page: String(page + 1) }, basePath)}
+                      className="w-8 h-8 rounded-full text-sm flex items-center justify-center hover:bg-white"
+                    >
+                      ›
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-          {materials.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-slate-100 p-10 text-center text-slate-500">
-              No materials have been shared for this college yet.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {materials.map((material: any) => (
-                <MaterialCard
-                  key={String(material._id)}
-                  material={material}
-                  view="grid"
-                  bookmarked={false}
-                  loggedIn={false}
-                />
-              ))}
-            </div>
-          )}
         </section>
 
         <section>
@@ -259,7 +460,7 @@ export default async function CollegeDetailsPage({ params }: Props) {
               {teachers.map((teacher: any) => (
                 <TeacherCard
                   key={String(teacher._id)}
-                  teacher={{ ...teacher, college: { name: college.name } }}
+                  teacher={{ ...teacher, college: { name: college.name }, role: teacher.role }}
                 />
               ))}
             </div>

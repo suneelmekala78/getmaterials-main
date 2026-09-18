@@ -10,20 +10,20 @@ const headlineAvatars = [
 const statRows = [
   {
     value: "2x",
-    label: "Faster Skills",
+    label: "Faster Revision",
     description:
-      "Learn concepts quicker with structured lessons and guided practice.",
+      "Find the right notes and previous papers faster — organized by subject and college.",
   },
   {
-    value: "30%",
-    label: "Course Completion",
+    value: "100%",
+    label: "Free Materials",
     description:
-      "Stay motivated with progress tracking and milestone-based learning.",
+      "Download study resources from verified teachers without paywalls on GetMaterials.",
   },
 ];
 
 const sidePoints = [
-  "Work on practical exercises and projects designed to reinforce skills and boost confidence.",
+  "Practice with quizzes and join polls — built for students, alongside free study materials.",
   "Access verified materials from teachers and students across colleges — all in one place.",
 ];
 

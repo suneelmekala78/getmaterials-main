@@ -2,9 +2,9 @@ import { auth } from "@/lib/auth";
 import { connectDB, Subject, Quiz, QuizAttempt } from "@/lib/database";
 import { ClipboardCheck, Clock, HelpCircle, Plus, Trophy, Users } from "lucide-react";
 import Link from "next/link";
-import QuizzesFilterSidebar from "@/components/quizzes/QuizzesFilterSidebar";
 import QuizzesToolbar from "@/components/quizzes/QuizzesToolbar";
 import QuizCard, { type QuizCardData } from "@/components/quizzes/QuizCard";
+import QuizLeaderboard, { type LeaderboardRow } from "@/components/quizzes/QuizLeaderboard";
 import { formatCount, quizzesHref, type QuizzesQuery } from "@/components/quizzes/query";
 import { parseList, type QueryParam } from "@/lib/filter-list";
 import { listingMetadata } from "@/lib/seo";
@@ -19,12 +19,14 @@ export const metadata = listingMetadata({
   keywords: ["free quizzes", "chapter wise quiz", "exam practice", "GetMaterials quizzes"],
 });
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 9;
+const kindValues = ["subject", "general_knowledge", "other"] as const;
 
 interface Props {
   searchParams: Promise<{
     q?: string;
     subject?: QueryParam;
+    kind?: string;
     tab?: string;
     sort?: string;
     view?: string;
@@ -43,6 +45,7 @@ export default async function QuizzesPage({ searchParams }: Props) {
   const current: QuizzesQuery = {
     q: params.q,
     subject: params.subject,
+    kind: params.kind,
     tab: params.tab,
     sort: params.sort,
     view: params.view,
@@ -52,10 +55,22 @@ export default async function QuizzesPage({ searchParams }: Props) {
   const selectedSubjects = subjectSlugs.length
     ? await Subject.find({ slug: { $in: subjectSlugs } }).select("_id").lean()
     : [];
+  const kind =
+    params.kind && kindValues.includes(params.kind as (typeof kindValues)[number])
+      ? params.kind
+      : "";
 
   const filter: Record<string, unknown> = { isActive: true };
   if (subjectSlugs.length) {
     filter.subject = { $in: selectedSubjects.map((item: any) => item._id) };
+  }
+  if (kind === "subject") {
+    filter.$and = [
+      ...((filter.$and as any[]) || []),
+      { $or: [{ kind: "subject" }, { kind: { $exists: false } }, { kind: null }] },
+    ];
+  } else if (kind) {
+    filter.kind = kind;
   }
   if (params.q?.trim()) {
     filter.$or = [
@@ -92,7 +107,7 @@ export default async function QuizzesPage({ searchParams }: Props) {
 
   const page = Math.max(1, Number(params.page) || 1);
   const skip = (page - 1) * PAGE_SIZE;
-  const view = params.view === "grid" ? "grid" : "list";
+  const view = params.view === "list" ? "list" : "grid";
 
   const [
     totalMatching,
@@ -119,23 +134,56 @@ export default async function QuizzesPage({ searchParams }: Props) {
       { $group: { _id: null, avg: { $avg: "$duration" }, attempts: { $sum: "$attempts" } } },
     ]),
     Quiz.aggregate([
-      { $match: { isActive: true } },
+      { $match: { isActive: true, subject: { $ne: null } } },
       { $group: { _id: "$subject", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
     ]),
     QuizAttempt.aggregate([
       {
         $group: {
-          _id: "$user",
+          _id: { user: "$user", quiz: "$quiz" },
+          bestScore: { $max: "$score" },
           attempts: { $sum: 1 },
-          avgScore: { $avg: "$score" },
         },
       },
-      { $sort: { avgScore: -1, attempts: -1 } },
-      { $limit: 5 },
-      { $lookup: { from: "users", localField: "_id", foreignField: "_id", as: "user" } },
-      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
-      { $project: { attempts: 1, avgScore: 1, name: "$user.name", avatar: "$user.avatar" } },
+      {
+        $group: {
+          _id: "$_id.user",
+          quizzes: { $sum: 1 },
+          totalAttempts: { $sum: "$attempts" },
+          avgBestScore: { $avg: "$bestScore" },
+          bestScore: { $max: "$bestScore" },
+        },
+      },
+      { $match: { quizzes: { $gte: 1 }, _id: { $ne: null } } },
+      { $sort: { avgBestScore: -1, quizzes: -1, totalAttempts: -1 } },
+      { $limit: 10 },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: false } },
+      {
+        $match: {
+          "user.name": { $exists: true, $nin: [null, ""] },
+          "user.status": { $ne: "suspended" },
+        },
+      },
+      {
+        $project: {
+          quizzes: 1,
+          totalAttempts: 1,
+          avgBestScore: 1,
+          bestScore: 1,
+          name: "$user.name",
+          avatar: "$user.avatar",
+          role: "$user.role",
+        },
+      },
     ]),
     attemptedIds.length
       ? Quiz.find({ _id: { $in: attemptedIds } }).select("passingScore").lean()
@@ -155,22 +203,26 @@ export default async function QuizzesPage({ searchParams }: Props) {
     })
     .filter(Boolean) as { value: string; label: string; count: number }[];
 
-  const leaderboard = topScorers
-    .filter((row: any) => row.name)
-    .map((row: any) => ({
-      id: String(row._id),
-      name: row.name as string,
-      avatar: row.avatar as string | undefined,
-      attempts: row.attempts as number,
-      avgScore: Math.round(row.avgScore || 0),
-    }));
+  const leaderboard: LeaderboardRow[] = topScorers.map((row: any) => ({
+    id: String(row._id),
+    name: row.name as string,
+    avatar: row.avatar as string | undefined,
+    role: row.role as string | undefined,
+    quizzes: row.quizzes as number,
+    attempts: row.totalAttempts as number,
+    avgScore: Math.round(row.avgBestScore || 0),
+    bestScore: Math.round(row.bestScore || 0),
+  }));
 
   const cards: QuizCardData[] = quizzes.map((quiz: any) => ({
     id: String(quiz._id),
+    slug: quiz.slug || undefined,
     title: quiz.title,
     description: quiz.description || "",
     subject: quiz.subject?.name,
     chapter: quiz.chapter?.title,
+    kind: quiz.kind || (quiz.subject ? "subject" : "other"),
+    thumbnailUrl: quiz.thumbnailUrl || "",
     questions: quiz.questions?.length || 0,
     duration: quiz.duration,
     attempts: quiz.attempts || 0,
@@ -184,7 +236,10 @@ export default async function QuizzesPage({ searchParams }: Props) {
   const avgDuration = durationAgg[0]?.avg ? Math.round(durationAgg[0].avg) : 0;
 
   const myAvg = userAttempts.length
-    ? Math.round(userAttempts.reduce((sum: number, item: any) => sum + (item.score || 0), 0) / userAttempts.length)
+    ? Math.round(
+        userAttempts.reduce((sum: number, item: any) => sum + (item.score || 0), 0) /
+          userAttempts.length
+      )
     : 0;
   const myBest = userAttempts.length
     ? Math.max(...userAttempts.map((item: any) => item.score || 0))
@@ -204,13 +259,14 @@ export default async function QuizzesPage({ searchParams }: Props) {
   const progressPct = totalQuizzes ? Math.round((uniqueAttempted / totalQuizzes) * 100) : 0;
 
   const canCreate = role === "teacher" || role === "admin";
-
   const queryForPage = (nextPage: number) => quizzesHref(current, { page: String(nextPage) });
 
   return (
     <div className="max-w-7xl mx-auto">
       <p className="text-sm text-slate-400 mb-4">
-        <Link href="/" className="hover:text-[var(--primary)]">Home</Link>
+        <Link href="/" className="hover:text-[var(--primary)]">
+          Home
+        </Link>
         <span className="mx-1.5">›</span>
         <span className="text-slate-600">Quizzes</span>
       </p>
@@ -222,7 +278,9 @@ export default async function QuizzesPage({ searchParams }: Props) {
           </div>
           <div>
             <h1 className="text-3xl font-extrabold text-slate-900">Quizzes</h1>
-            <p className="text-slate-500 mt-1">Test your knowledge and improve your skills with practice quizzes.</p>
+            <p className="text-slate-500 mt-1">
+              Test your knowledge and improve your skills with practice quizzes.
+            </p>
           </div>
         </div>
         {canCreate && (
@@ -246,12 +304,35 @@ export default async function QuizzesPage({ searchParams }: Props) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         {[
-          { icon: ClipboardCheck, tint: "bg-violet-50 text-violet-600", value: totalQuizzes ? `${formatCount(totalQuizzes)}+` : "0", label: "Total Quizzes" },
-          { icon: Users, tint: "bg-emerald-50 text-emerald-600", value: totalAttempts ? `${formatCount(totalAttempts)}+` : "0", label: "Attempts" },
-          { icon: Trophy, tint: "bg-amber-50 text-amber-600", value: avgScore ? `${avgScore}%` : "—", label: "Average Score" },
-          { icon: Clock, tint: "bg-blue-50 text-blue-600", value: avgDuration ? `${avgDuration} min` : "—", label: "Avg. Duration" },
+          {
+            icon: ClipboardCheck,
+            tint: "bg-violet-50 text-violet-600",
+            value: totalQuizzes ? `${formatCount(totalQuizzes)}+` : "0",
+            label: "Total Quizzes",
+          },
+          {
+            icon: Users,
+            tint: "bg-emerald-50 text-emerald-600",
+            value: totalAttempts ? `${formatCount(totalAttempts)}+` : "0",
+            label: "Attempts",
+          },
+          {
+            icon: Trophy,
+            tint: "bg-amber-50 text-amber-600",
+            value: avgScore ? `${avgScore}%` : "—",
+            label: "Average Score",
+          },
+          {
+            icon: Clock,
+            tint: "bg-blue-50 text-blue-600",
+            value: avgDuration ? `${avgDuration} min` : "—",
+            label: "Avg. Duration",
+          },
         ].map((item) => (
-          <div key={item.label} className="bg-white rounded-2xl border border-slate-100 px-4 py-3 flex items-center gap-3">
+          <div
+            key={item.label}
+            className="bg-white rounded-2xl border border-slate-100 px-4 py-3 flex items-center gap-3"
+          >
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${item.tint}`}>
               <item.icon className="w-4 h-4" />
             </div>
@@ -263,21 +344,28 @@ export default async function QuizzesPage({ searchParams }: Props) {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] xl:grid-cols-[240px_1fr_260px] gap-6 items-start">
-        <QuizzesFilterSidebar current={current} subjects={subjects} />
-
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6 items-start">
         <div>
-          <QuizzesToolbar current={current} showMine={Boolean(userId)} />
+          <QuizzesToolbar current={current} showMine={Boolean(userId)} subjects={subjects} />
           {cards.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center mt-5">
               <HelpCircle className="w-10 h-10 text-slate-200 mx-auto mb-3" />
               <p className="text-slate-500">No quizzes match your filters.</p>
-              <Link href="/quizzes" className="text-sm text-[var(--primary)] hover:underline mt-2 inline-block">
+              <Link
+                href="/quizzes"
+                className="text-sm text-[var(--primary)] hover:underline mt-2 inline-block"
+              >
                 Clear filters
               </Link>
             </div>
           ) : (
-            <div className={view === "grid" ? "mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4" : "mt-5 space-y-3"}>
+            <div
+              className={
+                view === "grid"
+                  ? "mt-5 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+                  : "mt-5 space-y-3"
+              }
+            >
               {cards.map((quiz) => (
                 <QuizCard key={quiz.id} quiz={quiz} view={view} />
               ))}
@@ -287,7 +375,10 @@ export default async function QuizzesPage({ searchParams }: Props) {
           {totalPages > 1 && (
             <div className="mt-8 flex items-center justify-center gap-1">
               {page > 1 && (
-                <Link href={queryForPage(page - 1)} className="px-3 py-1.5 text-sm rounded-lg hover:bg-white">
+                <Link
+                  href={queryForPage(page - 1)}
+                  className="px-3 py-1.5 text-sm rounded-lg hover:bg-white"
+                >
                   Prev
                 </Link>
               )}
@@ -298,7 +389,9 @@ export default async function QuizzesPage({ searchParams }: Props) {
                     key={n}
                     href={queryForPage(n)}
                     className={`min-w-8 h-8 px-2 rounded-lg text-sm font-semibold flex items-center justify-center ${
-                      n === page ? "bg-[var(--primary)] text-white" : "text-slate-600 hover:bg-white"
+                      n === page
+                        ? "bg-[var(--primary)] text-white"
+                        : "text-slate-600 hover:bg-white"
                     }`}
                   >
                     {n}
@@ -310,14 +403,19 @@ export default async function QuizzesPage({ searchParams }: Props) {
                 <Link
                   href={queryForPage(totalPages)}
                   className={`min-w-8 h-8 px-2 rounded-lg text-sm font-semibold flex items-center justify-center ${
-                    page === totalPages ? "bg-[var(--primary)] text-white" : "text-slate-600 hover:bg-white"
+                    page === totalPages
+                      ? "bg-[var(--primary)] text-white"
+                      : "text-slate-600 hover:bg-white"
                   }`}
                 >
                   {totalPages}
                 </Link>
               )}
               {page < totalPages && (
-                <Link href={queryForPage(page + 1)} className="px-3 py-1.5 text-sm rounded-lg hover:bg-white">
+                <Link
+                  href={queryForPage(page + 1)}
+                  className="px-3 py-1.5 text-sm rounded-lg hover:bg-white"
+                >
                   Next
                 </Link>
               )}
@@ -361,43 +459,7 @@ export default async function QuizzesPage({ searchParams }: Props) {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-100 p-5">
-            <h3 className="font-bold text-slate-900 text-sm mb-4">Top Scorers</h3>
-            {leaderboard.length === 0 ? (
-              <p className="text-xs text-slate-400">No attempts yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {leaderboard.map((row, index) => {
-                  const isYou = userId && row.id === userId;
-                  return (
-                    <div
-                      key={row.id}
-                      className={`flex items-center gap-3 rounded-xl px-2 py-1.5 -mx-2 ${
-                        isYou ? "bg-violet-50" : ""
-                      }`}
-                    >
-                      <span className="w-5 text-xs font-bold text-slate-400">{index + 1}</span>
-                      {row.avatar ? (
-                        <img src={row.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-violet-100 text-violet-700 text-xs font-bold flex items-center justify-center">
-                          {row.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-slate-900 truncate">
-                          {row.name}
-                          {isYou ? " (You)" : ""}
-                        </p>
-                        <p className="text-[11px] text-slate-400">{row.attempts} attempts</p>
-                      </div>
-                      <span className="text-xs font-bold text-violet-700">{row.avgScore}%</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <QuizLeaderboard rows={leaderboard} currentUserId={userId} />
         </aside>
       </div>
     </div>

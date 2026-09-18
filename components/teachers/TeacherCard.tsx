@@ -11,6 +11,7 @@ export type TeacherCardData = {
   id?: string;
   slug?: string;
   name: string;
+  role?: string;
   avatar?: string;
   banner?: string;
   bannerPos?: { x: number; y: number; zoom: number };
@@ -24,6 +25,7 @@ export type TeacherCardData = {
 export function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
   const href = `/users/${teacher._id || teacher.id || teacher.slug}`;
   const rating = Number(teacher.avgRating || 0);
+  const isTeacher = teacher.role === "teacher";
 
   return (
     <Link
@@ -40,7 +42,7 @@ export function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
         <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/25 to-transparent" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={teacher.avatar || defaultAvatarSrc("teacher")}
+          src={teacher.avatar || defaultAvatarSrc(isTeacher ? "teacher" : "student")}
           alt=""
           className="absolute -bottom-8 left-4 w-16 h-16 rounded-2xl border-4 border-white shadow-md object-cover bg-white"
         />
@@ -48,7 +50,7 @@ export function TeacherCard({ teacher }: { teacher: TeacherCardData }) {
       <div className="pt-10 px-4 pb-4">
         <p className="font-bold text-slate-900 truncate inline-flex items-center gap-1.5">
           <span className="truncate">{teacher.name}</span>
-          <BadgeCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+          {isTeacher ? <BadgeCheck className="w-4 h-4 text-emerald-500 shrink-0" /> : null}
         </p>
         <p className="text-xs text-slate-500 truncate">{teacher.college?.name || "GetMaterials"}</p>
         {(teacher.qualifications || teacher.bio) && (

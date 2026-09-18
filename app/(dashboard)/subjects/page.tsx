@@ -1,10 +1,10 @@
 import { connectDB, Subject, Material } from "@/lib/database";
-import { BookOpen, Beaker, Code, Calculator, Palette, Scale, Lightbulb, Download, FileText, Search, Star } from "lucide-react";
+import { BookOpen, Download, FileText, Search, Star } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import SubjectsFilterSidebar from "@/components/subjects/SubjectsFilterSidebar";
 import SubjectsToolbar from "@/components/subjects/SubjectsToolbar";
-import SubjectCard, { type SubjectCardData } from "@/components/subjects/SubjectCard";
+import SubjectCard, { SubjectLogo, type SubjectCardData } from "@/components/subjects/SubjectCard";
 import { formatCount, subjectsHref, type SubjectQuery } from "@/components/subjects/query";
 import { listingMetadata } from "@/lib/seo";
 import { parseList, type QueryParam } from "@/lib/filter-list";
@@ -21,16 +21,6 @@ export const metadata: Metadata = listingMetadata({
 });
 
 const PAGE_SIZE = 12;
-
-const popularIcons: Record<string, typeof BookOpen> = {
-  science: Beaker,
-  engineering: Code,
-  arts: Palette,
-  commerce: Calculator,
-  medical: Lightbulb,
-  law: Scale,
-  general: BookOpen,
-};
 
 interface Props {
   searchParams: Promise<{
@@ -53,7 +43,7 @@ export default async function SubjectsPage({ searchParams }: Props) {
     view: params.view,
   };
 
-  const filter: Record<string, unknown> = { isActive: true };
+  const filter: Record<string, unknown> = { isActive: true, materialsCount: { $gt: 0 } };
   const categories = parseList(params.category);
   if (categories.length) filter.category = { $in: categories };
   if (params.q?.trim()) {
@@ -85,9 +75,15 @@ export default async function SubjectsPage({ searchParams }: Props) {
   ] = await Promise.all([
     Subject.countDocuments(filter),
     Subject.find(filter).sort(sort).skip(skip).limit(PAGE_SIZE).lean(),
-    Subject.countDocuments({ isActive: true }),
-    Subject.aggregate([{ $match: { isActive: true } }, { $group: { _id: "$category", count: { $sum: 1 } } }]),
-    Subject.find({ isActive: true }).sort({ materialsCount: -1, name: 1 }).limit(5).lean(),
+    Subject.countDocuments({ isActive: true, materialsCount: { $gt: 0 } }),
+    Subject.aggregate([
+      { $match: { isActive: true, materialsCount: { $gt: 0 } } },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+    ]),
+    Subject.find({ isActive: true, materialsCount: { $gt: 0 } })
+      .sort({ materialsCount: -1, name: 1 })
+      .limit(5)
+      .lean(),
     Material.aggregate([
       { $match: { status: "published", isPublic: true } },
       {
@@ -131,6 +127,7 @@ export default async function SubjectsPage({ searchParams }: Props) {
       slug: subject.slug,
       category: subject.category || "general",
       materialsCount: subject.materialsCount || 0,
+      icon: subject.icon || null,
       ratingAverage: rating?.ratingAverage,
       ratingCount: rating?.ratingCount,
     };
@@ -155,7 +152,7 @@ export default async function SubjectsPage({ searchParams }: Props) {
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">Subjects</h1>
           <p className="text-slate-500 mt-1">
-            Explore subjects and find the best study materials for your courses.
+            Explore subjects and find free notes, PDFs, and lectures for your syllabus.
           </p>
         </div>
       </div>
@@ -244,7 +241,14 @@ export default async function SubjectsPage({ searchParams }: Props) {
             ) : (
               <div className="space-y-3">
                 {popular.map((subject: any, index: number) => {
-                  const Icon = popularIcons[subject.category] || BookOpen;
+                  const popularCard: SubjectCardData = {
+                    id: String(subject._id),
+                    name: subject.name,
+                    slug: subject.slug,
+                    category: subject.category || "general",
+                    materialsCount: subject.materialsCount || 0,
+                    icon: subject.icon || null,
+                  };
                   return (
                     <Link
                       key={String(subject._id)}
@@ -252,9 +256,7 @@ export default async function SubjectsPage({ searchParams }: Props) {
                       className="flex items-center gap-3 rounded-xl px-1 py-1 hover:bg-slate-50"
                     >
                       <span className="w-5 text-xs font-bold text-slate-400">{index + 1}</span>
-                      <div className="w-8 h-8 rounded-lg bg-violet-50 text-violet-700 flex items-center justify-center shrink-0">
-                        <Icon className="w-4 h-4" />
-                      </div>
+                      <SubjectLogo subject={popularCard} size="sm" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-semibold text-slate-900 truncate">{subject.name}</p>
                         <p className="text-[11px] text-slate-400">

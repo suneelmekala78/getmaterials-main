@@ -1,8 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Clock, CheckCircle2, XCircle, ArrowLeft, Trophy } from "lucide-react";
+import { useParams } from "next/navigation";
+import {
+  Clock,
+  CheckCircle2,
+  XCircle,
+  ArrowLeft,
+  Trophy,
+  HelpCircle,
+  Play,
+} from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
@@ -20,6 +28,8 @@ interface Quiz {
   duration: number;
   questions: Question[];
   passingScore: number;
+  thumbnailUrl?: string;
+  kind?: string;
 }
 
 interface Result {
@@ -30,13 +40,20 @@ interface Result {
   explanation?: string;
 }
 
+function kindLabel(kind?: string) {
+  if (kind === "general_knowledge") return "General knowledge";
+  if (kind === "other") return "Other";
+  if (kind === "subject") return "Subject";
+  return null;
+}
+
 export default function QuizTakePage() {
   const params = useParams();
-  const router = useRouter();
-  const quizId = params.id as string;
+  const quizParam = params.slug as string;
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
+  const [started, setStarted] = useState(false);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [currentQ, setCurrentQ] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -50,7 +67,11 @@ export default function QuizTakePage() {
   const [timeLeft, setTimeLeft] = useState(0);
 
   useEffect(() => {
-    fetch(`/api/quizzes?id=${quizId}`)
+    const looksLikeId = /^[a-f0-9]{24}$/i.test(quizParam || "");
+    const query = looksLikeId
+      ? `id=${encodeURIComponent(quizParam)}`
+      : `slug=${encodeURIComponent(quizParam)}`;
+    fetch(`/api/quizzes?${query}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.quiz) {
@@ -61,11 +82,10 @@ export default function QuizTakePage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [quizId]);
+  }, [quizParam]);
 
-  // Timer
   useEffect(() => {
-    if (!quiz || results || timeLeft <= 0) return;
+    if (!quiz || !started || results || timeLeft <= 0) return;
     const timer = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
@@ -77,16 +97,20 @@ export default function QuizTakePage() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [quiz, results]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quiz, results, started]);
 
   const handleSubmit = async () => {
-    if (submitting) return;
+    if (submitting || !quiz) return;
     setSubmitting(true);
     try {
       const res = await fetch("/api/quizzes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quizId, answers: answers.map((a) => a ?? -1) }),
+        body: JSON.stringify({
+          quizId: quiz._id,
+          answers: answers.map((a) => a ?? -1),
+        }),
       });
       const data = await res.json();
       if (data.score !== undefined) {
@@ -124,16 +148,25 @@ export default function QuizTakePage() {
     );
   }
 
-  // Results view
+  const thumb = quiz.thumbnailUrl || "/images/default-quiz.png";
+  const kind = kindLabel(quiz.kind);
+
   if (results) {
     return (
       <div className="max-w-3xl mx-auto space-y-6">
-        <Link href="/quizzes" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-violet-600">
+        <Link
+          href="/quizzes"
+          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-violet-600"
+        >
           <ArrowLeft className="w-4 h-4" /> Back to Quizzes
         </Link>
 
         <div className="bg-white rounded-2xl p-8 border border-slate-100 text-center">
-          <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${results.passed ? "bg-green-50" : "bg-red-50"}`}>
+          <div
+            className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${
+              results.passed ? "bg-green-50" : "bg-red-50"
+            }`}
+          >
             <Trophy className={`w-7 h-7 ${results.passed ? "text-green-600" : "text-red-500"}`} />
           </div>
           <h2 className="text-2xl font-bold mb-2">
@@ -147,16 +180,22 @@ export default function QuizTakePage() {
             </div>
             <div className="w-px h-10 bg-slate-200" />
             <div>
-              <p className="text-3xl font-bold text-slate-900">{results.correct}/{results.total}</p>
+              <p className="text-3xl font-bold text-slate-900">
+                {results.correct}/{results.total}
+              </p>
               <p className="text-slate-500">Correct</p>
             </div>
           </div>
         </div>
 
-        {/* Question results */}
         <div className="space-y-4">
           {results.results.map((r, i) => (
-            <div key={i} className={`bg-white rounded-xl p-5 border ${r.isCorrect ? "border-green-100" : "border-red-100"}`}>
+            <div
+              key={i}
+              className={`bg-white rounded-xl p-5 border ${
+                r.isCorrect ? "border-green-100" : "border-red-100"
+              }`}
+            >
               <div className="flex items-start gap-3">
                 {r.isCorrect ? (
                   <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
@@ -164,7 +203,9 @@ export default function QuizTakePage() {
                   <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                 )}
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-900 mb-2">Q{i + 1}. {r.question}</p>
+                  <p className="text-sm font-medium text-slate-900 mb-2">
+                    Q{i + 1}. {r.question}
+                  </p>
                   {!r.isCorrect && (
                     <p className="text-xs text-red-500 mb-1">
                       Your answer: {quiz.questions[i].options[r.yourAnswer] || "Not answered"}
@@ -185,12 +226,86 @@ export default function QuizTakePage() {
     );
   }
 
-  // Quiz taking view
+  if (!started) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        <Link
+          href="/quizzes"
+          className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-violet-600"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back to Quizzes
+        </Link>
+
+        <article className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+          <div className="relative aspect-[21/9] bg-slate-50">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={thumb} alt="" className="h-full w-full object-cover" />
+          </div>
+          <div className="p-6 sm:p-8 space-y-4">
+            <div className="flex flex-wrap gap-1.5">
+              {kind && (
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold">
+                  {kind}
+                </span>
+              )}
+              {quiz.subject?.name && (
+                <span className="px-2.5 py-0.5 rounded-full bg-violet-50 text-violet-700 text-[11px] font-semibold">
+                  {quiz.subject.name}
+                </span>
+              )}
+              {quiz.chapter?.title && (
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-semibold">
+                  {quiz.chapter.title}
+                </span>
+              )}
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold">
+                Pass {quiz.passingScore}%
+              </span>
+            </div>
+
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{quiz.title}</h1>
+              {quiz.description && (
+                <p className="text-slate-600 mt-2 leading-relaxed">{quiz.description}</p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-2.5 border border-slate-100">
+                <HelpCircle className="h-4 w-4 text-violet-600" />
+                <span className="text-sm font-semibold text-slate-900">
+                  {quiz.questions.length} questions
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-2 rounded-2xl bg-slate-50 px-4 py-2.5 border border-slate-100">
+                <Clock className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-semibold text-slate-900">{quiz.duration} min</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setStarted(true);
+                setTimeLeft(quiz.duration * 60);
+              }}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--primary)] text-white text-sm font-bold hover:opacity-90"
+            >
+              <Play className="w-4 h-4" />
+              Start Quiz
+            </button>
+          </div>
+        </article>
+      </div>
+    );
+  }
+
   const question = quiz.questions[currentQ];
+  const answeredCurrent =
+    answers[currentQ] !== null && answers[currentQ] !== undefined;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-slate-900">{quiz.title}</h1>
@@ -198,13 +313,16 @@ export default function QuizTakePage() {
             {quiz.subject?.name} {quiz.chapter && `• ${quiz.chapter.title}`}
           </p>
         </div>
-        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${timeLeft < 60 ? "bg-red-50 text-red-600" : "bg-slate-50 text-slate-600"}`}>
+        <div
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium ${
+            timeLeft < 60 ? "bg-red-50 text-red-600" : "bg-slate-50 text-slate-600"
+          }`}
+        >
           <Clock className="w-4 h-4" />
           {formatTime(timeLeft)}
         </div>
       </div>
 
-      {/* Progress */}
       <div className="bg-slate-100 rounded-full h-2">
         <div
           className="bg-violet-600 h-2 rounded-full transition-all"
@@ -215,7 +333,6 @@ export default function QuizTakePage() {
         Question {currentQ + 1} of {quiz.questions.length}
       </p>
 
-      {/* Question */}
       <div className="bg-white rounded-2xl p-6 border border-slate-100">
         <h2 className="text-base font-semibold text-slate-900 mb-5">{question.question}</h2>
         <div className="space-y-3">
@@ -242,7 +359,6 @@ export default function QuizTakePage() {
         </div>
       </div>
 
-      {/* Navigation */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => setCurrentQ((q) => Math.max(0, q - 1))}
@@ -255,7 +371,7 @@ export default function QuizTakePage() {
         {currentQ === quiz.questions.length - 1 ? (
           <button
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || !answeredCurrent}
             className="px-6 py-2.5 bg-violet-600 text-white font-medium text-sm rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-colors"
           >
             {submitting ? "Submitting..." : "Submit Quiz"}
@@ -263,14 +379,14 @@ export default function QuizTakePage() {
         ) : (
           <button
             onClick={() => setCurrentQ((q) => Math.min(quiz.questions.length - 1, q + 1))}
-            className="px-4 py-2 text-sm font-medium bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-colors"
+            disabled={!answeredCurrent}
+            className="px-4 py-2 text-sm font-medium bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-colors"
           >
             Next
           </button>
         )}
       </div>
 
-      {/* Question dots */}
       <div className="flex flex-wrap gap-2 justify-center pt-2">
         {quiz.questions.map((_, i) => (
           <button
@@ -280,8 +396,8 @@ export default function QuizTakePage() {
               i === currentQ
                 ? "bg-violet-600 text-white"
                 : answers[i] !== null
-                ? "bg-violet-100 text-violet-700"
-                : "bg-slate-100 text-slate-500"
+                  ? "bg-violet-100 text-violet-700"
+                  : "bg-slate-100 text-slate-500"
             }`}
           >
             {i + 1}

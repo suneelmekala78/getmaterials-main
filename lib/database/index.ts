@@ -28,6 +28,15 @@ import {
 } from "./models/quiz";
 import { Review as ReviewModel, type IReview } from "./models/review";
 import { Follow as FollowModel, type IFollow } from "./models/follow";
+import {
+  Job as JobModel,
+  JobApplication as JobApplicationModel,
+  type IJob,
+  type IJobApplication,
+  type EmploymentType,
+  type JobApplyMode,
+  type ApplicationStatus,
+} from "./models/job";
 
 export { connectDB } from "./connection";
 export { materialCollegeFilter };
@@ -45,6 +54,8 @@ export const Quiz = QuizModel as Model<IQuiz>;
 export const QuizAttempt = QuizAttemptModel as Model<IQuizAttempt>;
 export const Review = ReviewModel as Model<IReview>;
 export const Follow = FollowModel as Model<IFollow>;
+export const Job = JobModel as Model<IJob>;
+export const JobApplication = JobApplicationModel as Model<IJobApplication>;
 
 export type {
   IUser,
@@ -61,4 +72,9 @@ export type {
   IQuizAttempt,
   IReview,
   IFollow,
+  IJob,
+  IJobApplication,
+  EmploymentType,
+  JobApplyMode,
+  ApplicationStatus,
 };

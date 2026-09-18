@@ -44,11 +44,17 @@ export default function MaterialsFilterSidebar({
   subjects,
   chapters,
   colleges,
+  basePath = "/materials",
+  hideSubjects = false,
+  hideColleges = false,
 }: {
   current: MaterialsQuery;
   subjects: { value: string; label: string }[];
   chapters: { value: string; label: string }[];
   colleges: { value: string; label: string }[];
+  basePath?: string;
+  hideSubjects?: boolean;
+  hideColleges?: boolean;
 }) {
   const [subjectQuery, setSubjectQuery] = useState("");
   const [chapterQuery, setChapterQuery] = useState("");
@@ -57,7 +63,15 @@ export default function MaterialsFilterSidebar({
 
   const filteredSubjects = useSearchable(subjects, subjectQuery, current.subject);
   const filteredChapters = useSearchable(chapters, chapterQuery, current.chapter);
-  const filteredColleges = useSearchable(colleges, collegeQuery, current.college);
+  const filteredCollegesRaw = useSearchable(colleges, collegeQuery, current.college);
+  const filteredColleges = useMemo(() => {
+    const seen = new Set<string>();
+    return filteredCollegesRaw.filter((item) => {
+      if (seen.has(item.value)) return false;
+      seen.add(item.value);
+      return true;
+    });
+  }, [filteredCollegesRaw]);
 
   const hasFilters = Boolean(
     current.type ||
@@ -89,7 +103,7 @@ export default function MaterialsFilterSidebar({
         {types.map((item) => (
           <FilterLink
             key={item.value}
-            href={materialsHref(current, { type: toggleCsv(current.type, item.value) })}
+            href={materialsHref(current, { type: toggleCsv(current.type, item.value) }, basePath)}
             active={listHas(current.type, item.value)}
             label={item.label}
           />
@@ -100,7 +114,7 @@ export default function MaterialsFilterSidebar({
         {categories.map((item) => (
           <FilterLink
             key={item.value}
-            href={materialsHref(current, { category: toggleCsv(current.category, item.value) })}
+            href={materialsHref(current, { category: toggleCsv(current.category, item.value) }, basePath)}
             active={listHas(current.category, item.value)}
             label={item.label}
           />
@@ -111,13 +125,14 @@ export default function MaterialsFilterSidebar({
         {programs.map((item) => (
           <FilterLink
             key={item.value}
-            href={materialsHref(current, { program: toggleCsv(current.program, item.value) })}
+            href={materialsHref(current, { program: toggleCsv(current.program, item.value) }, basePath)}
             active={listHas(current.program, item.value)}
             label={item.label}
           />
         ))}
       </FilterGroup>
 
+      {!hideSubjects ? (
       <FilterGroup title="Subjects">
         <input
           type="search"
@@ -129,16 +144,19 @@ export default function MaterialsFilterSidebar({
         {filteredSubjects.map((item) => (
           <FilterLink
             key={item.value}
-            href={materialsHref(current, { subject: toggleCsv(current.subject, item.value) })}
+            href={materialsHref(current, { subject: toggleCsv(current.subject, item.value) }, basePath)}
             active={listHas(current.subject, item.value)}
             label={item.label}
           />
         ))}
       </FilterGroup>
+      ) : null}
 
       <FilterGroup title="Chapter">
         <p className="text-[11px] text-slate-400 mb-2">
-          {current.subject ? "Chapters for the selected subject(s)" : "Select a subject to narrow chapters"}
+          {current.subject || hideSubjects
+            ? "Chapters for this subject"
+            : "Select a subject to narrow chapters"}
         </p>
         <input
           type="search"
@@ -151,7 +169,7 @@ export default function MaterialsFilterSidebar({
           filteredChapters.map((item, index) => (
             <FilterLink
               key={`${item.value}-${index}`}
-              href={materialsHref(current, { chapter: toggleCsv(current.chapter, item.value) })}
+              href={materialsHref(current, { chapter: toggleCsv(current.chapter, item.value) }, basePath)}
               active={listHas(current.chapter, item.value)}
               label={item.label}
             />
@@ -161,6 +179,7 @@ export default function MaterialsFilterSidebar({
         )}
       </FilterGroup>
 
+      {!hideColleges ? (
       <FilterGroup title="College">
         <input
           type="search"
@@ -169,21 +188,23 @@ export default function MaterialsFilterSidebar({
           placeholder="Search colleges"
           className="w-full mb-2 px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:border-violet-400"
         />
-        {filteredColleges.map((item) => (
+        {filteredColleges.map((item, index) => (
           <FilterLink
-            key={item.value}
-            href={materialsHref(current, { college: toggleCsv(current.college, item.value) })}
+            key={`${item.value}-${index}`}
+            href={materialsHref(current, { college: toggleCsv(current.college, item.value) }, basePath)}
             active={listHas(current.college, item.value)}
             label={item.label}
+            title={item.label}
           />
         ))}
       </FilterGroup>
+      ) : null}
 
       <FilterGroup title="Semester">
         {semesters.map((sem) => (
           <FilterLink
             key={sem}
-            href={materialsHref(current, { semester: toggleCsv(current.semester, String(sem)) })}
+            href={materialsHref(current, { semester: toggleCsv(current.semester, String(sem)) }, basePath)}
             active={listHas(current.semester, String(sem))}
             label={`Semester ${sem}`}
           />
@@ -198,7 +219,7 @@ export default function MaterialsFilterSidebar({
         <summary className="flex items-center justify-between font-bold text-slate-900 cursor-pointer list-none">
           <span>Filters</span>
           {hasFilters && (
-            <Link href="/materials" className="text-xs font-semibold text-[var(--primary)] hover:underline">
+            <Link href={basePath} className="text-xs font-semibold text-[var(--primary)] hover:underline">
               Clear All
             </Link>
           )}
@@ -212,7 +233,7 @@ export default function MaterialsFilterSidebar({
         <div className="flex items-center justify-between mb-4 shrink-0">
           <h2 className="font-bold text-slate-900">Filters</h2>
           {hasFilters && (
-            <Link href="/materials" className="text-xs font-semibold text-[var(--primary)] hover:underline">
+            <Link href={basePath} className="text-xs font-semibold text-[var(--primary)] hover:underline">
               Clear All
             </Link>
           )}
@@ -251,26 +272,29 @@ function FilterLink({
   href,
   active,
   label,
+  title,
 }: {
   href: string;
   active: boolean;
   label: string;
+  title?: string;
 }) {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm ${
+      title={title || label}
+      className={`flex items-start gap-2.5 px-2 py-1.5 rounded-lg text-sm min-w-0 ${
         active ? "bg-violet-50 text-violet-700 font-semibold" : "text-slate-600 hover:bg-slate-50"
       }`}
     >
       <span
-        className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] ${
-          active ? "bg-[var(--primary)] border-[var(--primary)] text-white" : "border-slate-300"
+        className={`mt-0.5 w-4 h-4 shrink-0 rounded border flex items-center justify-center text-[10px] leading-none ${
+          active ? "bg-[var(--primary)] border-[var(--primary)] text-white" : "border-slate-300 bg-white"
         }`}
       >
         {active ? "✓" : ""}
       </span>
-      <span className="truncate">{label}</span>
+      <span className="min-w-0 flex-1 break-words leading-snug">{label}</span>
     </Link>
   );
 }

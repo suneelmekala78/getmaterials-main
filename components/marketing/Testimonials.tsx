@@ -61,7 +61,7 @@ const reviews: Review[] = [
   {
     name: "Ananya",
     role: "MBA Student",
-    text: "Stay motivated with progress tracking and milestone-based learning. GetMaterials keeps me on track every semester.",
+    text: "Quizzes and polls on GetMaterials help me revise between classes, and the notes are easy to find by subject.",
     time: "9:18 AM — Apr 08, 2024",
     avatar: "/images/default-profile-pic.png",
     quoteColor: "text-[#fbcfe8]",
@@ -70,25 +70,25 @@ const reviews: Review[] = [
 
 const stats = [
   {
-    value: "25K+",
-    label: "Active learners",
-    icon: Users,
-    iconBg: "bg-[#f3e8ff]",
-    iconColor: "text-[#9333ea]",
+    value: "Free",
+    label: "Study materials",
+    icon: FileText,
+    iconBg: "bg-[#ecfdf3]",
+    iconColor: "text-[#16a34a]",
   },
   {
-    value: "97%",
-    label: "Would recommend us",
+    value: "Quizzes",
+    label: "& student polls",
     icon: Heart,
     iconBg: "bg-[#fde8f2]",
     iconColor: "text-[#db2777]",
   },
   {
-    value: "12K+",
-    label: "Materials shared",
-    icon: FileText,
-    iconBg: "bg-[#ecfdf3]",
-    iconColor: "text-[#16a34a]",
+    value: "Teachers",
+    label: "Verified uploads",
+    icon: Users,
+    iconBg: "bg-[#f3e8ff]",
+    iconColor: "text-[#9333ea]",
   },
 ];
 

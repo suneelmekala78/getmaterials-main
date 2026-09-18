@@ -6,7 +6,7 @@ import { Toaster } from "react-hot-toast";
 import { Suspense } from "react";
 import { ReferralTracker } from "@/components/providers/ReferralTracker";
 import { GoogleAnalytics } from "@/components/providers/GoogleAnalytics";
-import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/seo";
 
 const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700", "800"],
@@ -19,8 +19,26 @@ export const metadata: Metadata = {
     default: "GetMaterials — Free Study Materials, Notes & Resources for Students",
     template: "%s | GetMaterials",
   },
-  description: "Access free study materials, notes, question papers, videos, and resources uploaded by verified teachers. Download PDFs, watch video lectures, and excel in your exams.",
+  description:
+    "Free study materials, notes, question papers, quizzes, and polls from verified teachers. Browse by subject or college — built for students across India.",
   metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME,
+  authors: [{ name: "GetMaterials", url: SITE_URL }],
+  creator: "GetMaterials",
+  publisher: "GetMaterials",
+  category: "education",
+  keywords: [
+    "free study materials",
+    "student notes",
+    "handwritten notes",
+    "college materials",
+    "question papers",
+    "quizzes for students",
+    "study resources India",
+    "GetMaterials",
+    "engineering notes",
+    "B.Tech study materials",
+  ],
   icons: {
     icon: "/getmaterials.jpeg",
     apple: "/getmaterials.jpeg",
@@ -29,11 +47,29 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     type: "website",
     locale: "en_IN",
+    url: SITE_URL,
+    title: "GetMaterials — Free Study Materials for Students",
+    description:
+      "Free notes, PDFs, quizzes, and polls curated by verified teachers for students and colleges.",
     images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
+    title: "GetMaterials — Free Study Materials for Students",
+    description:
+      "Access free study materials, quizzes, and polls curated by verified teachers.",
     images: [DEFAULT_OG_IMAGE.url],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
   verification: {
     google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION || undefined,
@@ -44,18 +80,19 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "EducationalOrganization",
   name: "GetMaterials",
-  url: "https://getmaterials.in",
-  logo: "https://getmaterials.in/getmaterials.jpeg",
+  url: SITE_URL,
+  logo: absoluteUrl("/getmaterials.jpeg"),
   description:
-    "Free, community-driven platform where verified teachers share study materials and students access them without paying.",
+    "Free, community-driven platform where verified teachers share study materials and students access notes, quizzes, and polls without paying.",
   founder: {
     "@type": "Person",
     name: "Suneel Mekala",
   },
   sameAs: [
-    "https://twitter.com/getmaterials_in",
+    "https://x.com/getmaterials",
     "https://instagram.com/getmaterials.in",
     "https://linkedin.com/company/getmaterials",
+    "https://youtube.com/@GetMaterials",
   ],
   offers: {
     "@type": "Offer",
@@ -71,7 +108,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en-IN">
       <head>
         <script
           type="application/ld+json"

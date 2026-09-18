@@ -5,17 +5,17 @@ export const SITE_URL = (
 ).replace(/\/$/, "");
 export const SITE_NAME = "GetMaterials";
 
-export const DEFAULT_OG_IMAGE = {
-  url: "/images/hero.png",
-  width: 1200,
-  height: 630,
-  alt: "GetMaterials — Free study materials for students in India",
-};
-
 export function absoluteUrl(path = "/") {
   if (/^https?:\/\//i.test(path)) return path;
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+export const DEFAULT_OG_IMAGE = {
+  url: absoluteUrl("/images/hero.png"),
+  width: 1200,
+  height: 630,
+  alt: "GetMaterials — Free study materials for students in India",
+};
 
 export function listingMetadata({
   title,

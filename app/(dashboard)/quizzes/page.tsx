@@ -140,9 +140,18 @@ export default async function QuizzesPage({ searchParams }: Props) {
     ]),
     QuizAttempt.aggregate([
       {
+        $addFields: {
+          timeSpentSeconds: {
+            $ifNull: ["$timeSpentSeconds", 999999],
+          },
+        },
+      },
+      { $sort: { score: -1, timeSpentSeconds: 1, completedAt: 1 } },
+      {
         $group: {
           _id: { user: "$user", quiz: "$quiz" },
-          bestScore: { $max: "$score" },
+          bestScore: { $first: "$score" },
+          bestTime: { $first: "$timeSpentSeconds" },
           attempts: { $sum: 1 },
         },
       },
@@ -152,11 +161,12 @@ export default async function QuizzesPage({ searchParams }: Props) {
           quizzes: { $sum: 1 },
           totalAttempts: { $sum: "$attempts" },
           avgBestScore: { $avg: "$bestScore" },
+          avgBestTime: { $avg: "$bestTime" },
           bestScore: { $max: "$bestScore" },
         },
       },
       { $match: { quizzes: { $gte: 1 }, _id: { $ne: null } } },
-      { $sort: { avgBestScore: -1, quizzes: -1, totalAttempts: -1 } },
+      { $sort: { avgBestScore: -1, avgBestTime: 1, quizzes: -1, totalAttempts: -1 } },
       { $limit: 10 },
       {
         $lookup: {
@@ -178,6 +188,7 @@ export default async function QuizzesPage({ searchParams }: Props) {
           quizzes: 1,
           totalAttempts: 1,
           avgBestScore: 1,
+          avgBestTime: 1,
           bestScore: 1,
           name: "$user.name",
           avatar: "$user.avatar",
@@ -212,6 +223,10 @@ export default async function QuizzesPage({ searchParams }: Props) {
     attempts: row.totalAttempts as number,
     avgScore: Math.round(row.avgBestScore || 0),
     bestScore: Math.round(row.bestScore || 0),
+    avgTimeSeconds:
+      row.avgBestTime != null && row.avgBestTime < 999999
+        ? Math.round(row.avgBestTime)
+        : undefined,
   }));
 
   const cards: QuizCardData[] = quizzes.map((quiz: any) => ({

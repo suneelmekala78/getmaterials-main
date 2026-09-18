@@ -3,7 +3,7 @@ import { connectDB, Subject, Chapter, College, User } from "@/lib/database";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { AlertTriangle, CloudUpload, FileText, Image as ImageIcon, Link2, Video } from "lucide-react";
+import { CloudUpload, FileText, Image as ImageIcon, Link2, Video } from "lucide-react";
 
 export const metadata = {
   title: "Upload Material - GetMaterials",
@@ -79,18 +79,6 @@ export default async function StudentUploadPage() {
           </span>
         </div>
       </div>
-
-      {user.role === "student" && (
-        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
-          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-amber-800">Review Required</p>
-            <p className="text-sm text-amber-700 mt-0.5">
-              Your uploads will be reviewed by our team before they are published. You&apos;ll be notified once approved.
-            </p>
-          </div>
-        </div>
-      )}
 
       <UploadForm
         key="create-upload"

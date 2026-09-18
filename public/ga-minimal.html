@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+  <head>
+    <title>GA minimal test</title>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-EKNR66122Z"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag;
+      gtag("js", new Date());
+      gtag("config", "G-EKNR66122Z", { debug_mode: true });
+    </script>
+  </head>
+  <body>
+    <h1>GA minimal</h1>
+    <button id="fire" type="button">Fire sign_up</button>
+    <script>
+      document.getElementById("fire").onclick = function () {
+        gtag("event", "sign_up", { method: "email" });
+        console.log("fired");
+      };
+    </script>
+  </body>
+</html>

@@ -602,7 +602,6 @@ export default async function MaterialViewPage({ params }: Props) {
                       {material.uploadedBy?.name || "Unknown"}
                       <VerifiedBadge
                         role={material.uploadedBy?.role}
-                        verified={material.uploadedBy?.emailVerified}
                         className="w-4 h-4"
                       />
                     </p>

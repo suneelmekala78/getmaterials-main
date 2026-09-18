@@ -626,9 +626,7 @@ export function UploadForm({
             ? "You can come back later to finish and publish."
             : isEdit
               ? "Your changes have been saved."
-              : userRole === "student"
-                ? "Your upload is in review and will go live after approval."
-                : "Your material is now available to students."}
+              : "Your material is now available to students."}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           {!isEdit && (
@@ -1161,9 +1159,7 @@ export function UploadForm({
                 : "Uploading..."
               : isEdit
                 ? "Save Changes"
-                : userRole === "student"
-                  ? "Submit for Review"
-                  : "Publish"}
+                : "Publish"}
           </button>
         </div>
       </section>

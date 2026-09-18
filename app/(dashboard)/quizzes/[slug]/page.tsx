@@ -104,12 +104,14 @@ export default function QuizTakePage() {
     if (submitting || !quiz) return;
     setSubmitting(true);
     try {
+      const elapsed = Math.max(1, quiz.duration * 60 - timeLeft);
       const res = await fetch("/api/quizzes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           quizId: quiz._id,
           answers: answers.map((a) => a ?? -1),
+          timeSpentSeconds: elapsed,
         }),
       });
       const data = await res.json();

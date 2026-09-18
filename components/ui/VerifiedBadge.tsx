@@ -5,8 +5,12 @@ export function isAdminRole(role?: string | null) {
   return role === "admin" || role === "college_admin";
 }
 
-export function showVerifiedBadge(role?: string | null, verified?: boolean | null) {
-  return isAdminRole(role) || role === "teacher" || Boolean(verified);
+/**
+ * Educator/staff verification (BadgeCheck) ≠ contact verification (email/phone).
+ * Only teachers and admin roles get this badge — never emailVerified alone.
+ */
+export function showVerifiedBadge(role?: string | null, _verified?: boolean | null) {
+  return isAdminRole(role) || role === "teacher";
 }
 
 /** Website BadgeCheck — gold for admins, green for teachers; white check always visible. */
@@ -16,6 +20,7 @@ export function VerifiedBadge({
   className = "w-4 h-4",
 }: {
   role?: string | null;
+  /** @deprecated Ignored — contact verification is not shown as BadgeCheck. */
   verified?: boolean | null;
   className?: string;
 }) {
@@ -27,7 +32,7 @@ export function VerifiedBadge({
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={`${className} shrink-0`}
-      aria-label={isAdminRole(role) ? "Admin verified" : "Verified"}
+      aria-label={isAdminRole(role) ? "Verified admin" : "Verified teacher"}
       role="img"
     >
       <path

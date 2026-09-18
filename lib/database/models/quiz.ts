@@ -66,6 +66,8 @@ export interface IQuizAttempt extends Document {
   user: mongoose.Types.ObjectId;
   answers: number[];
   score: number;
+  /** Elapsed seconds from start to submit (lower is better on ties). */
+  timeSpentSeconds?: number;
   completedAt: Date;
 }
 
@@ -74,6 +76,7 @@ const QuizAttemptSchema = new Schema<IQuizAttempt>({
   user: { type: Schema.Types.ObjectId, ref: "User", required: true },
   answers: [{ type: Number }],
   score: { type: Number, required: true },
+  timeSpentSeconds: { type: Number, min: 0 },
   completedAt: { type: Date, default: Date.now },
 });
 

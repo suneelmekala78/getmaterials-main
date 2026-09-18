@@ -146,16 +146,22 @@ export default async function UserProfilePage({ params }: Props) {
             <div className="min-w-0">
               <h1 className="text-2xl font-extrabold text-slate-900 flex items-center gap-2">
                 {user.name}
-                <VerifiedBadge
-                  role={user.role}
-                  verified={user.emailVerified}
-                  className="w-5 h-5"
-                />
+                <VerifiedBadge role={user.role} className="w-5 h-5" />
               </h1>
               <p className="text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-violet-50 text-violet-700 text-xs font-semibold capitalize">
                   {roleLabel(user.role)}
                 </span>
+                {user.emailVerified ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-semibold">
+                    Email verified
+                  </span>
+                ) : null}
+                {user.phoneVerified ? (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-sky-50 text-sky-700 text-xs font-semibold">
+                    Phone verified
+                  </span>
+                ) : null}
                 {collegeName ? (
                   <span className="inline-flex items-center gap-1">
                     <GraduationCap className="w-3.5 h-3.5" />

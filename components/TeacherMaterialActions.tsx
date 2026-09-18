@@ -15,7 +15,7 @@ interface Material {
 export function TeacherMaterialActions({
   material,
   editHref,
-  role,
+  role: _role,
 }: {
   material: Material;
   editHref?: string;
@@ -27,7 +27,6 @@ export function TeacherMaterialActions({
   const [busy, setBusy] = useState<"delete" | "draft" | "publish" | null>(null);
   const [deleted, setDeleted] = useState(false);
   const href = editHref || `/teacher/materials/${material._id}/edit`;
-  const isStudent = role === "student";
 
   const patchStatus = async (next: "draft" | "published") => {
     setBusy(next === "draft" ? "draft" : "publish");
@@ -39,14 +38,8 @@ export function TeacherMaterialActions({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || "Could not update status");
-      setStatus(isStudent && next === "published" ? "under_review" : next);
-      toast.success(
-        next === "draft"
-          ? "Saved as draft"
-          : isStudent
-            ? "Submitted for review"
-            : "Published",
-      );
+      setStatus(next);
+      toast.success(next === "draft" ? "Saved as draft" : "Published");
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Something went wrong");
@@ -103,7 +96,7 @@ export function TeacherMaterialActions({
             disabled={busy !== null}
             onClick={() => patchStatus("published")}
             className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
-            title={isStudent ? "Submit for review" : "Publish"}
+            title="Publish"
           >
             <Send className="w-4 h-4" />
           </button>

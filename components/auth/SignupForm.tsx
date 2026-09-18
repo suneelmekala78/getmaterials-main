@@ -58,17 +58,16 @@ export function SignupForm() {
         return;
       }
 
-      // Account was created — fire GA4 sign_up once (email/password registration).
+      // Account was created — fire GA4 sign_up once, then redirect.
+      // Await GA event_callback/timeout so hard navigation cannot drop the hit.
       if (!signUpTrackedRef.current) {
         signUpTrackedRef.current = true;
-        trackSignUp("email");
+        await trackSignUp("email");
       }
 
       clearReferralData();
       setSuccess("Account created! Redirecting to login...");
-      setTimeout(() => {
-        window.location.href = "/login?registered=true";
-      }, 1200);
+      window.location.href = "/login?registered=true";
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

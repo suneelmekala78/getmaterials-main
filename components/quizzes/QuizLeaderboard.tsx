@@ -10,7 +10,17 @@ export type LeaderboardRow = {
   attempts: number;
   avgScore: number;
   bestScore: number;
+  /** Average best-attempt time in seconds (used as tie-break). */
+  avgTimeSeconds?: number;
 };
+
+function formatAvgTime(seconds?: number) {
+  if (seconds == null || !Number.isFinite(seconds) || seconds <= 0) return null;
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.round(seconds % 60);
+  if (mins <= 0) return `${secs}s`;
+  return `${mins}m ${secs.toString().padStart(2, "0")}s`;
+}
 
 const rankStyles = [
   "bg-amber-100 text-amber-700 border-amber-200",
@@ -33,7 +43,7 @@ export default function QuizLeaderboard({
         </div>
         <div>
           <h3 className="font-bold text-slate-900 text-sm">Leaderboard</h3>
-          <p className="text-[11px] text-slate-400">Ranked by best quiz averages</p>
+          <p className="text-[11px] text-slate-400">Score first, then faster times</p>
         </div>
       </div>
 
@@ -45,6 +55,7 @@ export default function QuizLeaderboard({
             const isYou = currentUserId && row.id === currentUserId;
             const rank = index + 1;
             const avatar = resolveAvatarSrc(row.avatar, row.role);
+            const timeLabel = formatAvgTime(row.avgTimeSeconds);
             return (
               <div
                 key={row.id}
@@ -76,6 +87,7 @@ export default function QuizLeaderboard({
                     {row.quizzes} quiz{row.quizzes === 1 ? "" : "zes"} · {row.attempts} attempt
                     {row.attempts === 1 ? "" : "s"}
                     {row.bestScore > 0 ? ` · best ${row.bestScore}%` : ""}
+                    {timeLabel ? ` · ${timeLabel}` : ""}
                   </p>
                 </div>
                 <div className="text-right shrink-0">

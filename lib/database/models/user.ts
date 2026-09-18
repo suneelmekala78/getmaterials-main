@@ -12,6 +12,12 @@ export interface IMaterialHistoryItem {
   at: Date;
 }
 
+export interface IUserResume {
+  name: string;
+  url: string;
+  uploadedAt: Date;
+}
+
 export interface IUser extends Document {
   email: string;
   phone?: string;
@@ -42,6 +48,17 @@ export interface IUser extends Document {
   appleId?: string;
   googleId?: string;
   bookmarks: mongoose.Types.ObjectId[];
+  savedJobs: mongoose.Types.ObjectId[];
+  resumes?: IUserResume[];
+  careerProfile?: {
+    applicantType?: "student" | "graduate";
+    graduationYear?: string;
+    education?: string;
+    availability?: string;
+    location?: string;
+    studyingYear?: string;
+    program?: string;
+  };
   downloadHistory: IMaterialHistoryItem[];
   viewHistory: IMaterialHistoryItem[];
   pushDevices: IPushDevice[];
@@ -132,6 +149,26 @@ const UserSchema = new Schema<IUser>(
       website: { type: String, trim: true, maxlength: 300 },
     },
     bookmarks: [{ type: Schema.Types.ObjectId, ref: "Material" }],
+    savedJobs: [{ type: Schema.Types.ObjectId, ref: "Job" }],
+    resumes: [
+      {
+        name: { type: String, required: true, trim: true, maxlength: 200 },
+        url: { type: String, required: true, trim: true },
+        uploadedAt: { type: Date, default: Date.now },
+      },
+    ],
+    careerProfile: {
+      applicantType: {
+        type: String,
+        enum: ["student", "graduate"],
+      },
+      graduationYear: { type: String, trim: true, maxlength: 20 },
+      education: { type: String, trim: true, maxlength: 200 },
+      availability: { type: String, trim: true, maxlength: 200 },
+      location: { type: String, trim: true, maxlength: 200 },
+      studyingYear: { type: String, trim: true, maxlength: 50 },
+      program: { type: String, trim: true, maxlength: 200 },
+    },
     downloadHistory: [
       {
         material: { type: Schema.Types.ObjectId, ref: "Material", required: true },

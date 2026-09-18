@@ -68,6 +68,9 @@ export interface IQuizAttempt extends Document {
   score: number;
   /** Elapsed seconds from start to submit (lower is better on ties). */
   timeSpentSeconds?: number;
+  rating?: number;
+  flagWrongKey?: boolean;
+  feedbackNote?: string;
   completedAt: Date;
 }
 
@@ -77,6 +80,9 @@ const QuizAttemptSchema = new Schema<IQuizAttempt>({
   answers: [{ type: Number }],
   score: { type: Number, required: true },
   timeSpentSeconds: { type: Number, min: 0 },
+  rating: { type: Number, min: 1, max: 5 },
+  flagWrongKey: { type: Boolean, default: false },
+  feedbackNote: { type: String, maxlength: 1000 },
   completedAt: { type: Date, default: Date.now },
 });
 

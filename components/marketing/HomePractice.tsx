@@ -27,7 +27,7 @@ async function loadQuizzes(): Promise<HomeQuiz[]> {
     await connectDB();
     const quizzes = await Quiz.find({ isActive: { $ne: false } })
       .sort({ createdAt: -1 })
-      .limit(4)
+      .limit(3)
       .select("title slug kind duration questions thumbnailUrl")
       .lean();
     return quizzes.map((quiz: any) => ({
@@ -109,7 +109,7 @@ export default async function HomePractice() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {quizzes.map((quiz) => {
                 const href = `/quizzes/${quiz.slug || quiz.id}`;
                 const thumb = quiz.thumbnailUrl || "/images/default-quiz.png";
@@ -163,7 +163,7 @@ export default async function HomePractice() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {polls.map((poll) => {
                 const href = `/polls?poll=${encodeURIComponent(poll.slug || poll.id)}`;
                 const thumb = poll.thumbnailUrl || "/images/default-poll.png";

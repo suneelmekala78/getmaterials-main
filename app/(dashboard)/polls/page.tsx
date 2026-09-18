@@ -213,7 +213,7 @@ function PollsPageInner() {
           <p className="text-sm text-slate-500">Check back later for new feedback questions.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {polls.map((poll, index) => {
             const thumb = poll.thumbnailUrl || "/images/default-poll.png";
             const answered = Boolean(poll.answered);

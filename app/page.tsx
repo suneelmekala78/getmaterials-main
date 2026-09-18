@@ -6,6 +6,7 @@ import CoreValues from "@/components/marketing/CoreValues";
 import Features from "@/components/marketing/Features";
 import Subjects from "@/components/marketing/Subjects";
 import HomePractice from "@/components/marketing/HomePractice";
+import HomeMaterials from "@/components/marketing/HomeMaterials";
 import HowItWorks from "@/components/marketing/HowItWorks";
 import ForTeachers from "@/components/marketing/ForTeachers";
 import Testimonials from "@/components/marketing/Testimonials";
@@ -88,6 +89,7 @@ export default async function HomePage() {
         <CoreValues />
         <Features />
         <Subjects />
+        <HomeMaterials />
         <HomePractice />
         <HowItWorks />
         <ForTeachers />

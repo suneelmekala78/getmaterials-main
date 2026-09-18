@@ -143,7 +143,7 @@ export default function Footer() {
       />
 
       <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-20">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.35fr_repeat(3,minmax(0,1fr))] lg:gap-8 xl:gap-10">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.35fr_repeat(4,minmax(0,1fr))] lg:gap-8 xl:gap-10">
           <div>
             <Link
               href="/"
@@ -173,10 +173,8 @@ export default function Footer() {
           </div>
 
           <FooterColumn title="Platform" links={platformLinks} />
-          <div className="space-y-8">
-            <FooterColumn title="Explore" links={exploreLinks} />
-            <FooterColumn title="More from us" links={productLinks} />
-          </div>
+          <FooterColumn title="Explore" links={exploreLinks} />
+          <FooterColumn title="More from us" links={productLinks} />
           <div>
             <h4 className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--primary)]">
               Legal & Contact

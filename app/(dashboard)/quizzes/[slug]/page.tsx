@@ -10,9 +10,12 @@ import {
   Trophy,
   HelpCircle,
   Play,
+  Star,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { ShareButton } from "@/components/ShareButton";
 
 interface Question {
   question: string;
@@ -23,7 +26,8 @@ interface Quiz {
   _id: string;
   title: string;
   description?: string;
-  subject?: { name: string };
+  slug?: string;
+  subject?: { _id?: string; name: string };
   chapter?: { title: string };
   duration: number;
   questions: Question[];
@@ -47,6 +51,13 @@ function kindLabel(kind?: string) {
   return null;
 }
 
+function formatElapsed(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (mins <= 0) return `${secs}s`;
+  return `${mins}m ${secs.toString().padStart(2, "0")}s`;
+}
+
 export default function QuizTakePage() {
   const params = useParams();
   const quizParam = params.slug as string;
@@ -63,8 +74,20 @@ export default function QuizTakePage() {
     total: number;
     passed: boolean;
     results: Result[];
+    timeSpentSeconds?: number;
+    attemptId?: string;
   } | null>(null);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [rating, setRating] = useState(0);
+  const [flagWrongKey, setFlagWrongKey] = useState(false);
+  const [feedbackNote, setFeedbackNote] = useState("");
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+  const [feedbackDone, setFeedbackDone] = useState(false);
+  const [nextQuiz, setNextQuiz] = useState<{
+    slug?: string;
+    _id: string;
+    title: string;
+  } | null>(null);
 
   useEffect(() => {
     const looksLikeId = /^[a-f0-9]{24}$/i.test(quizParam || "");
@@ -100,6 +123,39 @@ export default function QuizTakePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quiz, results, started]);
 
+  useEffect(() => {
+    if (!results || !quiz) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const subjectId =
+          (quiz.subject as any)?._id ||
+          (typeof quiz.subject === "string" ? quiz.subject : null);
+        const qs = subjectId
+          ? `?subject=${encodeURIComponent(String(subjectId))}`
+          : "";
+        const res = await fetch(`/api/quizzes${qs}`);
+        const data = await res.json().catch(() => ({}));
+        const list = (data.quizzes || []) as any[];
+        const others = list.filter(
+          (q) => String(q._id) !== String(quiz._id) && q.isActive !== false,
+        );
+        if (!others.length || cancelled) return;
+        const pick = others[Math.floor(Math.random() * others.length)];
+        setNextQuiz({
+          _id: String(pick._id),
+          slug: pick.slug,
+          title: pick.title,
+        });
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [results, quiz]);
+
   const handleSubmit = async () => {
     if (submitting || !quiz) return;
     setSubmitting(true);
@@ -124,6 +180,38 @@ export default function QuizTakePage() {
       toast.error("Something went wrong. Please try again.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const submitFeedback = async () => {
+    if (!quiz || feedbackSubmitting || feedbackDone) return;
+    if (!rating && !flagWrongKey && !feedbackNote.trim()) {
+      toast.error("Add a rating or note before submitting");
+      return;
+    }
+    setFeedbackSubmitting(true);
+    try {
+      const res = await fetch(
+        `/api/quizzes/${encodeURIComponent(quiz._id)}/feedback`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            attemptId: results?.attemptId,
+            rating: rating || undefined,
+            flagWrongKey,
+            feedbackNote: feedbackNote.trim() || undefined,
+          }),
+        },
+      );
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not save feedback");
+      setFeedbackDone(true);
+      toast.success("Thanks for your feedback!");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit feedback");
+    } finally {
+      setFeedbackSubmitting(false);
     }
   };
 
@@ -152,8 +240,14 @@ export default function QuizTakePage() {
 
   const thumb = quiz.thumbnailUrl || "/images/default-quiz.png";
   const kind = kindLabel(quiz.kind);
+  const quizPath = `/quizzes/${quiz.slug || quiz._id}`;
+  const shareUrl = `https://getmaterials.in${quizPath}`;
 
   if (results) {
+    const timeSpent =
+      results.timeSpentSeconds ??
+      Math.max(1, quiz.duration * 60 - timeLeft);
+
     return (
       <div className="max-w-3xl mx-auto space-y-6">
         <Link
@@ -175,19 +269,108 @@ export default function QuizTakePage() {
             {results.passed ? "Congratulations!" : "Keep Practicing!"}
           </h2>
           <p className="text-slate-500 mb-4">{quiz.title}</p>
-          <div className="inline-flex items-center gap-6 text-sm">
+          <div className="inline-flex items-center gap-6 text-sm flex-wrap justify-center">
             <div>
               <p className="text-3xl font-bold text-violet-600">{results.score}%</p>
               <p className="text-slate-500">Score</p>
             </div>
-            <div className="w-px h-10 bg-slate-200" />
+            <div className="w-px h-10 bg-slate-200 hidden sm:block" />
             <div>
               <p className="text-3xl font-bold text-slate-900">
                 {results.correct}/{results.total}
               </p>
               <p className="text-slate-500">Correct</p>
             </div>
+            <div className="w-px h-10 bg-slate-200 hidden sm:block" />
+            <div>
+              <p className="text-3xl font-bold text-slate-900 inline-flex items-center gap-1 justify-center">
+                <Clock className="w-5 h-5 text-slate-400" />
+                {formatElapsed(timeSpent)}
+              </p>
+              <p className="text-slate-500">Time spent</p>
+            </div>
           </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <ShareButton
+              title={quiz.title}
+              description={`I scored ${results.score}% on ${quiz.title} — try it on GetMaterials!`}
+              url={shareUrl}
+            />
+            {nextQuiz ? (
+              <Link
+                href={`/quizzes/${nextQuiz.slug || nextQuiz._id}`}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--primary)] text-white font-semibold rounded-xl text-sm hover:opacity-90"
+              >
+                Try another quiz
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <Link
+                href="/quizzes"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[var(--primary)] text-white font-semibold rounded-xl text-sm hover:opacity-90"
+              >
+                Browse quizzes
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 border border-slate-100 space-y-4">
+          <h3 className="text-base font-bold text-slate-900">Rate this quiz</h3>
+          {feedbackDone ? (
+            <p className="text-sm text-emerald-700">Thanks — your feedback was saved.</p>
+          ) : (
+            <>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setRating(n)}
+                    className={`w-11 h-11 rounded-xl flex items-center justify-center transition ${
+                      rating >= n
+                        ? "bg-amber-400 text-white"
+                        : "bg-slate-50 border border-slate-200 text-slate-400 hover:border-amber-300"
+                    }`}
+                    aria-label={`${n} star${n === 1 ? "" : "s"}`}
+                  >
+                    <Star
+                      className={`w-5 h-5 ${rating >= n ? "fill-current" : ""}`}
+                    />
+                  </button>
+                ))}
+              </div>
+              <label className="flex items-start gap-3 text-sm text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={flagWrongKey}
+                  onChange={(e) => setFlagWrongKey(e.target.checked)}
+                  className="mt-0.5 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                />
+                <span>
+                  I think one or more questions have the wrong correct answer
+                </span>
+              </label>
+              <textarea
+                rows={3}
+                value={feedbackNote}
+                onChange={(e) => setFeedbackNote(e.target.value)}
+                maxLength={1000}
+                placeholder="Optional short feedback…"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-violet-500 resize-none"
+              />
+              <button
+                type="button"
+                onClick={submitFeedback}
+                disabled={feedbackSubmitting}
+                className="inline-flex px-5 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 disabled:opacity-50"
+              >
+                {feedbackSubmitting ? "Submitting…" : "Submit feedback"}
+              </button>
+            </>
+          )}
         </div>
 
         <div className="space-y-4">

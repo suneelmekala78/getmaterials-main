@@ -9,12 +9,20 @@ export type EmploymentType =
 
 export type JobApplyMode = "internal" | "external";
 
+export type JobLocationType = "onsite" | "remote" | "hybrid";
+
+export type JobAudience = "student" | "graduate" | "any";
+
 export interface IJob extends Document {
   title: string;
   slug: string;
   company: string;
   location: string;
+  locationType: JobLocationType;
   employmentType: EmploymentType;
+  salaryText?: string;
+  audience: JobAudience;
+  companyLogoUrl?: string;
   description: string;
   applyMode: JobApplyMode;
   externalUrl?: string;
@@ -34,6 +42,17 @@ export interface IJobApplication extends Document {
   phone?: string;
   coverNote?: string;
   resumeUrl?: string;
+  avatarUrl?: string;
+  linkedinUrl?: string;
+  /** Recruiter-facing note from applicant */
+  note?: string;
+  availability?: string;
+  graduationYear?: number | string;
+  education?: string;
+  applicantType?: "student" | "graduate";
+  location?: string;
+  studyingYear?: string;
+  program?: string;
   status: ApplicationStatus;
   createdAt: Date;
   updatedAt: Date;
@@ -52,11 +71,23 @@ const JobSchema = new Schema<IJob>(
     },
     company: { type: String, trim: true, default: "GetMaterials" },
     location: { type: String, trim: true, default: "" },
+    locationType: {
+      type: String,
+      enum: ["onsite", "remote", "hybrid"],
+      default: "onsite",
+    },
     employmentType: {
       type: String,
       enum: ["full_time", "part_time", "internship", "contract", "remote"],
       default: "full_time",
     },
+    salaryText: { type: String, trim: true, maxlength: 200 },
+    audience: {
+      type: String,
+      enum: ["student", "graduate", "any"],
+      default: "any",
+    },
+    companyLogoUrl: { type: String, trim: true },
     description: { type: String, default: "" },
     applyMode: {
       type: String,
@@ -91,6 +122,19 @@ const JobApplicationSchema = new Schema<IJobApplication>(
     phone: { type: String, trim: true },
     coverNote: { type: String, maxlength: 5000 },
     resumeUrl: { type: String, trim: true },
+    avatarUrl: { type: String, trim: true },
+    linkedinUrl: { type: String, trim: true },
+    note: { type: String, maxlength: 2000 },
+    availability: { type: String, trim: true, maxlength: 200 },
+    graduationYear: { type: Schema.Types.Mixed },
+    education: { type: String, trim: true, maxlength: 500 },
+    applicantType: {
+      type: String,
+      enum: ["student", "graduate"],
+    },
+    location: { type: String, trim: true, maxlength: 200 },
+    studyingYear: { type: String, trim: true, maxlength: 50 },
+    program: { type: String, trim: true, maxlength: 200 },
     status: {
       type: String,
       enum: ["pending", "reviewed", "rejected", "hired"],

@@ -38,6 +38,7 @@ interface Quiz {
 
 interface Result {
   question: string;
+  options?: string[];
   yourAnswer: number;
   correctAnswer: number;
   isCorrect: boolean;
@@ -374,38 +375,76 @@ export default function QuizTakePage() {
         </div>
 
         <div className="space-y-4">
-          {results.results.map((r, i) => (
-            <div
-              key={i}
-              className={`bg-white rounded-xl p-5 border ${
-                r.isCorrect ? "border-green-100" : "border-red-100"
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                {r.isCorrect ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                )}
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-900 mb-2">
-                    Q{i + 1}. {r.question}
-                  </p>
-                  {!r.isCorrect && (
-                    <p className="text-xs text-red-500 mb-1">
-                      Your answer: {quiz.questions[i].options[r.yourAnswer] || "Not answered"}
+          <h3 className="text-base font-bold text-slate-900">Review answers</h3>
+          {(results.results || []).map((r, i) => {
+            const options = r.options?.length
+              ? r.options
+              : quiz.questions[i]?.options || [];
+            return (
+              <div
+                key={i}
+                className={`bg-white rounded-xl p-5 border ${
+                  r.isCorrect ? "border-green-100" : "border-red-100"
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  {r.isCorrect ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0 mt-0.5" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 mb-3">
+                      Q{i + 1}. {r.question}
                     </p>
-                  )}
-                  <p className="text-xs text-green-700">
-                    Correct: {quiz.questions[i].options[r.correctAnswer]}
-                  </p>
-                  {r.explanation && (
-                    <p className="text-xs text-slate-500 mt-2 italic">{r.explanation}</p>
-                  )}
+                    <ul className="space-y-2">
+                      {options.map((option, idx) => {
+                        const isYours = idx === r.yourAnswer;
+                        const isCorrect = idx === r.correctAnswer;
+                        return (
+                          <li
+                            key={idx}
+                            className={`rounded-lg border px-3 py-2 text-sm ${
+                              isCorrect
+                                ? "border-green-200 bg-green-50 text-green-900"
+                                : isYours
+                                  ? "border-red-200 bg-red-50 text-red-800"
+                                  : "border-slate-100 bg-slate-50 text-slate-700"
+                            }`}
+                          >
+                            <span className="font-semibold mr-1">
+                              {String.fromCharCode(65 + idx)}.
+                            </span>
+                            {option}
+                            {isCorrect ? (
+                              <span className="ml-2 text-xs font-bold text-green-700">
+                                Correct
+                              </span>
+                            ) : null}
+                            {isYours ? (
+                              <span
+                                className={`ml-2 text-xs font-bold ${
+                                  isCorrect ? "text-green-700" : "text-red-600"
+                                }`}
+                              >
+                                Your answer
+                              </span>
+                            ) : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    {r.yourAnswer < 0 ? (
+                      <p className="text-xs text-red-500 mt-2">Not answered</p>
+                    ) : null}
+                    {r.explanation ? (
+                      <p className="text-xs text-slate-500 mt-2 italic">{r.explanation}</p>
+                    ) : null}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );

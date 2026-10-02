@@ -3,8 +3,6 @@ import { Heart } from "lucide-react";
 import { FaInstagram, FaLinkedinIn, FaYoutube } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import {
-  APP_ARENA_URL,
-  APP_COURSES_URL,
   CONTACT_EMAIL,
   CONTACT_OFFICE,
 } from "@/lib/shared";
@@ -18,20 +16,21 @@ const platformLinks = [
   { href: "/polls", label: "Polls" },
 ];
 
-const productLinks = [
-  {
-    href: APP_COURSES_URL,
-    label: "Courses",
-    external: true,
-    title: "Opens Courses (courses.getmaterials.in)",
-  },
-  {
-    href: APP_ARENA_URL,
-    label: "Arena",
-    external: true,
-    title: "Opens Arena (arena.getmaterials.in)",
-  },
-];
+// Courses and Arena are not production-ready. Uncomment when they are.
+// const productLinks = [
+//   {
+//     href: APP_COURSES_URL,
+//     label: "Courses",
+//     external: true,
+//     title: "Opens Courses (courses.getmaterials.in)",
+//   },
+//   {
+//     href: APP_ARENA_URL,
+//     label: "Arena",
+//     external: true,
+//     title: "Opens Arena (arena.getmaterials.in)",
+//   },
+// ];
 
 const exploreLinks = [
   { href: "/about", label: "About Us" },
@@ -143,7 +142,7 @@ export default function Footer() {
       />
 
       <div className="relative mx-auto max-w-6xl px-6 py-16 sm:py-20">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.35fr_repeat(4,minmax(0,1fr))] lg:gap-8 xl:gap-10">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.35fr_repeat(3,minmax(0,1fr))] lg:gap-8 xl:gap-10">
           <div>
             <Link
               href="/"
@@ -174,7 +173,9 @@ export default function Footer() {
 
           <FooterColumn title="Platform" links={platformLinks} />
           <FooterColumn title="Explore" links={exploreLinks} />
+          {/* Uncomment when Courses and Arena are ready.
           <FooterColumn title="More from us" links={productLinks} />
+          */}
           <div>
             <h4 className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--primary)]">
               Legal & Contact

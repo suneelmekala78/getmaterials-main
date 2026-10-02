@@ -56,6 +56,7 @@ export default async function TeacherDashboardPage() {
         </Link>
       </div>
 
+      {/* Courses site is not production-ready. Uncomment when it is.
       <div className="rounded-2xl border border-violet-100 bg-violet-50/60 px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <p className="font-semibold text-slate-900">Video courses studio</p>
@@ -70,6 +71,7 @@ export default async function TeacherDashboardPage() {
           Open courses studio
         </a>
       </div>
+      */}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

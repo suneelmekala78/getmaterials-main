@@ -5,11 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { HiMenu, HiX } from "react-icons/hi";
-import { ExternalLink, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { ProfileDrawer } from "@/components/layout/ProfileDrawer";
 import { UserAvatar } from "@/components/layout/UserAvatar";
-import { APP_COURSES_URL } from "@/lib/shared";
 
 type NavLink = {
   href: string;
@@ -28,11 +27,12 @@ const baseLinks: NavLink[] = [
   { href: "/teachers", label: "Teachers" },
 ];
 
-const coursesLink: NavLink = {
-  href: APP_COURSES_URL,
-  label: "Courses",
-  external: true,
-};
+// Courses site is not production-ready. Uncomment with APP_COURSES_URL when it is.
+// const coursesLink: NavLink = {
+//   href: APP_COURSES_URL,
+//   label: "Courses",
+//   external: true,
+// };
 
 const MarketingNavbar = () => {
   const [open, setOpen] = useState(false);
@@ -81,9 +81,6 @@ const MarketingNavbar = () => {
       : "hover:text-[var(--primary)] transition";
   };
 
-  const coursesLinkClass =
-    "inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[var(--primary)] hover:bg-violet-100 transition-colors duration-300";
-
   const renderLink = (link: NavLink, className: string, onClick?: () => void) =>
     link.external ? (
       <a
@@ -91,11 +88,8 @@ const MarketingNavbar = () => {
         href={link.href}
         className={className}
         onClick={onClick}
-        title="Opens Courses (courses.getmaterials.in)"
-        aria-label="Courses — opens courses.getmaterials.in"
       >
         <span>{link.label}</span>
-        <ExternalLink className="w-3.5 h-3.5 opacity-80" aria-hidden />
       </a>
     ) : (
       <Link key={link.label} href={link.href} className={className} onClick={onClick}>
@@ -144,13 +138,15 @@ const MarketingNavbar = () => {
               {renderLink(link, linkClass(isActive(link.href, link.external)))}
             </li>
           ))}
+          {/* Uncomment when courses.getmaterials.in is ready.
           <li
             aria-hidden
             className={`h-5 w-px shrink-0 ${heroMode ? "bg-slate-300/80" : "bg-gray-200"}`}
           />
           <li className="shrink-0">
-            {renderLink(coursesLink, `${coursesLinkClass} text-[13px] font-bold`)}
+            {renderLink(coursesLink, "inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[13px] font-bold text-[var(--primary)] hover:bg-violet-100 transition-colors duration-300")}
           </li>
+          */}
         </ul>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
@@ -230,17 +226,15 @@ const MarketingNavbar = () => {
               ),
             )}
           </div>
+          {/* Uncomment when courses.getmaterials.in is ready.
           <div className="mt-1 border-t border-dashed border-violet-200 pt-3">
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-violet-500">
               Separate app
             </p>
-            {renderLink(
-              coursesLink,
-              `${coursesLinkClass} w-fit text-sm font-bold`,
-              () => setOpen(false),
-            )}
+            {renderLink(coursesLink, "inline-flex items-center gap-1.5 rounded-full border border-violet-200 bg-violet-50 px-3 py-1 w-fit text-sm font-bold text-[var(--primary)]", () => setOpen(false))}
             <p className="mt-1.5 text-xs text-gray-400">courses.getmaterials.in</p>
           </div>
+          */}
           <div className="mt-2 flex gap-3 border-t border-gray-100 pt-3">
             {user ? (
               <Link

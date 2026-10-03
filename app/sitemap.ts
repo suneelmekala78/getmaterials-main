@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { connectDB, College, Material, Subject, User } from "@/lib/database";
+import { connectDB, College, Material, Poll, Quiz, Subject, User } from "@/lib/database";
 import { SITE_URL } from "@/lib/seo";
 
 function entry(
@@ -36,7 +36,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     await connectDB();
-    const [materials, subjects, users, colleges] = await Promise.all([
+    const [materials, subjects, users, colleges, quizzes, polls] = await Promise.all([
       Material.find({ status: "published", isPublic: true })
         .select("slug updatedAt")
         .sort({ updatedAt: -1 })
@@ -54,6 +54,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .lean(),
       College.find({ status: "active" })
         .select("slug code updatedAt")
+        .lean(),
+      Quiz.find({ isActive: true })
+        .select("slug updatedAt")
+        .limit(2000)
+        .lean(),
+      Poll.find({ isActive: true })
+        .select("slug updatedAt")
+        .limit(2000)
         .lean(),
     ]);
 
@@ -90,6 +98,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ...users.map((user: any) =>
         entry(`/users/${user.slug}`, user.updatedAt || now, "weekly", 0.5),
       ),
+      ...quizzes
+        .filter((quiz: any) => quiz.slug || quiz._id)
+        .map((quiz: any) =>
+          entry(
+            `/quizzes/${encodeURIComponent(quiz.slug || quiz._id)}`,
+            quiz.updatedAt || now,
+            "weekly",
+            0.6,
+          ),
+        ),
+      ...polls
+        .filter((poll: any) => poll.slug || poll._id)
+        .map((poll: any) =>
+          entry(
+            `/polls?poll=${encodeURIComponent(poll.slug || poll._id)}`,
+            poll.updatedAt || now,
+            "weekly",
+            0.5,
+          ),
+        ),
     ];
   } catch (error) {
     console.error("[sitemap] falling back to static URLs", error);

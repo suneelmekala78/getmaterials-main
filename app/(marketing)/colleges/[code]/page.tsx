@@ -18,9 +18,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import {
   BookOpen,
-  Building2,
   Download,
   GraduationCap,
+  Globe,
   MapPin,
   Star,
   Users,
@@ -31,6 +31,7 @@ import MaterialsToolbar from "@/components/materials/MaterialsToolbar";
 import { materialsHref, type MaterialsQuery } from "@/components/materials/query";
 import { TeacherCard } from "@/components/teachers/TeacherCard";
 import { formatCount } from "@/components/colleges/query";
+import { collegeBannerSrc, collegeLogoSrc, collegePlace, externalHref } from "@/lib/college-media";
 import { listingMetadata } from "@/lib/seo";
 import { ratedAverageExpr } from "@/lib/rating-aggregate";
 import { parseList, type QueryParam } from "@/lib/filter-list";
@@ -119,9 +120,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       college.description ||
       `Browse ${stats.materials || 0} free notes and lectures shared for ${college.name}.`,
     path: collegeHref(college),
-    keywords: [college.name, college.code, college.slug, "college notes", "campus materials"].filter(
+    keywords: [college.name, college.code, college.slug, college.city, college.state, "college notes", "campus materials"].filter(
       Boolean
     ) as string[],
+    image: college.banner || college.logo || collegeBannerSrc(null),
+    imageAlt: `${college.name} campus`,
   });
 }
 
@@ -227,12 +230,8 @@ export default async function CollegeDetailsPage({ params, searchParams }: Props
   return (
     <main className="bg-[#fafafa] min-h-screen">
       <div className="relative h-48 sm:h-64 bg-gradient-to-br from-indigo-600 to-violet-700">
-        {college.banner ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={college.banner} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        ) : (
-          <Building2 className="absolute right-8 bottom-8 w-20 h-20 text-white/20" />
-        )}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={collegeBannerSrc(college.banner)} alt="" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
       </div>
 
@@ -252,33 +251,63 @@ export default async function CollegeDetailsPage({ params, searchParams }: Props
         <section className="bg-white rounded-3xl border border-slate-100 p-5 sm:p-8 mb-8">
           <div className="flex flex-col sm:flex-row gap-5">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl border border-slate-100 bg-white overflow-hidden flex items-center justify-center shrink-0 shadow-sm">
-              {college.logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={college.logo}
+                  src={collegeLogoSrc(college.logo)}
                   alt={`${college.name} logo`}
-                  className="max-w-[88%] max-h-[88%] object-contain"
+                  className="w-full h-full object-cover"
                 />
-              ) : (
-                <span className="text-lg font-extrabold text-violet-700">
-                  {(college.code || college.name).slice(0, 3).toUpperCase()}
-                </span>
-              )}
             </div>
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">{college.name}</h1>
               <p className="text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                 {college.code ? <span className="font-semibold text-violet-700">{college.code}</span> : null}
-                {college.location && (
+                {collegePlace(college) && (
                   <span className="inline-flex items-center gap-1">
                     <MapPin className="w-3.5 h-3.5" />
-                    {college.location}
+                    {collegePlace(college)}
                   </span>
                 )}
+                {college.website ? (
+                  <a
+                    href={externalHref(college.website)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-violet-700 hover:underline"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    Website
+                  </a>
+                ) : null}
               </p>
               {college.description && (
                 <p className="text-slate-600 mt-3 leading-relaxed">{college.description}</p>
               )}
+              {Object.values(college.socials || {}).some(Boolean) ? (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {(
+                    [
+                      ["instagram", "Instagram"],
+                      ["linkedin", "LinkedIn"],
+                      ["youtube", "YouTube"],
+                      ["x", "X"],
+                      ["facebook", "Facebook"],
+                    ] as const
+                  ).map(([key, label]) =>
+                    college.socials?.[key] ? (
+                      <a
+                        key={key}
+                        href={externalHref(college.socials[key])}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-semibold px-2.5 py-1 rounded-full bg-violet-50 text-violet-700 hover:bg-violet-100"
+                      >
+                        {label}
+                      </a>
+                    ) : null
+                  )}
+                </div>
+              ) : null}
             </div>
           </div>
 

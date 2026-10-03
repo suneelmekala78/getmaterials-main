@@ -27,6 +27,16 @@ export interface ICollege extends Document {
   logo?: string;
   banner?: string;
   location?: string;
+  city?: string;
+  state?: string;
+  website?: string;
+  socials?: {
+    instagram?: string;
+    linkedin?: string;
+    youtube?: string;
+    x?: string;
+    facebook?: string;
+  };
   description?: string;
   adminUsers: mongoose.Types.ObjectId[];
   status: "active" | "inactive";
@@ -73,7 +83,17 @@ const CollegeSchema = new Schema<ICollege>(
     code: { type: String, unique: true, sparse: true, uppercase: true, trim: true },
     logo: { type: String },
     banner: { type: String },
-    location: { type: String },
+    location: { type: String, trim: true, maxlength: 200 },
+    city: { type: String, trim: true, maxlength: 80 },
+    state: { type: String, trim: true, maxlength: 80 },
+    website: { type: String, trim: true, maxlength: 300 },
+    socials: {
+      instagram: { type: String, trim: true, maxlength: 300 },
+      linkedin: { type: String, trim: true, maxlength: 300 },
+      youtube: { type: String, trim: true, maxlength: 300 },
+      x: { type: String, trim: true, maxlength: 300 },
+      facebook: { type: String, trim: true, maxlength: 300 },
+    },
     description: { type: String, maxlength: 1000 },
     adminUsers: [{ type: Schema.Types.ObjectId, ref: "User" }],
     status: { type: String, enum: ["active", "inactive"], default: "active" },

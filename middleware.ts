@@ -25,6 +25,10 @@ const protectedApiPaths = [
   "/api/user",
 ];
 
+/** Link-preview and search bots must see Open Graph tags, not the login redirect. */
+const SHARE_CRAWLER =
+  /facebookexternalhit|facebot|whatsapp|twitterbot|linkedinbot|telegrambot|slackbot-linkexpanding|slackbot|discordbot|pinterest|googlebot|bingbot|applebot|embedly|redditbot|vkshare/i;
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -72,6 +76,10 @@ export function middleware(req: NextRequest) {
   const isProtectedApi = protectedApiPaths.some(matchesPath);
 
   if (isProtectedPage && !sessionCookie) {
+    const userAgent = req.headers.get("user-agent") || "";
+    if (SHARE_CRAWLER.test(userAgent)) {
+      return NextResponse.next();
+    }
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);

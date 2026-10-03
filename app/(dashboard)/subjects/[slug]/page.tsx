@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import { BookOpen, Layers } from "lucide-react";
 import { connectDB, Subject, Chapter, Material, College, User } from "@/lib/database";
 import { auth } from "@/lib/auth";
-import { absoluteUrl, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/seo";
+import { absoluteUrl, DEFAULT_SUBJECT_IMAGE, SITE_NAME, SITE_URL, isMediaUrl, ogImages } from "@/lib/seo";
 import { SubjectLogo, type SubjectCardData } from "@/components/subjects/SubjectCard";
 import { categoryLabel } from "@/components/subjects/query";
 import MaterialsFilterSidebar from "@/components/materials/MaterialsFilterSidebar";
@@ -56,9 +56,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     subject.description ||
     `Browse free ${subject.name} study materials, notes, and PDFs on GetMaterials.`;
   const url = absoluteUrl(`/subjects/${slug}`);
-  const ogImage = subject.icon
-    ? { url: absoluteUrl(subject.icon), width: 512, height: 512, alt: subject.name }
-    : DEFAULT_OG_IMAGE;
+  const icon = isMediaUrl(subject.icon) ? subject.icon : DEFAULT_SUBJECT_IMAGE;
+  const picture = ogImages(icon, subject.name, DEFAULT_SUBJECT_IMAGE);
 
   return {
     title: `${subject.name} — Free Study Materials`,
@@ -78,13 +77,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       siteName: SITE_NAME,
       type: "website",
       locale: "en_IN",
-      images: [ogImage],
+      images: [picture],
     },
     twitter: {
       card: "summary_large_image",
       title: `${subject.name} — Free Study Materials`,
       description,
-      images: [ogImage.url],
+      images: [picture.url],
     },
     alternates: { canonical: url },
   };

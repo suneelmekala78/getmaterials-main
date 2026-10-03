@@ -7,7 +7,7 @@ import QuizCard, { type QuizCardData } from "@/components/quizzes/QuizCard";
 import QuizLeaderboard, { type LeaderboardRow } from "@/components/quizzes/QuizLeaderboard";
 import { formatCount, quizzesHref, type QuizzesQuery } from "@/components/quizzes/query";
 import { parseList, type QueryParam } from "@/lib/filter-list";
-import { listingMetadata } from "@/lib/seo";
+import { DEFAULT_QUIZ_IMAGE, listingMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +17,8 @@ export const metadata = listingMetadata({
     "Practice chapter-wise quizzes created by teachers on GetMaterials. Test notes, score instantly, and revise before exams.",
   path: "/quizzes",
   keywords: ["free quizzes", "chapter wise quiz", "exam practice", "GetMaterials quizzes"],
+  image: DEFAULT_QUIZ_IMAGE,
+  imageAlt: "GetMaterials quizzes",
 });
 
 const PAGE_SIZE = 9;

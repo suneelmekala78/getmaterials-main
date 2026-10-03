@@ -32,7 +32,7 @@ import {
   type PreviewItem,
 } from "@/components/materials/MaterialMedia";
 import { isOfficeFile, isPdfFile, officeKindLabel } from "@/lib/file-kinds";
-import { DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL, absoluteUrl } from "@/lib/seo";
+import { SITE_NAME, SITE_URL, absoluteUrl, ogImages, plainText } from "@/lib/seo";
 import { ratedAverageExpr } from "@/lib/rating-aggregate";
 
 interface Props {
@@ -94,10 +94,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!material) return { title: "Material Not Found" };
 
-  const plainDescription = stripHtml(material.description)
-    .slice(0, 160) || `${material.title} - Free study material on GetMaterials`;
+  const plainDescription = plainText(material.description)
+    || `${material.title} — free study material on GetMaterials`;
 
-  const ogImage = material.thumbnailUrl || absoluteUrl(DEFAULT_OG_IMAGE.url);
+  const picture = ogImages(material.thumbnailUrl, material.title, absoluteUrl("/images/default-thumbnail.png"));
 
   return {
     title: { absolute: `${material.title} - GetMaterials` },
@@ -108,22 +108,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: plainDescription,
       url: `${BASE_URL}/materials/${slug}`,
       siteName: SITE_NAME,
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: material.title,
-          type: "image/jpeg",
-        },
-      ],
+      images: [picture],
       type: "article",
     },
     twitter: {
       card: "summary_large_image",
       title: material.title,
       description: plainDescription,
-      images: [ogImage],
+      images: [picture.url],
     },
     alternates: {
       canonical: `${BASE_URL}/materials/${slug}`,
@@ -326,7 +318,7 @@ export default async function MaterialViewPage({ params }: Props) {
             name: material.title,
             description: plainDescription,
             url: pageUrl,
-            image: material.thumbnailUrl || absoluteUrl(DEFAULT_OG_IMAGE.url),
+            image: absoluteUrl(material.thumbnailUrl || "/images/default-thumbnail.png"),
             inLanguage: "en",
             isAccessibleForFree: true,
             learningResourceType: type.label,

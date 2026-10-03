@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Building2, Star } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import { formatCount } from "./query";
+import { collegeBannerSrc, collegeLogoSrc, collegePlace } from "@/lib/college-media";
 
 const covers = [
   "from-indigo-600 to-violet-700",
@@ -18,6 +19,8 @@ export type CollegeCardData = {
   logo?: string;
   banner?: string;
   location?: string;
+  city?: string;
+  state?: string;
   materials: number;
   avgRating: number;
   branches: { name: string; count: number }[];
@@ -34,18 +37,12 @@ function CollegeLogo({
     <div
       className={`bg-white flex items-center justify-center overflow-hidden ${className ?? ""}`}
     >
-      {college.logo ? (
-        // eslint-disable-next-line @next/next/no-img-element
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={college.logo}
+          src={collegeLogoSrc(college.logo)}
           alt={`${college.name} logo`}
-          className="max-w-[88%] max-h-[88%] object-contain"
+          className="w-full h-full object-cover"
         />
-      ) : (
-        <span className="text-sm font-extrabold text-violet-700">
-          {(college.code || college.name).slice(0, 3).toUpperCase()}
-        </span>
-      )}
     </div>
   );
 }
@@ -77,7 +74,7 @@ export default function CollegeCard({
         <div className="min-w-0 flex-1">
           <h3 className="font-bold text-slate-900 truncate">{college.name}</h3>
           <p className="text-xs text-slate-500 truncate">
-            {[college.code, college.location].filter(Boolean).join(" • ") || "College"}
+            {[college.code, collegePlace(college)].filter(Boolean).join(" • ") || "College"}
           </p>
           <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
             {college.avgRating > 0 && (
@@ -103,12 +100,8 @@ export default function CollegeCard({
       className="group bg-white rounded-2xl border border-slate-100 overflow-hidden flex flex-col hover:border-violet-200 hover:shadow-md transition-all"
     >
       <div className={`relative h-36 bg-gradient-to-br ${cover}`}>
-        {college.banner ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={college.banner} alt="" className="absolute inset-0 w-full h-full object-cover" />
-        ) : (
-          <Building2 className="absolute right-3 bottom-10 w-10 h-10 text-white/20" />
-        )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={collegeBannerSrc(college.banner)} alt="" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/25 to-transparent" />
         <CollegeLogo
           college={college}
@@ -118,7 +111,7 @@ export default function CollegeCard({
       <div className="pt-11 px-4 pb-4 flex-1 flex flex-col">
         <h3 className="font-bold text-slate-900 leading-snug line-clamp-2">{college.name}</h3>
         <p className="text-xs text-slate-500 mt-1 truncate">
-          {[college.code, college.location].filter(Boolean).join(" • ") || "College"}
+          {[college.code, collegePlace(college)].filter(Boolean).join(" • ") || "College"}
         </p>
         <div className="flex items-center gap-3 mt-2 text-xs text-slate-600">
           {college.avgRating > 0 && (

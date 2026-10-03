@@ -22,7 +22,7 @@ import { FollowButton } from "@/components/profile/FollowButton";
 import { FollowStatButton } from "@/components/profile/FollowList";
 import { ProfileLibrary } from "@/components/profile/ProfileLibrary";
 import { loadPublicProfile } from "@/lib/public-profile";
-import { DEFAULT_OG_IMAGE, SITE_NAME, absoluteUrl } from "@/lib/seo";
+import { SITE_NAME, absoluteUrl, ogImages } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -69,7 +69,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     profile.user.bio ||
     `${profile.user.name} shares free study materials on GetMaterials.`;
   const url = absoluteUrl(`/users/${slug}`);
-  const image = profile.user.avatar || DEFAULT_OG_IMAGE.url;
+  const image = ogImages(
+    profile.user.banner || profile.user.avatar,
+    profile.user.name,
+    absoluteUrl("/images/default-banner.png"),
+  );
   return {
     title,
     description,
@@ -80,13 +84,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url,
       siteName: SITE_NAME,
       type: "profile",
-      images: [{ url: image, alt: profile.user.name }],
+      images: [image],
     },
     twitter: {
       card: "summary_large_image",
       title: `${title} | ${SITE_NAME}`,
       description,
-      images: [image],
+      images: [image.url],
     },
   };
 }

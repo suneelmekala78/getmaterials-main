@@ -16,7 +16,8 @@ import CollegesFilterSidebar from "@/components/colleges/CollegesFilterSidebar";
 import CollegesToolbar from "@/components/colleges/CollegesToolbar";
 import CollegeCard, { type CollegeCardData } from "@/components/colleges/CollegeCard";
 import { collegesHref, formatCount, timeAgo, type CollegesQuery } from "@/components/colleges/query";
-import { listingMetadata } from "@/lib/seo";
+import { collegeLogoSrc, collegePlace } from "@/lib/college-media";
+import { DEFAULT_COLLEGE_IMAGE, listingMetadata } from "@/lib/seo";
 import { parseList, type QueryParam } from "@/lib/filter-list";
 import { HiddenListInputs } from "@/components/filters/HiddenListInputs";
 import { ratedAverageExpr } from "@/lib/rating-aggregate";
@@ -33,6 +34,8 @@ export const metadata: Metadata = listingMetadata({
     "B.Tech materials",
     "GetMaterials colleges",
   ],
+  image: DEFAULT_COLLEGE_IMAGE,
+  imageAlt: "GetMaterials colleges",
 });
 
 const PAGE_SIZE = 9;
@@ -209,7 +212,7 @@ export default async function CollegesPage({ searchParams }: Props) {
     }
     if (params.q) {
       const q = params.q.toLowerCase();
-      const haystack = `${college.name} ${college.code || ""} ${college.slug || ""} ${college.location || ""}`.toLowerCase();
+      const haystack = `${college.name} ${college.code || ""} ${college.slug || ""} ${college.location || ""} ${college.city || ""} ${college.state || ""}`.toLowerCase();
       if (!haystack.includes(q)) return false;
     }
     return true;
@@ -240,6 +243,8 @@ export default async function CollegesPage({ searchParams }: Props) {
       logo: college.logo,
       banner: college.banner,
       location: college.location,
+      city: college.city,
+      state: college.state,
       materials: stats?.materials || 0,
       avgRating: stats?.avgRating || 0,
       branches: materialBranches.length ? materialBranches : fallbackBranches,
@@ -428,16 +433,12 @@ export default async function CollegesPage({ searchParams }: Props) {
                     className="flex items-center gap-3 hover:opacity-80"
                   >
                     <div className="w-9 h-9 rounded-lg bg-violet-50 overflow-hidden flex items-center justify-center shrink-0">
-                      {college.logo ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={college.logo} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <Building2 className="w-4 h-4 text-violet-500" />
-                      )}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={collegeLogoSrc(college.logo)} alt="" className="w-full h-full object-cover" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-slate-900 truncate">{college.name}</p>
-                      <p className="text-[11px] text-slate-400 truncate">{college.location || college.code}</p>
+                      <p className="text-[11px] text-slate-400 truncate">{collegePlace(college) || college.code}</p>
                     </div>
                     <span className="text-[10px] text-slate-400 shrink-0">{timeAgo(college.createdAt)}</span>
                   </Link>

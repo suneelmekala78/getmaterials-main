@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   await connectDB();
   const job = await Job.findOne({ slug: slug.toLowerCase(), isActive: true })
-    .select("title description company")
+    .select("title description company companyLogoUrl")
     .lean();
   if (!job) {
     return listingMetadata({
@@ -57,6 +57,9 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
     title: `${job.title} — Careers at ${job.company || "GetMaterials"}`,
     description: plain.slice(0, 160) || `Apply for ${job.title}`,
     path: `/careers/${slug}`,
+    keywords: [job.title, job.company, "careers", "GetMaterials"].filter(Boolean) as string[],
+    image: job.companyLogoUrl || "/images/default-banner.png",
+    imageAlt: job.company || job.title,
   });
 }
 

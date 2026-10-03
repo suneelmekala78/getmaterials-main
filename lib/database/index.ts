@@ -26,6 +26,7 @@ import {
   type IQuiz,
   type IQuizAttempt,
 } from "./models/quiz";
+import { Poll as PollModel, type IPoll } from "./models/poll";
 import { Review as ReviewModel, type IReview } from "./models/review";
 import { Follow as FollowModel, type IFollow } from "./models/follow";
 import {
@@ -50,6 +51,7 @@ export const Subject = SubjectModel as Model<ISubject>;
 export const Chapter = ChapterModel as Model<IChapter>;
 export const Material = MaterialModel as Model<IMaterial>;
 export const MaterialView = MaterialViewModel as Model<IMaterialView>;
+export const Poll = PollModel as Model<IPoll>;
 export const Quiz = QuizModel as Model<IQuiz>;
 export const QuizAttempt = QuizAttemptModel as Model<IQuizAttempt>;
 export const Review = ReviewModel as Model<IReview>;
@@ -68,6 +70,7 @@ export type {
   IMaterial,
   IAttachment,
   IMaterialView,
+  IPoll,
   IQuiz,
   IQuizAttempt,
   IReview,

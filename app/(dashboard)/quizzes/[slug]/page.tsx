@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   Clock,
   CheckCircle2,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { useSession } from "next-auth/react";
 import { ShareButton } from "@/components/ShareButton";
 
 interface Question {
@@ -61,6 +62,8 @@ function formatElapsed(seconds: number) {
 
 export default function QuizTakePage() {
   const params = useParams();
+  const router = useRouter();
+  const { status } = useSession();
   const quizParam = params.slug as string;
 
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -510,6 +513,11 @@ export default function QuizTakePage() {
             <button
               type="button"
               onClick={() => {
+                if (status !== "authenticated") {
+                  const back = `/quizzes/${quiz.slug || quiz._id}`;
+                  router.push(`/login?callbackUrl=${encodeURIComponent(back)}`);
+                  return;
+                }
                 setStarted(true);
                 setTimeLeft(quiz.duration * 60);
               }}

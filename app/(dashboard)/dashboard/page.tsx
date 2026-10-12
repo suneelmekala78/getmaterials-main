@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { PollWidget } from "@/components/PollWidget";
 import { resolveThumbnailSrc } from "@/components/profile/FittedPhoto";
+import { PracticeStreakCard } from "@/components/practice/PracticeStreakCard";
 
 export const metadata = {
   title: "Dashboard - GetMaterials",
@@ -45,8 +46,36 @@ export default async function DashboardPage() {
       .sort({ createdAt: -1 })
       .limit(6)
       .lean(),
-    userId ? User.findById(userId).select("bookmarks name").lean() : null,
+    userId
+      ? User.findById(userId).select("bookmarks name studyProfile").lean()
+      : null,
   ]);
+
+  const study = (currentUser as any)?.studyProfile;
+  const subjectIds = study?.subjects || [];
+  const collegeId = study?.college;
+  const forYouFilter: Record<string, unknown> = { status: "published", isPublic: true };
+  if (collegeId) forYouFilter.$or = [{ college: collegeId }, { colleges: collegeId }];
+  if (subjectIds.length) forYouFilter.subject = { $in: subjectIds };
+  if (study?.semester) forYouFilter.semester = study.semester;
+  const [forYouMaterials, forYouQuizzes] = userId && (collegeId || subjectIds.length)
+    ? await Promise.all([
+        Material.find(forYouFilter)
+          .select("title slug type thumbnailUrl subject")
+          .populate("subject", "name")
+          .sort({ createdAt: -1 })
+          .limit(6)
+          .lean(),
+        Quiz.find({
+          isActive: true,
+          ...(subjectIds.length ? { subject: { $in: subjectIds } } : {}),
+        })
+          .select("title slug thumbnailUrl duration")
+          .sort({ createdAt: -1 })
+          .limit(4)
+          .lean(),
+      ])
+    : [[], []];
 
   const bookmarksCount = (currentUser as any)?.bookmarks?.length || 0;
   const firstName = user?.name?.split(" ")[0] || "there";
@@ -141,6 +170,47 @@ export default async function DashboardPage() {
           </div>
         </div>
       </section>
+
+      {userId ? <PracticeStreakCard /> : null}
+
+      {user?.role !== "teacher" && study && !study.completed && !study.dismissed && (
+        <Link href="/welcome" className="block rounded-2xl bg-violet-600 text-white p-5">
+          <p className="font-bold">Finish your study profile</p>
+          <p className="text-sm text-white/80 mt-1">College, course, and subjects personalize what you see.</p>
+        </Link>
+      )}
+
+      {(forYouMaterials.length > 0 || forYouQuizzes.length > 0) && (
+        <section className="space-y-4">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-extrabold text-slate-900">For your course</h2>
+              <p className="text-sm text-slate-500">Matched to your college, semester, and subjects.</p>
+            </div>
+            <Link href="/timetable" className="text-sm font-semibold text-violet-700">Timetable</Link>
+          </div>
+          {forYouMaterials.length > 0 && (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {forYouMaterials.map((item: any) => (
+                <Link key={String(item._id)} href={`/materials/${item.slug}`} className="rounded-2xl border border-slate-100 bg-white p-4 hover:border-violet-200">
+                  <p className="text-xs font-semibold text-violet-700">{item.subject?.name || "Material"}</p>
+                  <p className="font-bold text-slate-900 mt-1 line-clamp-2">{item.title}</p>
+                </Link>
+              ))}
+            </div>
+          )}
+          {forYouQuizzes.length > 0 && (
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {forYouQuizzes.map((quiz: any) => (
+                <Link key={String(quiz._id)} href={`/quizzes/${quiz.slug || quiz._id}`} className="min-w-[200px] rounded-2xl border border-slate-100 bg-white p-4">
+                  <p className="font-bold text-slate-900 line-clamp-2">{quiz.title}</p>
+                  <p className="text-xs text-slate-500 mt-1">{quiz.duration} min</p>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {quickLinks.map((item) => (

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getReferralData, clearReferralData } from "@/components/providers/ReferralTracker";
 import { trackSignUp } from "@/lib/analytics";
 import { VerifiableField } from "./VerifiableField";
+import { SocialAuthButtons } from "./SocialAuthButtons";
 
 export function SignupForm() {
   const [name, setName] = useState("");
@@ -76,6 +77,8 @@ export function SignupForm() {
   };
 
   return (
+    <div className="space-y-5">
+    <SocialAuthButtons mode="signup" />
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && (
         <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl">
@@ -173,5 +176,6 @@ export function SignupForm() {
         </p>
       )}
     </form>
+    </div>
   );
 }

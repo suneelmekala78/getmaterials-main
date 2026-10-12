@@ -8,6 +8,7 @@ import {
   BarChart3,
   Bookmark,
   ClipboardCheck,
+  Code2,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -56,6 +57,7 @@ function drawerLinks(role?: string, status?: string) {
       label: "Quizzes",
       icon: ClipboardCheck,
     },
+    { href: "/practice", label: "Practice", icon: Code2 },
     ...(!isTeacher ? [{ href: "/bookmarks", label: "Bookmarks", icon: Bookmark }] : []),
     { href: "/settings", label: "Settings", icon: Settings },
   ];

@@ -8,7 +8,8 @@ const protectedPaths = [
   "/settings",
   "/profile",
   "/teacher",
-  "/quizzes",
+  "/welcome",
+  "/timetable",
   "/requests",
   "/my-materials",
 ];
@@ -44,7 +45,8 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/feedback") ||
     pathname.startsWith("/api/college-directory") ||
     pathname.startsWith("/api/profiles") ||
-    pathname.startsWith("/api/polls")
+    pathname.startsWith("/api/polls") ||
+    pathname.startsWith("/api/study")
   ) {
     return NextResponse.next();
   }
@@ -86,6 +88,13 @@ export function middleware(req: NextRequest) {
   }
 
   if (isProtectedApi && !sessionCookie) {
+    const isPublicQuizRead =
+      req.method === "GET" &&
+      pathname.startsWith("/api/quizzes") &&
+      !pathname.includes("/attempts");
+    if (isPublicQuizRead) {
+      return NextResponse.next();
+    }
     // Allow Bearer token auth (mobile app) — actual validation happens in route handler via getUser()
     const authHeader = req.headers.get("authorization");
     if (!authHeader?.startsWith("Bearer ")) {

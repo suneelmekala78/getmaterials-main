@@ -3,11 +3,9 @@
 import { useEffect, useState } from "react";
 import { signIn } from "next-auth/react";
 import toast from "react-hot-toast";
-import {
-  deviceNameFromUa,
-  getOrCreateDeviceId,
-  reportLoginDevice,
-} from "@/lib/device-id";
+import { deviceNameFromUa, getOrCreateDeviceId } from "@/lib/device-id";
+import { redirectAfterLogin } from "@/lib/post-login";
+import { SocialAuthButtons } from "./SocialAuthButtons";
 // Phone login is disabled until SMS provider is ready.
 // import { PhoneInput, formatPhoneDisplay } from "./PhoneInput";
 
@@ -26,19 +24,10 @@ export function LoginForm() {
     }
   }, []);
 
-  const redirectAfterLogin = async () => {
+  const finishLogin = async () => {
     setSuccess("Login successful! Redirecting...");
     toast.success("Login successful!");
-    // Backup recognition if web-session did not get a deviceId.
-    await reportLoginDevice();
-    const sessionRes = await fetch("/api/auth/session");
-    const sessionData = await sessionRes.json();
-    const userRole = sessionData?.user?.role;
-    const userStatus = sessionData?.user?.status;
-    window.location.href =
-      userRole === "teacher" && userStatus !== "pending"
-        ? "/teacher/dashboard"
-        : "/dashboard";
+    await redirectAfterLogin();
   };
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -71,7 +60,7 @@ export function LoginForm() {
         }
         setLoading(false);
       } else {
-        await redirectAfterLogin();
+        await finishLogin();
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -92,6 +81,8 @@ export function LoginForm() {
           {success}
         </div>
       )}
+
+      <SocialAuthButtons mode="login" />
 
       <form onSubmit={handleEmailSubmit} className="space-y-5">
         <label className="block">

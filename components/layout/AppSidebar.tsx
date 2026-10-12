@@ -14,6 +14,8 @@ import {
   BarChart3,
   Upload,
   Globe,
+  CalendarDays,
+  GraduationCap,
 } from "lucide-react";
 
 const studentLinks = [
@@ -24,6 +26,8 @@ const studentLinks = [
   { href: "/my-materials", icon: FileText, label: "My Materials" },
   { href: "/bookmarks", icon: Bookmark, label: "Bookmarks" },
   { href: "/quizzes", icon: ClipboardCheck, label: "Quizzes" },
+  { href: "/welcome", icon: GraduationCap, label: "Study profile" },
+  { href: "/timetable", icon: CalendarDays, label: "Timetable" },
   { href: "/requests", icon: MessageSquare, label: "Requests" },
   { href: "/polls", icon: BarChart3, label: "Polls" },
 ];

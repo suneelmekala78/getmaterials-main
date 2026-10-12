@@ -21,6 +21,7 @@ import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { FollowButton } from "@/components/profile/FollowButton";
 import { FollowStatButton } from "@/components/profile/FollowList";
 import { ProfileLibrary } from "@/components/profile/ProfileLibrary";
+import { PracticeStreakCard } from "@/components/practice/PracticeStreakCard";
 import { loadPublicProfile } from "@/lib/public-profile";
 import { SITE_NAME, absoluteUrl, ogImages } from "@/lib/seo";
 
@@ -202,6 +203,7 @@ export default async function UserProfilePage({ params }: Props) {
                 : "This contributor has not added a bio yet."}
             </p>
           )}
+          {isOwn ? <PracticeStreakCard /> : null}
           {user.qualifications ? (
             <p className="mt-2 text-sm text-slate-500">
               Qualifications: {user.qualifications}

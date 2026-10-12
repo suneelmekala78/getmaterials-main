@@ -1,4 +1,4 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB, User } from "@/lib/database";
@@ -31,6 +31,22 @@ if (!process.env.JWT_SECRET && (process.env.AUTH_SECRET || process.env.NEXTAUTH_
 //   const data = await res.json();
 //   return data.user ?? null;
 // }
+
+class SocialSignInError extends CredentialsSignin {
+  constructor(code: string) {
+    super();
+    this.code = code;
+  }
+}
+
+function socialErrorCode(message: string) {
+  const text = message.toLowerCase();
+  if (text.includes("suspended")) return "suspended";
+  if (text.includes("disposable") || text.includes("temporary")) return "disposable_email";
+  if (text.includes("verified email") || text.includes("email required")) return "email_required";
+  if (text.includes("deleted")) return "account_deleted";
+  return "social_failed";
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
@@ -109,6 +125,61 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
+    Credentials({
+      id: "social",
+      credentials: {
+        provider: { label: "Provider", type: "text" },
+        token: { label: "Token", type: "text" },
+        firstName: { label: "First name", type: "text" },
+        lastName: { label: "Last name", type: "text" },
+        deviceId: { label: "Device ID", type: "text" },
+        deviceName: { label: "Device name", type: "text" },
+        userAgent: { label: "User agent", type: "text" },
+      },
+      async authorize(credentials) {
+        const provider = credentials?.provider === "apple" ? "apple" : "google";
+        const token = String(credentials?.token || "");
+        if (!token) return null;
+
+        const body =
+          provider === "google"
+            ? { idToken: token }
+            : {
+                identityToken: token,
+                fullName: {
+                  givenName: credentials?.firstName || undefined,
+                  familyName: credentials?.lastName || undefined,
+                },
+              };
+
+        const res = await fetch(`${resolveApiOrigin()}/api/auth/web/${provider}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...body,
+            deviceId: credentials?.deviceId || undefined,
+            deviceName: credentials?.deviceName || undefined,
+            userAgent: credentials?.userAgent || undefined,
+          }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.user?.id) {
+          throw new SocialSignInError(socialErrorCode(String(data?.error || "")));
+        }
+
+        return {
+          id: String(data.user.id),
+          email: data.user.email,
+          name: data.user.name,
+          image: data.user.avatar,
+          slug: data.user.slug,
+          role: data.user.role,
+          status: data.user.status,
+          accessToken: data.accessToken,
+          isNewUser: Boolean(data.isNewUser),
+        };
+      },
+    }),
     // Phone OTP login — disabled until SMS provider is ready.
     // Credentials({
     //   id: "phone",
@@ -143,6 +214,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.slug = (user as any).slug;
         token.picture = (user as any).image || token.picture;
         token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
+        token.newUserAt = (user as any).isNewUser ? Date.now() : undefined;
       }
       if (trigger === "update" && session) {
         if (typeof session.name === "string") token.name = session.name;
@@ -188,6 +260,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           slug: token.slug,
           role: token.role,
           status: token.status,
+          isNewUser:
+            typeof token.newUserAt === "number" && Date.now() - token.newUserAt < 10 * 60 * 1000,
         },
       };
     },

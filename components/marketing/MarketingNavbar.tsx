@@ -23,6 +23,7 @@ const baseLinks: NavLink[] = [
   { href: "/subjects", label: "Subjects" },
   { href: "/colleges", label: "Colleges" },
   { href: "/quizzes", label: "Quizzes" },
+  { href: "/practice", label: "Practice" },
   { href: "/polls", label: "Polls" },
   { href: "/teachers", label: "Teachers" },
 ];

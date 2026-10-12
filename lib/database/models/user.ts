@@ -59,6 +59,24 @@ export interface IUser extends Document {
     studyingYear?: string;
     program?: string;
   };
+  studyProfile?: {
+    completed: boolean;
+    dismissed: boolean;
+    college?: mongoose.Types.ObjectId | null;
+    collegeOther?: string;
+    program?: string;
+    programOther?: string;
+    branch?: string;
+    branchOther?: string;
+    year?: number | null;
+    yearOther?: string;
+    semester?: number | null;
+    semesterOther?: string;
+    section?: string;
+    sectionOther?: string;
+    subjects: mongoose.Types.ObjectId[];
+    subjectOthers: string[];
+  };
   downloadHistory: IMaterialHistoryItem[];
   viewHistory: IMaterialHistoryItem[];
   pushDevices: IPushDevice[];
@@ -168,6 +186,24 @@ const UserSchema = new Schema<IUser>(
       location: { type: String, trim: true, maxlength: 200 },
       studyingYear: { type: String, trim: true, maxlength: 50 },
       program: { type: String, trim: true, maxlength: 200 },
+    },
+    studyProfile: {
+      completed: { type: Boolean, default: false },
+      dismissed: { type: Boolean, default: false },
+      college: { type: Schema.Types.ObjectId, ref: "College", default: null },
+      collegeOther: { type: String, trim: true, maxlength: 200 },
+      program: { type: String, trim: true, maxlength: 80 },
+      programOther: { type: String, trim: true, maxlength: 120 },
+      branch: { type: String, trim: true, maxlength: 80 },
+      branchOther: { type: String, trim: true, maxlength: 120 },
+      year: { type: Number, min: 1, max: 10 },
+      yearOther: { type: String, trim: true, maxlength: 40 },
+      semester: { type: Number, min: 1, max: 20 },
+      semesterOther: { type: String, trim: true, maxlength: 40 },
+      section: { type: String, trim: true, maxlength: 20 },
+      sectionOther: { type: String, trim: true, maxlength: 40 },
+      subjects: [{ type: Schema.Types.ObjectId, ref: "Subject" }],
+      subjectOthers: [{ type: String, trim: true, maxlength: 120 }],
     },
     downloadHistory: [
       {

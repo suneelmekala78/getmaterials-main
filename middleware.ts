@@ -46,7 +46,8 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/college-directory") ||
     pathname.startsWith("/api/profiles") ||
     pathname.startsWith("/api/polls") ||
-    pathname.startsWith("/api/study")
+    pathname.startsWith("/api/study") ||
+    pathname.startsWith("/api/practice")
   ) {
     return NextResponse.next();
   }

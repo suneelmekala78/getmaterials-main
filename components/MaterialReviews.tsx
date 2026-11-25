@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { signOut } from "next-auth/react";
 import { Star, Loader2, Trash2, MessageCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -38,6 +39,18 @@ export function MaterialReviews({
   const [success, setSuccess] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
+
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(
+    materialSlug ? `/materials/${materialSlug}` : "/materials",
+  )}`;
+
+  const redirectToLogin = () => {
+    setSessionExpired(true);
+    toast.error("Your session expired. Please sign in again.");
+    // Clear the long-lived NextAuth cookie so /login does not bounce back to dashboard.
+    void signOut({ callbackUrl: loginHref });
+  };
 
   useEffect(() => {
     fetchReviews();
@@ -88,8 +101,13 @@ export function MaterialReviews({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ materialId, rating, comment: comment.trim() }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
       if (res.ok) {
+        setSessionExpired(false);
         setSuccess(data.message || "Review submitted!");
         fetchReviews();
       } else {
@@ -107,6 +125,10 @@ export function MaterialReviews({
     setDeleting(id);
     try {
       const res = await fetch(`/api/reviews?id=${id}`, { method: "DELETE" });
+      if (res.status === 401) {
+        redirectToLogin();
+        return;
+      }
       if (res.ok) {
         setReviews((prev) => prev.filter((r) => r._id !== id));
         setRating(0);
@@ -209,7 +231,20 @@ export function MaterialReviews({
           </a>
         </div>
       )}
-      {currentUserId && (
+      {currentUserId && sessionExpired && (
+        <div className="px-6 py-5 border-b border-slate-100 bg-amber-50/80 text-center">
+          <p className="text-sm text-amber-900 mb-3">
+            Your session expired. Sign in again to add or edit a review.
+          </p>
+          <a
+            href={loginHref}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-colors"
+          >
+            Sign in again
+          </a>
+        </div>
+      )}
+      {currentUserId && !sessionExpired && (
         <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50">
           <h3 className="text-sm font-semibold text-slate-700 mb-3">
             {reviews.some((r) => r.user?._id === currentUserId) ? "Update Your Review" : "Write a Review"}

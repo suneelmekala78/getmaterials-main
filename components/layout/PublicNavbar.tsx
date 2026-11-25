@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { Search, Menu, X, LogOut, User, ChevronDown, BookOpen, FileText, LayoutDashboard } from "lucide-react";
+import { Search, Menu, X, LogOut, User, ChevronDown, GraduationCap, FileText, LayoutDashboard, Newspaper, MessagesSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -10,7 +10,9 @@ import { UserAvatar } from "@/components/layout/UserAvatar";
 
 const navLinks = [
   { href: "/materials", label: "Materials", icon: FileText },
-  { href: "/subjects", label: "Subjects", icon: BookOpen },
+  { href: "/programs", label: "Programs", icon: GraduationCap },
+  { href: "/articles", label: "Articles", icon: Newspaper },
+  { href: "/community", label: "Community", icon: MessagesSquare },
 ];
 
 export function PublicNavbar() {
@@ -26,7 +28,7 @@ export function PublicNavbar() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      window.location.href = `/subjects?q=${encodeURIComponent(searchQuery)}`;
+      window.location.href = `/materials?q=${encodeURIComponent(searchQuery)}`;
     }
   };
 

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { signOut } from "next-auth/react";
-import { User, Lock, Bell, LogOut, Save, GraduationCap, Clock, CheckCircle2, XCircle, Camera, ImageIcon, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { User, Lock, Bell, LogOut, Save, GraduationCap, Clock, CheckCircle2, XCircle, Camera, ImageIcon, Trash2, ArrowRight } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { OtpCodeInput } from "@/components/auth/OtpCodeInput";
 import { uploadBrowserFile } from "@/lib/upload-file";
@@ -395,6 +396,25 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
         <p className="text-slate-500 mt-1">Manage your account preferences.</p>
       </div>
+
+      {/* Study profile — college, program, year, semester, subjects */}
+      <Link
+        href="/welcome?next=/settings"
+        className="group flex items-center justify-between gap-4 bg-white rounded-2xl border border-slate-100 px-5 py-4 hover:border-violet-200 transition-colors"
+      >
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+            <GraduationCap className="w-5 h-5" />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-slate-900">Study profile</h2>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Edit college, program, branch, year, semester, and subjects for My Semester.
+            </p>
+          </div>
+        </div>
+        <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-violet-600 shrink-0" />
+      </Link>
 
       {/* Profile section */}
       <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">

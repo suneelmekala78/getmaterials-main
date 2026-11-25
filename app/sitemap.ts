@@ -1,5 +1,14 @@
 import type { MetadataRoute } from "next";
-import { connectDB, College, Material, Poll, Quiz, Subject, User } from "@/lib/database";
+import {
+  connectDB,
+  College,
+  Material,
+  Poll,
+  Quiz,
+  Subject,
+  User,
+  Article,
+} from "@/lib/database";
 import { SITE_URL } from "@/lib/seo";
 
 function entry(
@@ -22,10 +31,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry("/", now, "weekly", 1),
     entry("/materials", now, "daily", 0.9),
     entry("/subjects", now, "daily", 0.8),
+    entry("/programs", now, "daily", 0.85),
     entry("/colleges", now, "weekly", 0.8),
     entry("/teachers", now, "weekly", 0.7),
     entry("/polls", now, "weekly", 0.5),
     entry("/quizzes", now, "weekly", 0.6),
+    entry("/articles", now, "daily", 0.7),
+    entry("/community", now, "daily", 0.6),
     entry("/about", now, "monthly", 0.7),
     entry("/how-to-use", now, "monthly", 0.7),
     entry("/contact", now, "monthly", 0.5),
@@ -36,7 +48,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     await connectDB();
-    const [materials, subjects, users, colleges, quizzes, polls] = await Promise.all([
+    const [materials, subjects, users, colleges, quizzes, polls, articles] =
+      await Promise.all([
       Material.find({ status: "published", isPublic: true })
         .select("slug updatedAt")
         .sort({ updatedAt: -1 })
@@ -61,6 +74,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .lean(),
       Poll.find({ isActive: true })
         .select("slug updatedAt")
+        .limit(2000)
+        .lean(),
+      Article.find({ status: "published" })
+        .select("slug updatedAt")
+        .sort({ publishedAt: -1 })
         .limit(2000)
         .lean(),
     ]);
@@ -116,6 +134,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
             poll.updatedAt || now,
             "weekly",
             0.5,
+          ),
+        ),
+      ...articles
+        .filter((article: any) => article.slug)
+        .map((article: any) =>
+          entry(
+            `/articles/${article.slug}`,
+            article.updatedAt || now,
+            "weekly",
+            0.7,
           ),
         ),
     ];

@@ -126,18 +126,18 @@ const DESC_MAX = 3000;
 const TAG_MAX = 10;
 const FILE_MAX_MB = 100;
 
-const programs = [
-  { key: "btech", label: "B.Tech" },
-  { key: "mtech", label: "M.Tech" },
-  { key: "mca", label: "MCA" },
-  { key: "bca", label: "BCA" },
-  { key: "bsc", label: "B.Sc" },
-  { key: "msc", label: "M.Sc" },
-  { key: "mba", label: "MBA" },
-  { key: "bba", label: "BBA" },
-  { key: "diploma", label: "Diploma" },
-  { key: "phd", label: "Ph.D" },
-  { key: "other", label: "Other" },
+const FALLBACK_PROGRAMS = [
+  { key: "btech", label: "B.Tech", durationYears: 4, totalSemesters: 8 },
+  { key: "mtech", label: "M.Tech", durationYears: 2, totalSemesters: 4 },
+  { key: "mca", label: "MCA", durationYears: 2, totalSemesters: 4 },
+  { key: "bca", label: "BCA", durationYears: 3, totalSemesters: 6 },
+  { key: "bsc", label: "B.Sc", durationYears: 3, totalSemesters: 6 },
+  { key: "msc", label: "M.Sc", durationYears: 2, totalSemesters: 4 },
+  { key: "mba", label: "MBA", durationYears: 2, totalSemesters: 4 },
+  { key: "bba", label: "BBA", durationYears: 3, totalSemesters: 6 },
+  { key: "diploma", label: "Diploma", durationYears: 3, totalSemesters: 6 },
+  { key: "phd", label: "Ph.D", durationYears: 3, totalSemesters: 6 },
+  { key: "other", label: "Other", durationYears: 4, totalSemesters: 8 },
 ];
 
 const materialTypes: { value: AttachmentType; label: string; icon: typeof FileText; color: string }[] = [
@@ -251,6 +251,7 @@ export function UploadForm({
   const [collegeQuery, setCollegeQuery] = useState("");
   const [collegeOpen, setCollegeOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [defaultPrograms, setDefaultPrograms] = useState(FALLBACK_PROGRAMS);
   const filesRef = useRef<Map<string, File>>(new Map());
 
   const [showAddSubject, setShowAddSubject] = useState(false);
@@ -267,6 +268,18 @@ export function UploadForm({
     setThumbnailPreview(initialMaterial.thumbnailUrl || "");
     setKeepThumbnailUrl(initialMaterial.thumbnailUrl || "");
   }, [initialMaterial?.id, initialMaterial?.thumbnailUrl]);
+
+  useEffect(() => {
+    fetch("/api/programs")
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.programs) && data.programs.length) {
+          setDefaultPrograms(data.programs);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const filteredChapters = chapters.filter((c) => c.subject === formData.subject);
   const selectedColleges = colleges.filter((c) => formData.collegeIds.includes(c.id));
   const selectedCollege = selectedColleges[0];
@@ -524,6 +537,14 @@ export function UploadForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      if (res.status === 401) {
+        const { signOut } = await import("next-auth/react");
+        const callback = typeof window !== "undefined" ? window.location.pathname : "/teacher";
+        await signOut({
+          callbackUrl: `/login?callbackUrl=${encodeURIComponent(callback)}`,
+        });
+        throw new Error("Unauthorized");
+      }
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Failed to upload material");
@@ -948,7 +969,7 @@ export function UploadForm({
                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white"
               >
                 <option value="">Any program</option>
-                {(collegePrograms.length ? collegePrograms : programs).map((p: any) => (
+                {(collegePrograms.length ? collegePrograms : defaultPrograms).map((p: any) => (
                   <option key={p.key} value={p.key}>
                     {p.label}
                   </option>

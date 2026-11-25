@@ -16,7 +16,7 @@ export const CONTACT_OFFICE =
 export const GOOGLE_PLAY_URL =
   "https://play.google.com/store/apps/details?id=in.getmaterials.app";
 export const APP_STORE_URL =
-  "https://apps.apple.com/us/search?term=getmaterials";
+  "https://apps.apple.com/us/app/getmaterials/id6797921203";
 
 export const BRAND_COLOR = "#7c3aed"; // violet-600
 export const BRAND_COLOR_LIGHT = "#a78bfa"; // violet-400

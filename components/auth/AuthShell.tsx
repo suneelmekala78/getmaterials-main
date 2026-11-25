@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ReactNode } from "react";
+import { StoreBadges } from "@/components/marketing/AppDownload";
 
 const points = [
   "Free notes, PDFs and videos",
@@ -77,6 +78,12 @@ export function AuthShell({
               {subtitle}
             </div>
             {children}
+            <div className="mt-10 border-t border-slate-100 pt-6">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Get the app
+              </p>
+              <StoreBadges tone="onLight" />
+            </div>
           </div>
         </div>
       </div>

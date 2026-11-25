@@ -7,23 +7,25 @@ import {
   BookOpen,
   FileText,
   Upload,
-  ClipboardCheck,
+  Newspaper,
+  GraduationCap,
+  MessagesSquare,
 } from "lucide-react";
 
 const studentTabs = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Home" },
-  { href: "/subjects", icon: BookOpen, label: "Subjects" },
+  { href: "/my-semester", icon: GraduationCap, label: "Semester" },
   { href: "/materials", icon: FileText, label: "Materials" },
+  { href: "/articles", icon: Newspaper, label: "Articles" },
   { href: "/upload", icon: Upload, label: "Upload" },
-  { href: "/quizzes", icon: ClipboardCheck, label: "Quizzes" },
 ];
 
 const teacherTabs = [
   { href: "/teacher/dashboard", icon: LayoutDashboard, label: "Home" },
   { href: "/materials", icon: BookOpen, label: "Browse" },
+  { href: "/articles", icon: Newspaper, label: "Articles" },
+  { href: "/community", icon: MessagesSquare, label: "Community" },
   { href: "/teacher/upload", icon: Upload, label: "Upload" },
-  { href: "/teacher/materials", icon: FileText, label: "My Files" },
-  { href: "/teacher/quizzes", icon: ClipboardCheck, label: "Quizzes" },
 ];
 
 interface BottomBarProps {

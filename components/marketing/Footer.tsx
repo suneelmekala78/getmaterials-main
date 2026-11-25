@@ -6,10 +6,11 @@ import {
   CONTACT_EMAIL,
   CONTACT_OFFICE,
 } from "@/lib/shared";
+import { StoreBadges } from "@/components/marketing/AppDownload";
 
 const platformLinks = [
   { href: "/materials", label: "Browse Materials" },
-  { href: "/subjects", label: "Subjects" },
+  { href: "/programs", label: "Programs" },
   { href: "/colleges", label: "Colleges" },
   { href: "/quizzes", label: "Quizzes" },
   { href: "/practice", label: "Practice" },
@@ -169,6 +170,13 @@ export default function Footer() {
                   <Icon className="text-sm" />
                 </a>
               ))}
+            </div>
+
+            <div className="mt-6 rounded-2xl bg-[#0a0a0a] p-5 text-white shadow-[0_16px_40px_rgba(0,0,0,0.2)]">
+              <h4 className="text-[12px] font-semibold uppercase tracking-[0.18em] text-violet-300">
+                Get the app
+              </h4>
+              <StoreBadges className="mt-4" />
             </div>
           </div>
 

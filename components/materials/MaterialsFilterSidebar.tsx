@@ -23,7 +23,7 @@ const categories = [
   { value: "other", label: "Other" },
 ];
 
-const programs = [
+const FALLBACK_PROGRAMS = [
   { value: "btech", label: "B.Tech" },
   { value: "mtech", label: "M.Tech" },
   { value: "mca", label: "MCA" },
@@ -59,6 +59,7 @@ export default function MaterialsFilterSidebar({
   const [subjectQuery, setSubjectQuery] = useState("");
   const [chapterQuery, setChapterQuery] = useState("");
   const [collegeQuery, setCollegeQuery] = useState("");
+  const [programs, setPrograms] = useState(FALLBACK_PROGRAMS);
   const scrollRef = useRef<HTMLElement>(null);
 
   const filteredSubjects = useSearchable(subjects, subjectQuery, current.subject);
@@ -95,6 +96,21 @@ export default function MaterialsFilterSidebar({
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/programs")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!Array.isArray(data.programs) || !data.programs.length) return;
+        setPrograms(
+          data.programs.map((p: { key?: string; value?: string; label?: string }) => ({
+            value: String(p.key || p.value || ""),
+            label: String(p.label || p.key || ""),
+          })).filter((p: { value: string }) => p.value),
+        );
+      })
+      .catch(() => {});
   }, []);
 
   const groups = (

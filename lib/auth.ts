@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { connectDB, User } from "@/lib/database";
 import { resolveApiOrigin } from "@/lib/api-origin";
+import { signAccessToken } from "@/lib/jwt";
 
 if (!process.env.AUTH_SECRET && process.env.NEXTAUTH_SECRET) {
   process.env.AUTH_SECRET = process.env.NEXTAUTH_SECRET;
@@ -213,7 +214,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.accessToken = (user as any).accessToken;
         token.slug = (user as any).slug;
         token.picture = (user as any).image || token.picture;
-        token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
+        // Align refresh cadence with Express web tokens (7d), with a small buffer.
+        token.accessTokenExpires = Date.now() + 6.5 * 24 * 60 * 60 * 1000;
         token.newUserAt = (user as any).isNewUser ? Date.now() : undefined;
       }
       if (trigger === "update" && session) {
@@ -223,14 +225,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (typeof (session as any).slug === "string") token.slug = (session as any).slug;
       }
 
-      if (Date.now() < (token.accessTokenExpires as number)) {
+      if (Date.now() < (token.accessTokenExpires as number) && token.accessToken) {
         return token;
       }
 
       if (token.id) {
         try {
           await connectDB();
-          const dbUser = await User.findById(token.id).select("role status avatar slug name").lean();
+          const dbUser = await User.findById(token.id).select("role status avatar slug name email").lean();
           if (!dbUser || (dbUser as any).status === "suspended") {
             return { ...token, error: "UserRevoked" };
           }
@@ -239,10 +241,55 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.picture = (dbUser as any).avatar || "";
           if ((dbUser as any).slug) token.slug = (dbUser as any).slug;
           if ((dbUser as any).name) token.name = (dbUser as any).name;
+          if ((dbUser as any).email) token.email = (dbUser as any).email;
         } catch {
           // DB unavailable — keep user logged in with last known state
         }
-        token.accessTokenExpires = Date.now() + 15 * 60 * 1000;
+
+        // Remint Express bearer so API calls stay authorized for the long NextAuth session.
+        const email = String(token.email || "");
+        if (email) {
+          let reminted: string | undefined;
+          const internal = process.env.INTERNAL_API_SECRET;
+          if (internal) {
+            try {
+              const res = await fetch(`${resolveApiOrigin()}/api/auth/session-token`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-internal-secret": internal,
+                },
+                body: JSON.stringify({
+                  userId: String(token.id || token.sub || email),
+                  email,
+                  name: String(token.name || email),
+                  role: String(token.role || "student"),
+                  status: String(token.status || "active"),
+                  expiresIn: "7d",
+                }),
+              });
+              const data = (await res.json().catch(() => ({}))) as { accessToken?: string };
+              if (res.ok && data.accessToken) reminted = data.accessToken;
+            } catch (error) {
+              console.error("[website-auth] remint session-token failed", error);
+            }
+          }
+          if (!reminted) {
+            try {
+              reminted = await signAccessToken({
+                sub: String(token.id || token.sub || email),
+                email,
+                name: String(token.name || email),
+                role: String(token.role || "student"),
+                status: String(token.status || "active"),
+              });
+            } catch (error) {
+              console.error("[website-auth] remint local token failed", error);
+            }
+          }
+          if (reminted) token.accessToken = reminted;
+        }
+        token.accessTokenExpires = Date.now() + 6.5 * 24 * 60 * 60 * 1000;
       }
 
       return token;

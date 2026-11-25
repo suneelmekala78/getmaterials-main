@@ -38,6 +38,15 @@ import {
   type JobApplyMode,
   type ApplicationStatus,
 } from "./models/job";
+import { Article as ArticleModel, type IArticle } from "./models/article";
+import {
+  CommunityTopic as CommunityTopicModel,
+  CommunityThread as CommunityThreadModel,
+  CommunityReply as CommunityReplyModel,
+  type ICommunityTopic,
+  type ICommunityThread,
+  type ICommunityReply,
+} from "./models/community";
 
 export { connectDB } from "./connection";
 export { materialCollegeFilter };
@@ -58,6 +67,10 @@ export const Review = ReviewModel as Model<IReview>;
 export const Follow = FollowModel as Model<IFollow>;
 export const Job = JobModel as Model<IJob>;
 export const JobApplication = JobApplicationModel as Model<IJobApplication>;
+export const Article = ArticleModel as Model<IArticle>;
+export const CommunityTopic = CommunityTopicModel as Model<ICommunityTopic>;
+export const CommunityThread = CommunityThreadModel as Model<ICommunityThread>;
+export const CommunityReply = CommunityReplyModel as Model<ICommunityReply>;
 
 export type {
   IUser,
@@ -80,4 +93,8 @@ export type {
   EmploymentType,
   JobApplyMode,
   ApplicationStatus,
+  IArticle,
+  ICommunityTopic,
+  ICommunityThread,
+  ICommunityReply,
 };

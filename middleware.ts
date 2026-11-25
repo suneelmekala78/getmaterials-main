@@ -12,6 +12,7 @@ const protectedPaths = [
   "/timetable",
   "/requests",
   "/my-materials",
+  "/my-semester",
 ];
 
 // API routes that require authentication
@@ -39,6 +40,7 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/materials") ||
     pathname.startsWith("/api/subjects") ||
     pathname.startsWith("/api/chapters") ||
+    pathname.startsWith("/api/programs") ||
     pathname.startsWith("/api/search") ||
     pathname.startsWith("/api/college-assignments") ||
     pathname.startsWith("/api/contact") ||
@@ -47,7 +49,9 @@ export function middleware(req: NextRequest) {
     pathname.startsWith("/api/profiles") ||
     pathname.startsWith("/api/polls") ||
     pathname.startsWith("/api/study") ||
-    pathname.startsWith("/api/practice")
+    pathname.startsWith("/api/practice") ||
+    pathname.startsWith("/api/articles") ||
+    pathname.startsWith("/api/community")
   ) {
     return NextResponse.next();
   }

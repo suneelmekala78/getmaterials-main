@@ -1,5 +1,6 @@
 import MarketingNavbar from "@/components/marketing/MarketingNavbar";
 import Footer from "@/components/marketing/Footer";
+import AppDownload from "@/components/marketing/AppDownload";
 
 export default function MarketingLayout({
   children,
@@ -10,6 +11,7 @@ export default function MarketingLayout({
     <div className="bg-white">
       <MarketingNavbar />
       {children}
+      <AppDownload />
       <Footer />
     </div>
   );

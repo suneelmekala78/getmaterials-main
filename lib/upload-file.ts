@@ -31,6 +31,13 @@ export async function uploadBrowserFile(file: File, folder: string) {
   };
 
   if (presignRes.status === 401 || /unauthorized/i.test(presign.error || "")) {
+    if (typeof window !== "undefined") {
+      const { signOut } = await import("next-auth/react");
+      const callback = window.location.pathname + window.location.search;
+      await signOut({
+        callbackUrl: `/login?callbackUrl=${encodeURIComponent(callback)}`,
+      });
+    }
     throw new Error("Unauthorized");
   }
   if (!presignRes.ok) {

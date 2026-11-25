@@ -216,6 +216,8 @@ function DocumentsPreview({
               <DownloadButton
                 materialId={materialId}
                 fileUrl={file.url}
+                fileName={file.fileName || file.title}
+                index={index}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:opacity-90"
               >
                 <Download className="w-4 h-4" />
@@ -347,8 +349,8 @@ function OfficePreview({
         <>
         <h3 className="text-lg font-bold text-slate-900 mt-6 mb-2">Downloads</h3>
         <ul className="divide-y divide-slate-100 border-t border-slate-100">
-          {files.map((file) => (
-            <li key={file.url} className="py-3 flex items-center gap-3">
+          {files.map((file, index) => (
+            <li key={`${file.url}-${index}`} className="py-3 flex items-center gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-slate-900 truncate">{file.fileName || file.title}</p>
                 <p className="text-xs text-slate-500">
@@ -359,6 +361,8 @@ function OfficePreview({
               <DownloadButton
                 materialId={materialId}
                 fileUrl={file.url}
+                fileName={file.fileName || file.title}
+                index={index}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:opacity-90"
               >
                 <Download className="w-4 h-4" />

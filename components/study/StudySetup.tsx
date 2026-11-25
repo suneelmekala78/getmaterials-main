@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, GraduationCap } from "lucide-react";
+import { collegeLogoSrc } from "@/lib/college-media";
 
-type Option = { id: string; label: string };
+type Option = { id: string; label: string; image?: string };
 type Program = { key: string; label: string; durationYears: number; totalSemesters: number };
 type Branch = { name: string; sections: string[] };
 
 const STEPS = ["College", "Course", "Branch", "Year", "Semester", "Section", "Subjects"];
+const DEFAULT_SUBJECT_IMAGE = "/images/default-subject.png";
 
 function ChoiceGrid({
   options,
@@ -35,8 +37,18 @@ function ChoiceGrid({
             }`}
           >
             <span className="flex items-center justify-between gap-3">
-              {option.label}
-              {selected ? <Check className="w-4 h-4" /> : null}
+              <span className="flex min-w-0 items-center gap-3">
+                {option.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={option.image}
+                    alt=""
+                    className="h-10 w-10 shrink-0 rounded-xl object-cover bg-slate-100"
+                  />
+                ) : null}
+                <span className="truncate">{option.label}</span>
+              </span>
+              {selected ? <Check className="w-4 h-4 shrink-0" /> : null}
             </span>
           </button>
         );
@@ -128,12 +140,19 @@ export function StudySetup() {
         setColleges((data.colleges || []).map((item: any) => ({
           id: item.id,
           label: item.code ? `${item.name} (${item.code})` : item.name,
+          image: collegeLogoSrc(item.logo),
         })));
         setPrograms(data.programs || []);
         setBranches(data.branches || []);
         setYears(data.years || []);
         setSemesters(data.semesters || []);
-        setSubjects((data.subjects || []).map((item: any) => ({ id: item.id, label: item.name })));
+        setSubjects(
+          (data.subjects || []).map((item: any) => ({
+            id: item.id,
+            label: item.name,
+            image: item.icon || DEFAULT_SUBJECT_IMAGE,
+          })),
+        );
       })
       .catch(() => setError("Could not load colleges"))
       .finally(() => setLoading(false));
@@ -248,10 +267,16 @@ export function StudySetup() {
                         on ? prev.filter((id) => id !== subject.id) : [...prev, subject.id],
                       )
                     }
-                    className={`px-3 py-1.5 rounded-full text-sm font-semibold border ${
+                    className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1.5 text-sm font-semibold ${
                       on ? "bg-violet-600 text-white border-violet-600" : "bg-white text-slate-700 border-slate-200"
                     }`}
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={subject.image || DEFAULT_SUBJECT_IMAGE}
+                      alt=""
+                      className="h-7 w-7 rounded-full object-cover bg-slate-100"
+                    />
                     {subject.label}
                   </button>
                 );

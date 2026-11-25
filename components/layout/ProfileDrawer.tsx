@@ -10,6 +10,7 @@ import {
   ClipboardCheck,
   Code2,
   FileText,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -32,6 +33,20 @@ function drawerLinks(role?: string, status?: string) {
   const isTeacher = role === "teacher" && status !== "pending";
   return [
     { href: "/profile", label: "My Profile", icon: User },
+    ...(!isTeacher
+      ? [
+          {
+            href: "/welcome",
+            label: "Study profile",
+            icon: GraduationCap,
+          },
+          {
+            href: "/my-semester",
+            label: "My Semester",
+            icon: GraduationCap,
+          },
+        ]
+      : []),
     {
       href: isTeacher ? "/teacher/dashboard" : "/dashboard",
       label: "Dashboard",

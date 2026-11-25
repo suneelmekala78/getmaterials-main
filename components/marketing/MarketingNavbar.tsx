@@ -20,7 +20,7 @@ type NavLink = {
 const baseLinks: NavLink[] = [
   { href: "/", label: "Home" },
   { href: "/materials", label: "Materials" },
-  { href: "/subjects", label: "Subjects" },
+  { href: "/programs", label: "Programs" },
   { href: "/colleges", label: "Colleges" },
   { href: "/quizzes", label: "Quizzes" },
   { href: "/practice", label: "Practice" },
@@ -74,11 +74,11 @@ const MarketingNavbar = () => {
   const linkClass = (active: boolean) => {
     if (heroMode) {
       return active
-        ? "text-[var(--primary)] font-bold underline underline-offset-8 decoration-2"
+        ? "text-[var(--primary)] font-bold"
         : "text-slate-500 hover:text-[var(--primary)] transition-colors duration-300";
     }
     return active
-      ? "text-[var(--primary)] underline underline-offset-8 decoration-2"
+      ? "text-[var(--primary)] font-bold"
       : "hover:text-[var(--primary)] transition";
   };
 

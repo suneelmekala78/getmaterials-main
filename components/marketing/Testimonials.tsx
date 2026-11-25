@@ -1,12 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Caveat } from "next/font/google";
 import { FileText, Heart, Users } from "lucide-react";
-
-const caveat = Caveat({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
+import { caveat } from "@/lib/fonts";
 
 type Review = {
   name: string;

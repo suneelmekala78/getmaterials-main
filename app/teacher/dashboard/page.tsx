@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { connectDB, Material } from "@/lib/database";
-import { FileText, Video, Eye, Download, TrendingUp, Upload } from "lucide-react";
+import { FileText, Video, Eye, Download, TrendingUp, Upload, Newspaper } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
@@ -48,12 +48,20 @@ export default async function TeacherDashboardPage() {
             Manage your materials and track their performance
           </p>
         </div>
-        <Link
-          href="/teacher/upload"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-blue-600 text-white font-semibold rounded-xl text-sm hover:shadow-lg hover:shadow-violet-500/25 transition-all"
-        >
-          <Upload className="w-4 h-4" /> Upload Material
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/teacher/articles"
+            className="inline-flex items-center gap-2 px-4 py-2.5 border border-slate-200 bg-white text-slate-700 font-semibold rounded-xl text-sm hover:border-violet-200 hover:text-violet-700 transition-all"
+          >
+            <Newspaper className="w-4 h-4" /> Articles
+          </Link>
+          <Link
+            href="/teacher/upload"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-blue-600 text-white font-semibold rounded-xl text-sm hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+          >
+            <Upload className="w-4 h-4" /> Upload Material
+          </Link>
+        </div>
       </div>
 
       {/* Courses site is not production-ready. Uncomment when it is.

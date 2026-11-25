@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { Edit, FilePenLine, Send, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import toast from "react-hot-toast";
@@ -37,6 +38,11 @@ export function TeacherMaterialActions({
         body: JSON.stringify({ status: next }),
       });
       const data = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        toast.error("Your session expired. Please sign in again.");
+        await signOut({ callbackUrl: `/login?callbackUrl=${encodeURIComponent(href)}` });
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "Could not update status");
       setStatus(next);
       toast.success(next === "draft" ? "Saved as draft" : "Published");
@@ -52,6 +58,11 @@ export function TeacherMaterialActions({
     setBusy("delete");
     try {
       const res = await fetch(`/api/materials/${material._id}`, { method: "DELETE" });
+      if (res.status === 401) {
+        toast.error("Your session expired. Please sign in again.");
+        await signOut({ callbackUrl: `/login?callbackUrl=${encodeURIComponent("/teacher")}` });
+        return;
+      }
       if (res.ok) {
         setDeleted(true);
         toast.success("Material deleted");

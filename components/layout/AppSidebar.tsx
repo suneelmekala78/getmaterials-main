@@ -16,12 +16,17 @@ import {
   Globe,
   CalendarDays,
   GraduationCap,
+  Newspaper,
+  MessagesSquare,
 } from "lucide-react";
 
 const studentLinks = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/subjects", icon: BookOpen, label: "Subjects" },
+  { href: "/my-semester", icon: GraduationCap, label: "My Semester" },
+  { href: "/programs", icon: BookOpen, label: "Programs" },
   { href: "/materials", icon: FileText, label: "Materials" },
+  { href: "/articles", icon: Newspaper, label: "Articles" },
+  { href: "/community", icon: MessagesSquare, label: "Community" },
   { href: "/upload", icon: Upload, label: "Upload" },
   { href: "/my-materials", icon: FileText, label: "My Materials" },
   { href: "/bookmarks", icon: Bookmark, label: "Bookmarks" },
@@ -34,8 +39,11 @@ const studentLinks = [
 
 const teacherLinks = [
   { href: "/teacher/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/subjects", icon: Search, label: "Subjects" },
+  { href: "/programs", icon: Search, label: "Programs" },
   { href: "/materials", icon: FileText, label: "All Materials" },
+  { href: "/articles", icon: Newspaper, label: "Articles" },
+  { href: "/teacher/articles", icon: Newspaper, label: "My Articles" },
+  { href: "/community", icon: MessagesSquare, label: "Community" },
   { href: "/teacher/upload", icon: Upload, label: "Upload" },
   { href: "/teacher/materials", icon: BookOpen, label: "My Materials" },
   { href: "/teacher/quizzes", icon: ClipboardCheck, label: "Quizzes" },
@@ -64,7 +72,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
       <nav className="flex-1 flex flex-col gap-1 px-3">
         {links.map((link) => {
           const Icon = link.icon;
-          const isActive = pathname === link.href;
+          const isActive =
+            link.href === "/dashboard"
+              ? pathname === link.href
+              : pathname === link.href || pathname.startsWith(`${link.href}/`);
           return (
             <Link
               key={link.href}

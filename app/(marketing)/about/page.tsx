@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Caveat } from "next/font/google";
 import { Mail, MapPin } from "lucide-react";
+import { caveat } from "@/lib/fonts";
 import { CONTACT_EMAIL, CONTACT_OFFICE } from "@/lib/shared";
 import { listingMetadata } from "@/lib/seo";
-
-const caveat = Caveat({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
 
 export const metadata: Metadata = listingMetadata({
   title: "About Us — Our Mission to Make Education Free",

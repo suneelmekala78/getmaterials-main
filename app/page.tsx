@@ -11,6 +11,7 @@ import HowItWorks from "@/components/marketing/HowItWorks";
 import ForTeachers from "@/components/marketing/ForTeachers";
 import Testimonials from "@/components/marketing/Testimonials";
 import CTA from "@/components/marketing/CTA";
+import AppDownload from "@/components/marketing/AppDownload";
 import MarketingNavbar from "@/components/marketing/MarketingNavbar";
 import Footer from "@/components/marketing/Footer";
 
@@ -95,6 +96,7 @@ export default async function HomePage() {
         <ForTeachers />
         <Testimonials />
         <CTA />
+        <AppDownload />
       </main>
       <Footer />
     </div>

@@ -24,12 +24,15 @@ export interface JWTPayload {
   status: string;
 }
 
-/** Mint a short-lived Bearer token so the Next.js BFF can call Express. */
-export async function signAccessToken(payload: JWTPayload): Promise<string> {
+/** Mint a Bearer token so the Next.js BFF can call Express (default 7d to match web sessions). */
+export async function signAccessToken(
+  payload: JWTPayload,
+  expiresIn: string = "7d",
+): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(ACCESS_TOKEN_EXPIRY)
+    .setExpirationTime(expiresIn || ACCESS_TOKEN_EXPIRY)
     .setIssuer("getmaterials")
     .setAudience("getmaterials-mobile")
     .sign(getSecret());

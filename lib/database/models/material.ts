@@ -113,6 +113,11 @@ MaterialSchema.index({ college: 1, program: 1, branch: 1, semester: 1 });
 MaterialSchema.index({ colleges: 1 });
 MaterialSchema.index({ branches: 1 });
 MaterialSchema.index({ title: "text", description: "text", tags: "text" });
+// Public listing sorts on /materials
+MaterialSchema.index({ status: 1, isPublic: 1, createdAt: -1 });
+MaterialSchema.index({ status: 1, isPublic: 1, views: -1 });
+MaterialSchema.index({ status: 1, isPublic: 1, downloads: -1 });
+MaterialSchema.index({ status: 1, isPublic: 1, "rating.average": -1 });
 
 MaterialSchema.pre("save", function () {
   const ids = new Set<string>((this.colleges || []).map((id) => String(id)));

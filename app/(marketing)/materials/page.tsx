@@ -1,5 +1,5 @@
-import { connectDB, Material, Subject, College, User, Chapter } from "@/lib/database";
 import { auth } from "@/lib/auth";
+import { User, connectDB } from "@/lib/database";
 import {
   BookOpen,
   Building2,
@@ -14,11 +14,14 @@ import MaterialsToolbar from "@/components/materials/MaterialsToolbar";
 import MaterialsFilterSidebar from "@/components/materials/MaterialsFilterSidebar";
 import MaterialCard from "@/components/materials/MaterialCard";
 import { listingMetadata } from "@/lib/seo";
-import { ratedAverageExpr } from "@/lib/rating-aggregate";
-import { parseList, type QueryParam } from "@/lib/filter-list";
-import { collegePathKey } from "@/lib/college-key";
+import { type QueryParam } from "@/lib/filter-list";
 import { HiddenListInputs } from "@/components/filters/HiddenListInputs";
 import { materialsHref } from "@/components/materials/query";
+import {
+  getMaterialsFilterOptions,
+  getMaterialsHubStats,
+  getMaterialsListing,
+} from "@/lib/materials-listing";
 
 export const metadata: Metadata = listingMetadata({
   title: "Browse Free Study Materials, Notes & PDFs",
@@ -33,19 +36,6 @@ export const metadata: Metadata = listingMetadata({
     "GetMaterials",
   ],
 });
-
-const PAGE_SIZE = 18;
-
-const typeValues = ["pdf", "video", "link", "image", "assignment"] as const;
-const categoryValues = [
-  "notes",
-  "question_paper",
-  "syllabus",
-  "assignment",
-  "lab_manual",
-  "reference",
-  "other",
-] as const;
 
 interface Props {
   searchParams: Promise<{
@@ -72,119 +62,30 @@ function formatStat(value: number) {
 
 export default async function MaterialsPage({ searchParams }: Props) {
   const params = await searchParams;
-  await connectDB();
-  const session = await auth();
+
+  const [stats, filterOptions, listing, session] = await Promise.all([
+    getMaterialsHubStats(),
+    getMaterialsFilterOptions(),
+    getMaterialsListing(params),
+    auth(),
+  ]);
+
   const userId = (session?.user as any)?.id as string | undefined;
+  const bookmarkUser =
+    userId != null
+      ? await (async () => {
+          await connectDB();
+          return User.findById(userId).select("bookmarks").lean();
+        })()
+      : null;
 
-  const filter: any = { status: "published", isPublic: true };
-  const types = parseList(params.type).filter((item) => typeValues.includes(item as any));
-  const categories = parseList(params.category).filter((item) => categoryValues.includes(item as any));
-  const semesters = parseList(params.semester)
-    .map((item) => Number(item))
-    .filter((item) => item >= 1 && item <= 10);
-  const programs = parseList(params.program);
-  if (types.length) filter.type = { $in: types };
-  if (categories.length) filter.materialCategory = { $in: categories };
-  if (semesters.length) filter.semester = { $in: semesters };
-  if (programs.length) filter.program = { $in: programs };
-  if (params.tag) filter.tags = params.tag.toLowerCase().trim();
-  if (params.q) filter.title = { $regex: params.q, $options: "i" };
-
-  const subjectSlugs = parseList(params.subject);
-  const collegeKeys = parseList(params.college).map((item) => item.toLowerCase());
-  const chapterSlugs = parseList(params.chapter);
-
-  const [subjectDocs, collegeDocs, chapterDocs] = await Promise.all([
-    subjectSlugs.length
-      ? Subject.find({ slug: { $in: subjectSlugs } }).select("_id").lean()
-      : Promise.resolve([]),
-    collegeKeys.length
-      ? College.find({
-          $or: [
-            { slug: { $in: collegeKeys } },
-            { code: { $in: collegeKeys.map((item) => item.toUpperCase()) } },
-          ],
-        })
-          .select("_id")
-          .lean()
-      : Promise.resolve([]),
-    chapterSlugs.length
-      ? Chapter.find({ slug: { $in: chapterSlugs } }).select("_id").lean()
-      : Promise.resolve([]),
-  ]);
-
-  if (subjectDocs.length) filter.subject = { $in: subjectDocs.map((item: any) => item._id) };
-  if (chapterDocs.length) filter.chapter = { $in: chapterDocs.map((item: any) => item._id) };
-  if (collegeDocs.length) {
-    const collegeIds = collegeDocs.map((item: any) => item._id);
-    filter.$or = [{ college: { $in: collegeIds } }, { colleges: { $in: collegeIds } }];
-  }
-
-  const sortKey = params.sort || "latest";
-  const sort: Record<string, 1 | -1> =
-    sortKey === "popular"
-      ? { views: -1, createdAt: -1 }
-      : sortKey === "downloads"
-        ? { downloads: -1, createdAt: -1 }
-        : sortKey === "rating"
-          ? { "rating.average": -1, createdAt: -1 }
-          : { createdAt: -1 };
-
-  const page = Math.max(1, Number(params.page) || 1);
-  const skip = (page - 1) * PAGE_SIZE;
-
-  const published = { status: "published", isPublic: true };
-
-  const [
-    totalMatching,
-    materials,
-    totalMaterials,
-    totalColleges,
-    totalSubjects,
-    aggregates,
-    bookmarkUser,
-    subjects,
-    chapterOptions,
-    collegeOptions,
-  ] = await Promise.all([
-    Material.countDocuments(filter),
-    Material.find(filter)
-      .populate("subject", "name slug")
-      .populate("uploadedBy", "name role")
-      .populate("college", "name")
-      .sort(sort)
-      .skip(skip)
-      .limit(PAGE_SIZE)
-      .lean(),
-    Material.countDocuments(published),
-    College.countDocuments({}),
-    Subject.countDocuments({}),
-    Material.aggregate([
-      { $match: published },
-      {
-        $group: {
-          _id: null,
-          downloads: { $sum: "$downloads" },
-          avgRating: ratedAverageExpr,
-        },
-      },
-    ]),
-    userId ? User.findById(userId).select("bookmarks").lean() : null,
-    Subject.find({ isActive: true }).select("name slug").sort({ name: 1 }).lean(),
-    Chapter.find(subjectDocs.length ? { subject: { $in: subjectDocs.map((item: any) => item._id) } } : {})
-      .select("title slug")
-      .sort({ title: 1 })
-      .limit(400)
-      .lean(),
-    College.find({ status: "active" }).select("name slug code").sort({ name: 1 }).lean(),
-  ]);
-
-  const totals = aggregates[0] || { downloads: 0, avgRating: 0 };
   const bookmarkedIds = new Set(
     ((bookmarkUser as any)?.bookmarks || []).map((id: any) => String(id))
   );
   const view = params.view === "list" ? "list" : "grid";
-  const totalPages = Math.max(1, Math.ceil(totalMatching / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(listing.totalMatching / listing.pageSize));
+  const page = listing.page;
+  const { materials } = listing;
 
   const queryForPage = (nextPage: number) =>
     materialsHref(params, { page: nextPage > 1 ? String(nextPage) : undefined });
@@ -206,7 +107,7 @@ export default async function MaterialsPage({ searchParams }: Props) {
             <div>
               <h1 className="text-3xl font-extrabold text-slate-900">Materials</h1>
               <p className="text-slate-500 mt-1">
-                Explore {formatStat(totalMaterials)} study materials shared by students and teachers.
+                Explore {formatStat(stats.totalMaterials)} study materials shared by students and teachers.
               </p>
             </div>
           </div>
@@ -221,14 +122,14 @@ export default async function MaterialsPage({ searchParams }: Props) {
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-8">
           {[
-            { icon: BookOpen, label: "Total Materials", value: formatStat(totalMaterials) },
-            { icon: Building2, label: "Colleges", value: formatStat(totalColleges) },
-            { icon: Layers, label: "Subjects", value: formatStat(totalSubjects) },
-            { icon: Download, label: "Downloads", value: formatStat(totals.downloads || 0) },
+            { icon: BookOpen, label: "Total Materials", value: formatStat(stats.totalMaterials) },
+            { icon: Building2, label: "Colleges", value: formatStat(stats.totalColleges) },
+            { icon: Layers, label: "Subjects", value: formatStat(stats.totalSubjects) },
+            { icon: Download, label: "Downloads", value: formatStat(stats.downloads) },
             {
               icon: Star,
               label: "Avg. Rating",
-              value: totals.avgRating ? Number(totals.avgRating).toFixed(1) : "—",
+              value: stats.avgRating ? Number(stats.avgRating).toFixed(1) : "—",
             },
           ].map((item) => (
             <div
@@ -259,22 +160,9 @@ export default async function MaterialsPage({ searchParams }: Props) {
               chapter: params.chapter,
               program: params.program,
             }}
-            subjects={subjects.map((subject: any) => ({
-              value: subject.slug,
-              label: subject.name,
-            }))}
-            chapters={Array.from(
-              new Map(
-                chapterOptions.map((chapter: any) => [
-                  String(chapter.slug),
-                  { value: String(chapter.slug), label: String(chapter.title || chapter.slug) },
-                ]),
-              ).values(),
-            )}
-            colleges={collegeOptions.map((college: any) => ({
-              value: collegePathKey(college),
-              label: college.code ? `${college.name} (${college.code})` : college.name,
-            }))}
+            subjects={filterOptions.subjects}
+            chapters={listing.chapters}
+            colleges={filterOptions.colleges}
           />
 
           <div>
@@ -329,12 +217,12 @@ export default async function MaterialsPage({ searchParams }: Props) {
                     : "mt-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
                 }
               >
-                {materials.map((material: any) => (
+                {materials.map((material) => (
                   <MaterialCard
-                    key={String(material._id)}
+                    key={material._id}
                     material={material}
                     view={view}
-                    bookmarked={bookmarkedIds.has(String(material._id))}
+                    bookmarked={bookmarkedIds.has(material._id)}
                     loggedIn={Boolean(userId)}
                   />
                 ))}
